@@ -1105,7 +1105,7 @@ const User = () => {
 
               <div className="flex flex-row justify-between space-x-4">
                
-                <div className="w-1/2">
+                {/* <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="date"
@@ -1127,7 +1127,7 @@ const User = () => {
                       {errors.password}
                     </p>
                   )}
-                </div>
+                </div> */}
                
                 <div className="w-1/2">
                   <label

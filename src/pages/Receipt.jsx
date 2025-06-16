@@ -233,7 +233,7 @@ const Receipt = () => {
           );
 
           setFilteredAuction(validPayments);
-          console.log("payment:", validPayments);
+         
 
           const totalAmount = validPayments.reduce(
             (sum, payment) => sum + Number(payment.amount || 0),
@@ -253,6 +253,7 @@ const Receipt = () => {
             old_receipt_no: group?.old_receipt_no,
             ticket: group?.ticket,
             amount: group?.amount,
+            transaction_date:group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
             collected_by:
               group?.collected_by?.name ||
@@ -310,7 +311,8 @@ const Receipt = () => {
 
   const columns = [
     { key: "id", header: "SL. NO" },
-    { key: "date", header: "Date" },
+    { key: "date", header: "Paid Date" },
+    { key: "transaction_date", header: "Transaction Date" },
     { key: "group", header: "Group Name" },
     { key: "name", header: "Customer Name" },
     { key: "category", header: "Category" },

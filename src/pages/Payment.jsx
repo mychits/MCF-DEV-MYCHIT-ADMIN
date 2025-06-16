@@ -203,11 +203,13 @@ const Payment = () => {
               name: group?.user_id?.full_name,
               phone_number: group?.user_id?.phone_number,
               group_name: group?.group_id?.group_name,
+
               ticket: group.ticket,
               receipt: group.receipt_no,
               old_receipt: group.old_receipt_no,
               amount: group.amount,
               date: formatPayDate(group.pay_date),
+              transaction_date: formatPayDate(group.createdAt),
               collected_by:
                 group?.collected_by?.name ||
                 group?.admin_type?.admin_name ||
@@ -465,6 +467,8 @@ const Payment = () => {
 
   const columns = [
     { key: "id", header: "SL. NO" },
+    { key: "date", header: "Paid Date" },
+    { key: "transaction_date", header: "Transaction Date" },
     { key: "name", header: "Customer Name" },
     { key: "phone_number", header: "Customer Phone Number" },
   ];
@@ -476,7 +480,7 @@ const Payment = () => {
     { key: "old_receipt", header: "Old Receipt" },
     { key: "receipt", header: "Receipt" },
     { key: "amount", header: "Amount" },
-    { key: "date", header: "Paid Date" },
+
     { key: "collected_by", header: "Collected By" },
     { key: "action", header: "Action" }
   );
@@ -540,9 +544,7 @@ const Payment = () => {
   };
 
   const formatPayDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { day: "numeric", month: "short", year: "numeric" };
-    return date.toLocaleDateString("en-US", options);
+    return dateString?.split("T")[0];
   };
 
   const handleGroupPaymentChange = async (groupId) => {
@@ -574,7 +576,8 @@ const Payment = () => {
               receipt: group.receipt_no,
               old_receipt: group.old_receipt_no,
               amount: group.amount,
-              date: group?.pay_date.split("T"),
+              date: group?.pay_date.split("T")[0],
+              transaction_date: group?.createdAt?.split("T")[0],
               collected_by:
                 group?.collected_by?.name ||
                 group?.admin_type?.admin_name ||
@@ -614,6 +617,7 @@ const Payment = () => {
     setFormData((prevData) => ({
       ...prevData,
       pay_type: selectedMode,
+
       transaction_id: selectedMode === "online" ? prevData.transaction_id : "",
     }));
   };
@@ -692,35 +696,18 @@ const Payment = () => {
           console.error("Failed to parse user from localStorage:", e);
         }
 
-        // if (paymentFor === dataPaymentsFor.typeChit) {
-        //   const { loan, pigme, ...chitPayload } = formData;
-        //   payload = chitPayload;
-        //   payload.admin_type = admin_type?._id;
-        // } else if (paymentFor === dataPaymentsFor.typeLoan) {
-        //   const { group_id, ticket, pigme, ...loanPayload } = formData;
-        //   payload = loanPayload;
-        //   payload.pay_for = "Loan";
-        //   payload.admin_type = admin_type?._id;
-        // } else if (paymentFor === dataPaymentsFor.typePigme) {
-        //   const { group_id, ticket, loan, ...pigmePayload } = formData;
-        //   payload = pigmePayload;
-        //   payload.pay_for = "Pigme";
-        //   payload.admin_type = admin_type?._id;
-        // }
         formData.payment_group_tickets = paymentGroupTickets;
         formData.admin_type = admin_type?._id;
         setOpenBackdropLoader(true);
         const response = await api.post("/payment/add-payments", formData);
         if (response.status === 201) {
           setSelectedGroupId("");
-          // if (paymentFor === dataPaymentsFor.typeChit) {
-          //   createReceipt(formData);
-          // }
+          setPaymentGroupTickets([]);
           setDisabled(false);
           setFormData({
             user_id: "",
             receipt_no: "",
-            pay_date: "",
+            pay_date: today,
             amount: "",
             pay_type: "cash",
             transaction_id: "",
@@ -737,11 +724,12 @@ const Payment = () => {
         if (response.status >= 400) {
           setShowModal(false);
           setSelectedGroupId("");
+          setPaymentGroupTickets([]);
           setDisabled(false);
           setFormData({
             user_id: "",
             receipt_no: "",
-            pay_date: "",
+            pay_date: today,
             amount: "",
             pay_type: "cash",
             transaction_id: "",

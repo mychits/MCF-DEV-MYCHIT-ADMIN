@@ -119,7 +119,7 @@ const Daybook = () => {
   const dayGroup = [
     { value: "Today", label: "Today" },
     { value: "Yesterday", label: "Yesterday" },
-    { value: "Twodaysago", label: "Two days ago" },
+    { value: "Twodaysago", label: "Two Days Ago" },
     { value: "Custom", label: "Custom" },
   ];
 
@@ -235,6 +235,8 @@ const Daybook = () => {
             receipt: group?.receipt_no,
             old_receipt_no: group?.old_receipt_no,
             amount: group?.amount,
+            date:group.pay_date?.split("T")?.[0],
+            transaction_date:group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
             collected_by:
               group?.collected_by?.name ||
@@ -287,6 +289,8 @@ const Daybook = () => {
 
   const columns = [
     { key: "id", header: "SL. NO" },
+    { key: "date", header: "Paid Date" },
+    { key: "transaction_date", header: "Transaction Date" },
     { key: "group", header: "Group Name" },
     { key: "category", header: "Category" },
     { key: "name", header: "Customer Name" },
