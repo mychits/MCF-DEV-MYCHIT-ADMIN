@@ -68,6 +68,12 @@ const MenuSidebar = [
     icon: <BsPersonCheck />,
     link: "/admin-access-rights",
   },
+
+   {
+      title: "Agent Target",
+      icon: <GoGraph />,
+      link: "/target",
+    },
   {
     title: "Profile",
     spacing: true,

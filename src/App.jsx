@@ -53,6 +53,7 @@ import EmployeeProfile from "./pages/EmployeeProfile"
 import LeadSettings from "./pages/LeadSettings";
 import SalesReport from "./pages/SalesReport";
 import PaymentSummary from './pages/PaymentSummary';
+import Target from "./pages/Target";
 function App() {
   return (
     <>
@@ -82,6 +83,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Task />
+                </ProtectedRoute>
+              }
+            />
+
+              <Route
+              path="/target"
+              element={
+                <ProtectedRoute>
+                  <Target />
                 </ProtectedRoute>
               }
             />
