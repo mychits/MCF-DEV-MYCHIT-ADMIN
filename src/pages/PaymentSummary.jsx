@@ -7,7 +7,6 @@ import { Select } from "antd";
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
 
-
 // const PaymentSummary = () => {
 //   const [searchText, setSearchText] = useState("");
 //   const [usersData, setUsersData] = useState([]);
@@ -39,7 +38,6 @@ import filterOption from "../helpers/filterOption";
 
 //     fetchData();
 //   }, [reloadTrigger]);
-
 
 //   const processRawData = (rawData) => {
 //     let count = 0;
@@ -404,49 +402,107 @@ const PaymentSummary = () => {
     fetchData();
   }, []);
 
+  // const processRawData = (rawData) => {
+  //   let count = 0;
+  //   const result = [];
+
+  //   rawData.forEach(usrData => {
+  //     if (usrData?.data) {
+  //       usrData.data.forEach(data => {
+  //         if (data?.enrollment?.group) {
+  //           count++;
+  //           result.push({
+  //             sl_no: ++count,
+  //             _id: usrData._id,
+  //             userName: usrData.userName,
+  //             userPhone: usrData.phone_number,
+  //             customerId: usrData.customer_id,
+  //             amountPaid: data.payments?.totalPaidAmount || 0,
+  //             paymentsTicket: data.payments?.ticket || 0,
+  //             groupValue: data.enrollment?.group?.group_value || 0,
+  //             groupName: data.enrollment?.group?.group_name || "",
+  //             payment_type: data.enrollment?.payment_type || "",
+  //             latestPaymentDate: data.payments?.latestPaymentDate || null,
+  //             latestPaymentAmount: data.payments?.latestPaymentAmount || 0,
+  //             latestCollectedBy: data.payments?.latestCollectedBy,
+  //             amountToBePaid: data.enrollment?.group?.group_type === "double"
+  //               ? (Number(data.enrollment?.group?.group_install) * Number(data?.auction?.auctionCount) + Number(data.enrollment?.group?.group_install) || 0)
+  //               : (Number(data.payments?.totalPayable) + Number(data.enrollment?.group?.group_install) + Number(data?.firstAuction?.firstDividentHead) || 0),
+  //             balance: data.enrollment?.group?.group_type === "double"
+  //               ? (Number(data.enrollment?.group?.group_install) * Number(data?.auction?.auctionCount) +
+  //                 Number(data.enrollment?.group?.group_install) -
+  //                 Number(data.payments?.totalPaidAmount) || 0)
+  //               : (Number(data.payments?.totalPayable) +
+  //                 Number(data.enrollment?.group?.group_install) +
+  //                 Number(data?.firstAuction?.firstDividentHead) -
+  //                 Number(data?.payments?.totalPaidAmount) || 0),
+  //             referredBy: data.payments?.collected_by
+  //               ? data.payments.collected_by
+
+  //                   : "N/A",
+  //             enrollmentDate: data.enrollment?.createdAt
+  //               ? new Date(data.enrollment.createdAt).toLocaleDateString()
+  //               : "N/A"
+  //           });
+  //         }
+  //       });
+  //     }
+  //   });
+
+  //   return result;
+  // };
+
   const processRawData = (rawData) => {
     let count = 0;
     const result = [];
 
-    rawData.forEach(usrData => {
+    rawData.forEach((usrData) => {
       if (usrData?.data) {
-        usrData.data.forEach(data => {
+        usrData.data.forEach((data) => {
           if (data?.enrollment?.group) {
             count++;
+
+            const latestPaymentAmount = data.payments?.latestPaymentAmount || 0;
+            const totalPaid = data.payments?.totalPaidAmount || 0;
+
+            const totalPayable =
+              data.enrollment?.group?.group_type === "double"
+                ? Number(data.enrollment?.group?.group_install) *
+                    Number(data?.auction?.auctionCount) +
+                    Number(data.enrollment?.group?.group_install) || 0
+                : Number(data.payments?.totalPayable) +
+                    Number(data.enrollment?.group?.group_install) +
+                    Number(data?.firstAuction?.firstDividentHead) || 0;
+
+            const balance = totalPayable - totalPaid;
+
+            // ✅ Status logic
+            let status = "Not Paid";
+            if (latestPaymentAmount > 0 || balance <= 0) {
+              status = "Paid";
+            }
+
             result.push({
-              sl_no: ++count,
+              sl_no: count,
               _id: usrData._id,
               userName: usrData.userName,
               userPhone: usrData.phone_number,
               customerId: usrData.customer_id,
-              amountPaid: data.payments?.totalPaidAmount || 0,
-              paymentsTicket: data.payments?.ticket || 0,
+              amountPaid: totalPaid,
+              paymentsTicket:
+                data.enrollments?.tickets || data.payments?.ticket || 0,
               groupValue: data.enrollment?.group?.group_value || 0,
               groupName: data.enrollment?.group?.group_name || "",
               payment_type: data.enrollment?.payment_type || "",
               latestPaymentDate: data.payments?.latestPaymentDate || null,
-              latestPaymentAmount: data.payments?.latestPaymentAmount || 0,
-              amountToBePaid: data.enrollment?.group?.group_type === "double"
-                ? (Number(data.enrollment?.group?.group_install) * Number(data?.auction?.auctionCount) + Number(data.enrollment?.group?.group_install) || 0)
-                : (Number(data.payments?.totalPayable) + Number(data.enrollment?.group?.group_install) + Number(data?.firstAuction?.firstDividentHead) || 0),
-              balance: data.enrollment?.group?.group_type === "double"
-                ? (Number(data.enrollment?.group?.group_install) * Number(data?.auction?.auctionCount) +
-                  Number(data.enrollment?.group?.group_install) -
-                  Number(data.payments?.totalPaidAmount) || 0)
-                : (Number(data.payments?.totalPayable) +
-                  Number(data.enrollment?.group?.group_install) +
-                  Number(data?.firstAuction?.firstDividentHead) -
-                  Number(data?.payments?.totalPaidAmount) || 0),
-              referredBy: data.enrollment?.agent
-                ? data.enrollment.agent
-                : data.enrollment.referred_customer
-                  ? data.enrollment.referred_customer
-                  : data.enrollment.referred_lead
-                    ? data.enrollment.referred_lead
-                    : "N/A",
+              latestPaymentAmount: latestPaymentAmount,
+              latestCollectedBy: data.payments?.latestCollectedBy || "N/A", 
+              amountToBePaid: totalPayable,
+              balance: balance,
               enrollmentDate: data.enrollment?.createdAt
                 ? new Date(data.enrollment.createdAt).toLocaleDateString()
-                : "N/A"
+                : "N/A",
+              status: status,
             });
           }
         });
@@ -456,67 +512,107 @@ const PaymentSummary = () => {
     return result;
   };
 
-  const filteredData = useMemo(() => {
-    const fromDate = payloads.from_date ? new Date(payloads.from_date).setHours(0, 0, 0, 0) : null;
-    const toDate = payloads.to_date ? new Date(payloads.to_date).setHours(23, 59, 59, 999) : null;
+const filteredData = useMemo(() => {
+  const fromDate = payloads.from_date
+    ? new Date(payloads.from_date).setHours(0, 0, 0, 0)
+    : null;
+  const toDate = payloads.to_date
+    ? new Date(payloads.to_date).setHours(23, 59, 59, 999)
+    : null;
 
-    return usersData
-      .filter(item => {
-        const matchPaymentType = payloads.payment_type ? item.payment_type === payloads.payment_type : true;
-        return matchPaymentType && filterOption([item], searchText).length > 0;
-      })
-      .map(item => {
-        let updatedItem = { ...item };
+  return usersData
+    .filter((item) => {
+      const matchPaymentType = payloads.payment_type
+        ? item.payment_type === payloads.payment_type
+        : true;
+      return matchPaymentType && filterOption([item], searchText).length > 0;
+    })
+    .map((item) => {
+      const updatedItem = { ...item };
 
-        if (fromDate && toDate) {
-          const paymentDate = item.latestPaymentDate ? new Date(item.latestPaymentDate).setHours(0, 0, 0, 0) : null;
+      const paymentDate = item.latestPaymentDate
+        ? new Date(item.latestPaymentDate).setHours(0, 0, 0, 0)
+        : null;
 
-          if (!paymentDate || paymentDate < fromDate || paymentDate > toDate) {
-            updatedItem.latestPaymentAmount = 0;
-            updatedItem.latestPaymentDate = payloads.from_date; // show filter's from_date as default
-          }
-        }
+      let isFilteredOut = false;
 
-        return updatedItem;
-      });
-  }, [usersData, payloads, searchText]);
+      if (
+        (fromDate && (!paymentDate || paymentDate < fromDate)) ||
+        (toDate && paymentDate > toDate)
+      ) {
+        updatedItem.latestPaymentAmount = 0;
+        updatedItem.latestPaymentDate = payloads.from_date;
+        isFilteredOut = true;
+      }
+
+      const balance =
+        Number(updatedItem.amountToBePaid) - Number(updatedItem.amountPaid);
+      const latest = Number(updatedItem.latestPaymentAmount);
+
+      // ✅ Final payment status logic with new condition
+      let status = "Not Paid";
+      if (latest > 0 && balance <= 0) status = "Paid";
+      else if (latest > 0 && balance > 0) status = "Paid";
+      else if (latest === 0 && balance < 0) status = "Paid"; // ✅ NEW condition
+      else if (latest === 0 && balance >= 0) status = "Not Paid";
+
+      // ✅ In filters, hide collectedBy if no real payment
+      if (isFilteredOut && latest === 0) {
+        updatedItem.latestCollectedBy = "N/A";
+      }
+
+      updatedItem.status = status;
+      return updatedItem;
+    });
+}, [usersData, payloads, searchText]);
+
+
+
 
   const handleSelectFilter = (value) => {
     setSelectedLabel(value);
     setShowFilterField(false);
     const today = new Date();
-    const formatDate = (date) => date.toISOString().split('T')[0];
+    const formatDate = (date) => date.toISOString().split("T")[0];
 
     switch (value) {
       case "Today": {
         const dateStr = formatDate(today);
-        setPayloads(prev => ({ ...prev, from_date: dateStr, to_date: dateStr }));
+        setPayloads((prev) => ({
+          ...prev,
+          from_date: dateStr,
+          to_date: dateStr,
+        }));
         break;
       }
       case "Yesterday": {
         const yest = new Date(today);
         yest.setDate(today.getDate() - 1);
         const dateStr = formatDate(yest);
-        setPayloads(prev => ({ ...prev, from_date: dateStr, to_date: dateStr }));
+        setPayloads((prev) => ({
+          ...prev,
+          from_date: dateStr,
+          to_date: dateStr,
+        }));
         break;
       }
       case "ThisMonth": {
         const start = new Date(today.getFullYear(), today.getMonth(), 1);
         const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
       case "LastMonth": {
         const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const end = new Date(today.getFullYear(), today.getMonth(), 0);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
@@ -526,10 +622,10 @@ const PaymentSummary = () => {
         start.setDate(start.getDate() + diff);
         const end = new Date(start);
         end.setDate(start.getDate() + 6);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
@@ -539,30 +635,30 @@ const PaymentSummary = () => {
         start.setDate(start.getDate() + diff - 7);
         const end = new Date(start);
         end.setDate(start.getDate() + 6);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
       case "ThisYear": {
         const start = new Date(today.getFullYear(), 0, 1);
         const end = new Date(today.getFullYear(), 11, 31);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
       case "All": {
         const start = new Date(2000, 0, 1);
         const end = new Date(today);
-        setPayloads(prev => ({
+        setPayloads((prev) => ({
           ...prev,
           from_date: formatDate(start),
-          to_date: formatDate(end)
+          to_date: formatDate(end),
         }));
         break;
       }
@@ -573,11 +669,19 @@ const PaymentSummary = () => {
   };
 
   const handlePaymentTypeChange = (value) => {
-    setPayloads(prev => ({ ...prev, payment_type: value }));
+    setPayloads((prev) => ({ ...prev, payment_type: value }));
   };
 
   const Auctioncolumns = [
     { key: "sl_no", header: "SL. NO" },
+    {
+      key: "latestPaymentDate",
+      header: "Payment Date",
+      render: (row) =>
+        row.latestPaymentDate
+          ? new Date(row.latestPaymentDate).toLocaleDateString()
+          : "N/A",
+    },
     { key: "userName", header: "Customer Name" },
     { key: "userPhone", header: "Phone Number" },
     { key: "groupName", header: "Group Name" },
@@ -587,17 +691,28 @@ const PaymentSummary = () => {
     {
       key: "latestPaymentAmount",
       header: "Latest Amount",
-      render: (row) => row.latestPaymentAmount > 0 ? row.latestPaymentAmount : "Not Paid"
+      render: (row) =>
+        Number(row.latestPaymentAmount) === 0
+          ? "Not Paid"
+          : row.latestPaymentAmount,
     },
     { key: "amountToBePaid", header: "Amount To be Paid" },
     { key: "amountPaid", header: "Amount Paid" },
     { key: "balance", header: "Balance" },
     {
-      key: "latestPaymentDate",
-      header: "Payment Date",
-      render: (row) => row.latestPaymentDate ? new Date(row.latestPaymentDate).toLocaleDateString() : "N/A"
+      key: "status",
+      header: "Status",
+      render: (row) => (
+        <span
+          className={`px-3 py-1 rounded-full text-white ${
+            row.status === "Paid" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
     },
-    { key: "referredBy", header: "Referred By" }
+    { key: "latestCollectedBy", header: "Collected By" },
   ];
 
   return (
@@ -613,7 +728,9 @@ const PaymentSummary = () => {
           </div>
         ) : (
           <div className="flex-grow p-7">
-            <h1 className="text-2xl font-bold text-center">Reports - Payment Summary</h1>
+            <h1 className="text-2xl font-bold text-center">
+              Reports - Payment Summary
+            </h1>
             <div className="mt-6 mb-8">
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="mb-2">
@@ -626,8 +743,20 @@ const PaymentSummary = () => {
                     placeholder="Search Or Select Filter"
                     className="w-full max-w-xs h-11"
                   >
-                    {["All", "Today", "Yesterday", "ThisWeek", "LastWeek", "ThisMonth", "LastMonth", "ThisYear", "Custom"].map((label) => (
-                      <Select.Option key={label} value={label}>{label}</Select.Option>
+                    {[
+                      { value: "All", label: "All" },
+                      { value: "Today", label: "Today" },
+                      { value: "Yesterday", label: "Yesterday" },
+                      { value: "ThisWeek", label: "This Week" },
+                      { value: "LastWeek", label: "Last Week" },
+                      { value: "ThisMonth", label: "This Month" },
+                      { value: "LastMonth", label: "Last Month" },
+                      { value: "ThisYear", label: "This Year" },
+                      { value: "Custom", label: "Custom" },
+                    ].map((option) => (
+                      <Select.Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Select.Option>
                     ))}
                   </Select>
                 </div>
@@ -639,7 +768,12 @@ const PaymentSummary = () => {
                       <input
                         type="date"
                         value={payloads.from_date}
-                        onChange={(e) => setPayloads(prev => ({ ...prev, from_date: e.target.value }))}
+                        onChange={(e) =>
+                          setPayloads((prev) => ({
+                            ...prev,
+                            from_date: e.target.value,
+                          }))
+                        }
                         className="w-full max-w-xs h-11 rounded-md"
                       />
                     </div>
@@ -648,7 +782,12 @@ const PaymentSummary = () => {
                       <input
                         type="date"
                         value={payloads.to_date}
-                        onChange={(e) => setPayloads(prev => ({ ...prev, to_date: e.target.value }))}
+                        onChange={(e) =>
+                          setPayloads((prev) => ({
+                            ...prev,
+                            to_date: e.target.value,
+                          }))
+                        }
                         className="w-full max-w-xs h-11 rounded-md"
                       />
                     </div>
@@ -667,7 +806,9 @@ const PaymentSummary = () => {
                   >
                     <Select.Option value="">All</Select.Option>
                     {["Daily", "Weekly", "Monthly"].map((type) => (
-                      <Select.Option key={type} value={type}>{type}</Select.Option>
+                      <Select.Option key={type} value={type}>
+                        {type}
+                      </Select.Option>
                     ))}
                   </Select>
                 </div>

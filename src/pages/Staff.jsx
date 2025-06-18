@@ -834,7 +834,7 @@ const Staff = () => {
                   value={formData?.agent_type || undefined}
                   onChange={(value) => handleAntDSelect("agent_type", value)}
                 >
-                  {["Agent", "Employee", "Both"].map((aType) => (
+                  {["Agent", "Employee"].map((aType) => (
                     <Select.Option key={aType} value={aType.toLowerCase()}>
                       {aType}
                     </Select.Option>
@@ -1155,7 +1155,7 @@ const Staff = () => {
                   value={updateFormData?.agent_type || undefined}
                   onChange={(value) => handleAntInputDSelect("agent_type", value)}
                 >
-                  {["Agent", "Employee", "Both"].map((aType) => (
+                  {["Agent", "Employee",].map((aType) => (
                     <Select.Option key={aType} value={aType.toLowerCase()}>
                       {aType}
                     </Select.Option>
