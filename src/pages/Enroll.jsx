@@ -254,9 +254,16 @@ const Enroll = () => {
               enrollment_date:group?.createdAt.split("T")[0],
               chit_asking_month: group?.chit_asking_month,
               referred_type: group?.referred_type,
-              referred_agent: group?.agent?.name,
-              referred_customer: group?.referred_customer?.full_name,
-              referred_lead: group?.referred_lead?.lead_name,
+              referred_by: group?.agent?.name && group?.agent?.phone_number
+              ? `${group.agent.name} | ${group.agent.phone_number}`
+              : group?.referred_customer?.full_name && group?.referred_customer?.phone_number
+                ? `${group.referred_customer.full_name} | ${group?.referred_customer?.phone_number}`
+                : group?.referred_lead?.lead_name && group?.referred_lead?.agent_number
+                  ? `${group.referred_lead.lead_name} | ${group.referred_lead.agent_number}`
+                  : "N/A",
+              // referred_agent: group?.agent?.name,
+              // referred_customer: group?.referred_customer?.full_name,
+              // referred_lead: group?.referred_lead?.lead_name,
               ticket: group.tickets,
               action: (
                 <div className="flex justify-center items-center gap-2">
