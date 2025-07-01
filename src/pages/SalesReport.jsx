@@ -83,14 +83,21 @@ const SalesReport = () => {
         Object.values(monthMap).length > 0 ? Object.values(monthMap)[0] : 0;
 
       // Step 2: Aggregate total target between fromDate & toDate
-      let total = 0;
-      let loop = new Date(fromDate);
-      const end = new Date(toDate);
-      while (loop <= end) {
-        const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-        total += monthMap[key] ?? defaultTarget;
-        loop.setMonth(loop.getMonth() + 1);
-      }
+   let total = 0;
+let loop = new Date(fromDate);
+const end = new Date(toDate);
+while (loop <= end) {
+  const year = loop.getFullYear();
+  const month = loop.getMonth(); // 0-based index
+  const key = `${year}-${month}`;
+  const monthTarget = monthMap[key] ?? defaultTarget;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const perDayTarget = monthTarget / daysInMonth;
+
+  total += perDayTarget;
+  loop.setDate(loop.getDate() + 1);
+}
+
 
       // Step 3: Get achieved value via enroll commission
       const { data: commData } = await api.get(

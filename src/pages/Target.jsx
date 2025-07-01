@@ -1,4 +1,3 @@
-// (imports)
 import { useEffect, useState } from "react";
 import Navbar from "../components/layouts/Navbar";
 import SettingSidebar from "../components/layouts/SettingSidebar";
@@ -10,67 +9,16 @@ import { IoMdMore } from "react-icons/io";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
 
 const today = new Date();
-const todayStr = new Date().toISOString().split("T")[0];
-const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-  .toISOString()
-  .split("T")[0];
-const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  .toISOString()
-  .split("T")[0];
 
-function generateVirtualTargets(original, type, fromDate, toDate) {
-  if (!type || type === "designation") return original;
-
-  const extended = [...original];
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
-
-  const ids = [...new Set(original.map((t) => t.agentId?._id || t.agentId))];
-
-  for (const id of ids) {
-    const personalTargets = original.filter(
-      (t) => t.agentId === id || t.agentId?._id === id
-    );
-
-    const latest = personalTargets
-      .filter((t) => new Date(t.startDate) < from)
-      .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
-
-    if (!latest) continue;
-
-    const existingMonths = new Set(
-      personalTargets.map((t) => {
-        const d = new Date(t.startDate);
-        return `${d.getFullYear()}-${d.getMonth()}`;
-      })
-    );
-
-    const loop = new Date(from);
-    while (loop <= to) {
-      const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-      if (!existingMonths.has(key)) {
-        const virtual = {
-          ...latest,
-          startDate: new Date(
-            loop.getFullYear(),
-            loop.getMonth(),
-            1
-          ).toISOString(),
-          endDate: new Date(
-            loop.getFullYear(),
-            loop.getMonth() + 1,
-            0
-          ).toISOString(),
-          isVirtual: true,
-        };
-        extended.push(virtual);
-      }
-      loop.setMonth(loop.getMonth() + 1);
-    }
-  }
-
-  return extended;
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = (`0${date.getMonth() + 1}`).slice(-2);
+  const day = (`0${date.getDate()}`).slice(-2);
+  return `${year}-${month}-${day}`;
 }
+
+const firstDay = formatDate(new Date(today.getFullYear(), today.getMonth(), 1));
+const lastDay = formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0));
 
 const Target = () => {
   const [selectedType, setSelectedType] = useState("agents");
@@ -113,6 +61,7 @@ const Target = () => {
       ]);
 
       const all = agentRes.data || [];
+      console.info(agentRes.data);
       setAgents(
         all.filter((a) => a.agent_type === "agent" || a.agent_type === "both")
       );
@@ -142,67 +91,140 @@ const Target = () => {
               type === "designation" && { designationId: selectedId }),
           },
         });
+        console.info(res.data);
 
         const originalTargets = res.data || [];
+        const extendedTargets = [...originalTargets];
 
-        if (type && (type === "agent" || type === "employee")) {
-          const from = new Date(fromDate);
-          const to = new Date(toDate);
-          const extendedTargets = [...originalTargets];
-
-          const personMap = {};
+        if (type === "agent" || type === "employee") {
           const list = type === "agent" ? agents : employees;
 
           for (const person of list) {
             const personId = person._id;
-            const personalTargets = originalTargets.filter(
-              (t) => t.agentId === personId || t.agentId?._id === personId
+            const allTargets = originalTargets.filter((t) => {
+              const id = t.agentId?._id || t.agentId;
+              return id === personId;
+            });
+
+            if (allTargets.length === 0) {
+              // Use designation-level fallback if available
+              const designationId = person.designation_id?._id || person.designation_id;
+              const desigTargets = originalTargets.filter((t) => {
+                const id = t.designationId?._id || t.designationId;
+                return id === designationId;
+              });
+
+              if (desigTargets.length > 0) {
+                const sortedTargets = [...desigTargets].sort(
+                  (a, b) => new Date(a.startDate) - new Date(b.startDate)
+                );
+
+                const loop = new Date(fromDate);
+                const to = new Date(toDate);
+
+                while (loop <= to) {
+                  const key = `${loop.getFullYear()}-${loop.getMonth()}`;
+
+                  const existing = desigTargets.find((t) => {
+                    const d = new Date(t.startDate);
+                    return d.getFullYear() === loop.getFullYear() && d.getMonth() === loop.getMonth();
+                  });
+
+                  const closest = sortedTargets.reduce((closest, curr) => {
+                    const diff = Math.abs(new Date(curr.startDate) - loop);
+                    const currClosest = closest
+                      ? Math.abs(new Date(closest.startDate) - loop)
+                      : Infinity;
+                    return diff < currClosest ? curr : closest;
+                  }, null);
+
+                  if (closest) {
+                    extendedTargets.push({
+                      ...closest,
+                      startDate: new Date(loop.getFullYear(), loop.getMonth(), 1).toISOString(),
+                      endDate: new Date(loop.getFullYear(), loop.getMonth() + 1, 0).toISOString(),
+                      agentId: person,
+                      isVirtual: true,
+                    });
+                  }
+
+                  loop.setMonth(loop.getMonth() + 1);
+                }
+              }
+
+              continue;
+            }
+
+
+            const sortedTargets = [...allTargets].sort(
+              (a, b) => new Date(a.startDate) - new Date(b.startDate)
             );
 
-            // Find latest target before fromDate
-            const latest = personalTargets
-              .filter((t) => new Date(t.startDate) < from)
-              .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+            const loop = new Date(fromDate);
+            const to = new Date(toDate);
 
-            if (!latest) continue;
-
-            const monthSet = new Set(
-              personalTargets.map((t) => {
-                const d = new Date(t.startDate);
-                return `${d.getFullYear()}-${d.getMonth()}`;
-              })
-            );
-
-            const loop = new Date(from);
             while (loop <= to) {
               const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-              if (!monthSet.has(key)) {
-                const newTarget = {
-                  ...latest,
-                  startDate: new Date(
-                    loop.getFullYear(),
-                    loop.getMonth(),
-                    1
-                  ).toISOString(),
-                  endDate: new Date(
-                    loop.getFullYear(),
-                    loop.getMonth() + 1,
-                    0
-                  ).toISOString(),
-                  isVirtual: true,
-                };
-                extendedTargets.push(newTarget);
+
+              const alreadyExists = allTargets.find((t) => {
+                const d = new Date(t.startDate);
+                return (
+                  d.getFullYear() === loop.getFullYear() &&
+                  d.getMonth() === loop.getMonth()
+                );
+              });
+
+              if (!alreadyExists) {
+                const loopTime = new Date(loop);
+
+                const closest = sortedTargets.reduce((closest, curr) => {
+                  const currDiff = Math.abs(
+                    new Date(curr.startDate) - loopTime
+                  );
+                  const closestDiff = closest
+                    ? Math.abs(new Date(closest.startDate) - loopTime)
+                    : Infinity;
+                  return currDiff < closestDiff ? curr : closest;
+                }, null);
+
+                if (closest) {
+                  extendedTargets.push({
+                    ...closest,
+                    startDate: new Date(
+                      loop.getFullYear(),
+                      loop.getMonth(),
+                      1
+                    ).toISOString(),
+                    endDate: new Date(
+                      loop.getFullYear(),
+                      loop.getMonth() + 1,
+                      0
+                    ).toISOString(),
+                    isVirtual: true,
+                  });
+                }
               }
+
               loop.setMonth(loop.getMonth() + 1);
             }
           }
-
-          setTargets(extendedTargets);
-          setVirtualTargets(extendedTargets);
-        } else {
-          setTargets(originalTargets);
-          setVirtualTargets(originalTargets);
         }
+
+
+        const monthFiltered = extendedTargets.filter((t) => {
+          const s = new Date(t.startDate);
+          const start = new Date(fromDate);
+          const end = new Date(toDate);
+          return (
+            s.getFullYear() === start.getFullYear() &&
+            s.getMonth() === start.getMonth()
+          );
+        });
+
+        setTargets(monthFiltered);
+        setVirtualTargets(monthFiltered);
+        setLoading(false);
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching targets:", err);
@@ -214,13 +236,14 @@ const Target = () => {
     }
   }, [fromDate, toDate, type, selectedId, reload]);
 
+
   useEffect(() => {
     const sourceList =
       type === "agent"
         ? agents
         : type === "employee"
-        ? employees
-        : designations;
+          ? employees
+          : designations;
 
     const buildRows = async () => {
       const rows = await Promise.all(
@@ -287,14 +310,17 @@ const Target = () => {
     if (type && selectedId) buildRows();
   }, [type, selectedId, targets, fromDate, toDate]);
 
-  const formatRow = async (person, targets, currentType) => {
+ const formatRow = async (person, targets, currentType) => {
     let designation = "N/A";
     let achieved = 0;
+    const personIdStr = person._id?.toString();
 
     const allTargets = targets.filter(
       (t) =>
-        (t.agentId?._id || t.agentId) === person._id ||
-        (t.designationId?._id || t.designationId) === person._id
+        (t.agentId?._id?.toString() === personIdStr ||
+          t.agentId?.toString() === personIdStr ||
+          t.designationId?._id?.toString() === personIdStr ||
+          t.designationId?.toString() === personIdStr)
     );
 
     const monthMap = {};
@@ -310,7 +336,6 @@ const Target = () => {
     let total = 0;
     let loop = new Date(fromDate);
     const end = new Date(toDate);
-
     while (loop <= end) {
       const key = `${loop.getFullYear()}-${loop.getMonth()}`;
       const value = monthMap[key] ?? defaultTarget;
@@ -318,27 +343,29 @@ const Target = () => {
       loop.setMonth(loop.getMonth() + 1);
     }
 
-    try {
-      const { data: commData } = await api.get(
-        `/enroll/get-detailed-commission/${person._id}`,
-        {
-          params: {
-            from_date: fromDate,
-            to_date: toDate,
-          },
+    if (currentType !== "designation") {
+      try {
+        const { data: commData } = await api.get(
+          `/enroll/get-detailed-commission/${person._id}`,
+          {
+            params: {
+              from_date: fromDate,
+              to_date: toDate,
+            },
+          }
+        );
+        achieved = commData?.summary?.actual_business || 0;
+        if (typeof achieved === "string") {
+          achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
         }
-      );
-      achieved = commData?.summary?.actual_business || 0;
-      if (typeof achieved === "string") {
-        achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
+      } catch (err) {
+        console.error("Error fetching actual business (achieved):", err);
       }
-    } catch (err) {
-      console.error("Error fetching actual business (achieved):", err);
     }
 
     designation = person.designationTitle || person.title || "N/A";
 
-    let isFallback = false;
+    let isDesignationFallback = false;
     if ((currentType === "agent" || currentType === "employee") && person._id) {
       try {
         const { data: empData } = await api.get(
@@ -351,7 +378,7 @@ const Target = () => {
             (t) => (t.agentId?._id || t.agentId) === person._id
           );
           if (allDirect.length === 0) {
-            isFallback = true;
+            isDesignationFallback = true;
           }
         }
       } catch (err) {
@@ -359,7 +386,7 @@ const Target = () => {
       }
     }
 
-    if (isFallback) {
+    if (isDesignationFallback) {
       designation += " (default)";
     }
 
@@ -370,27 +397,27 @@ const Target = () => {
     const title = designation.toLowerCase();
 
     if (title === "business agent" && achieved >= total) {
-      incentiveAmount = achieved * 0.005;
-      incentivePercent = "0.5%";
+      incentiveAmount = achieved * 0.01;
+      incentivePercent = "1%";
     } else if (difference < 0) {
       incentiveAmount = Math.abs(difference) * 0.01;
       incentivePercent = "1%";
     }
+    
+    // This is the key logic. Find a real, agent-specific target, not a virtual one.
+    const hasAgentSpecificTarget = targets.find((t) => {
+      const agentMatch = (t.agentId?._id?.toString() === personIdStr || t.agentId?.toString() === personIdStr);
+      return agentMatch && !t.isVirtual;
+    });
 
     const dropdownItems = [];
-
-    const hasRealTarget = targets.find(
-      (t) =>
-        ((t.agentId?._id || t.agentId) === person._id ||
-          (t.designationId?._id || t.designationId) === person._id) &&
-        t._id &&
-        !t.isVirtual
-    );
-
-    if (hasRealTarget) {
+    
+    // If a real agent-specific target exists, allow viewing and updating it.
+    if (hasAgentSpecificTarget) {
       dropdownItems.push({ key: "update", label: "View" });
       dropdownItems.push({ key: "delete", label: "Delete Target" });
     } else {
+      // If there's no agent-specific target, only allow setting a new one.
       dropdownItems.push({ key: "set", label: "Set Target" });
     }
 
@@ -401,9 +428,9 @@ const Target = () => {
           items: dropdownItems,
           onClick: ({ key }) => {
             if (key === "set") openSetModal(person, currentType);
-            if (key === "update" && hasRealTarget) openEditModal(hasRealTarget);
-            if (key === "delete" && hasRealTarget)
-              handleDeleteTarget(hasRealTarget._id);
+            // Only call openEditModal if a real agent target exists
+            if (key === "update" && hasAgentSpecificTarget) openEditModal(hasAgentSpecificTarget);
+            if (key === "delete" && hasAgentSpecificTarget) handleDeleteTarget(hasAgentSpecificTarget._id);
           },
         }}
       >
@@ -437,46 +464,72 @@ const Target = () => {
     });
     setSelectedName(person.name || person.title || "");
     setModalVisible(true);
+    setIsEditMode(false);
+    setEditTargetId(null);
   };
 
   const openEditModal = (target) => {
-    // Check if the target is set for an individual agent/employee
     const isAgentBased = !!target.agentId;
+    const isDesignationBased = !!target.designationId;
+
+    const rawStart = new Date(target.startDate);
+    const correctedStart = new Date(rawStart.getFullYear(), rawStart.getMonth(), 1);
+    const correctedEnd = new Date(new Date(target.endDate).getFullYear(), new Date(target.endDate).getMonth() + 1, 0);
 
     setFormData({
       agentId: isAgentBased ? target.agentId?._id || target.agentId || "" : "",
-      designationId: !isAgentBased
-        ? target.designationId?._id || target.designationId || ""
-        : "",
-      startDate: target.startDate?.split("T")[0] || "",
-      endDate: target.endDate?.split("T")[0] || "",
+      designationId: isDesignationBased ? target.designationId?._id || target.designationId || "" : "",
+      startDate: formatDate(correctedStart),
+      endDate: formatDate(correctedEnd),
       totalTarget: target.totalTarget,
       incentive: target.incentive || 0,
     });
+
+
+    setSelectedName(
+      isAgentBased
+        ? target.agentId?.name || "-"
+        : target.designationId?.title || "-"
+    );
 
     setEditTargetId(target._id);
     setIsEditMode(true);
     setModalVisible(true);
   };
 
-  const handleDeleteTarget = async (id) => {
-    try {
-      await api.delete(`/target/delete-target/${id}`);
-      setAlertConfig({
-        visibility: true,
-        message: "Target deleted",
-        type: "success",
-      });
-      setReload((prev) => prev + 1);
-    } catch (err) {
-      console.error("Delete failed", err);
-      setAlertConfig({
-        visibility: true,
-        message: "Delete failed",
-        type: "error",
-      });
-    }
-  };
+ const handleDeleteTarget = async (id) => {
+  try {
+    await api.delete(`/target/delete-target/${id}`);
+    setAlertConfig({
+      visibility: true,
+      message: "Target deleted successfully",
+      type: "success",
+    });
+
+    // ✅ Trigger reload to update table
+    setReload((prev) => prev + 1);
+  } catch (err) {
+    console.error("Delete failed", err);
+
+    const isProtected =
+      err?.response?.status === 403 &&
+      err?.response?.data?.message?.includes("designation-level");
+
+    setAlertConfig({
+      visibility: true,
+      message: isProtected
+        ? "Cannot delete fallback designation-level target. Please set a personal target instead."
+        : "Delete failed. Please try again.",
+      type: "error",
+    });
+  }
+
+  setTimeout(() => {
+    setAlertConfig((prev) => ({ ...prev, visibility: false }));
+  }, 4000);
+};
+
+
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -494,35 +547,39 @@ const Target = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      agentId: formData.agentId || null,
+      designationId: formData.designationId || null,
+      totalTarget: parseInt(formData.totalTarget),
+      incentive: formData.incentive || 0,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+    };
+    
     try {
       if (isEditMode) {
-        await api.put(`/target/update-target/${editTargetId}`, formData);
-        setAlertConfig({
-          visibility: true,
-          message: "Target updated successfully",
-          type: "success",
-        });
+        await api.put(`/target/update-target/${editTargetId}`, payload);
+        setAlertConfig({ visibility: true, message: "Target updated successfully", type: "success" });
       } else {
-        await api.post("/target/add-target", formData);
-        setAlertConfig({
-          visibility: true,
-          message: "Target added",
-          type: "success",
-        });
+        await api.post("/target/add-target", payload);
+        setAlertConfig({ visibility: true, message: "Target set successfully", type: "success" });
       }
+
       setModalVisible(false);
       setIsEditMode(false);
       setEditTargetId(null);
-      setReload((prev) => prev + 1);
+
+      const dt = new Date(payload.startDate);
+      setFromDate(formatDate(new Date(dt.getFullYear(), dt.getMonth(), 1)));
+      setToDate(formatDate(new Date(dt.getFullYear(), dt.getMonth() + 1, 0)));
+      setTimeout(() => setReload((prev) => prev + 1), 300);
     } catch (err) {
       console.error("Submit failed", err);
-      setAlertConfig({
-        visibility: true,
-        message: isEditMode ? "Update failed" : "Add failed",
-        type: "error",
-      });
+      setAlertConfig({ visibility: true, message: isEditMode ? "Update failed" : "Add failed", type: "error" });
     }
   };
+
 
   const getColumns = () => {
     const baseColumns = [
@@ -561,22 +618,24 @@ const Target = () => {
           type={alertConfig.type}
           isVisible={alertConfig.visibility}
           message={alertConfig.message}
-          onClose={() => setAlertConfig({ ...alertConfig, visibility: false })}
+          onClose={() =>
+            setAlertConfig((prev) => ({ ...prev, visibility: false }))
+          }
         />
+
         <div className="flex-grow p-6">
-          <h1 className="text-2xl font-semibold mb-4">Target Report</h1>
+          <h1 className="text-2xl font-semibold mb-4">Targets</h1>
           <div className="flex gap-2 flex-wrap mb-6">
             <select
-              className={`lp-2 border rounded pl-5 py-2 ${
-                !type ? "text-gray-400" : "text-black"
-              }`}
+              className={`lp-2 border rounded pl-5 py-2 ${!type ? "text-gray-400" : "text-black"
+                }`}
               value={type}
               onChange={(e) => {
                 const selected = e.target.value;
                 setLoading(true);
-             
-                  setTableData([]); 
-                     setType(selected);
+
+                setTableData([]);
+                setType(selected);
                 setSelectedId("all");
               }}
             >
@@ -589,9 +648,9 @@ const Target = () => {
               <option value="employee" className="text-black">
                 Employee
               </option>
-              <option value="designation" className="text-black">
+              {/* <option value="designation" className="text-black">
                 Designation
-              </option>
+              </option> */}
             </select>
             {type && (
               <select
@@ -603,8 +662,8 @@ const Target = () => {
                 {(type === "agent"
                   ? agents
                   : type === "employee"
-                  ? employees
-                  : designations
+                    ? employees
+                    : designations
                 ).map((p) => (
                   <option key={p._id} value={p._id}>
                     {p.name || p.title}
@@ -612,18 +671,21 @@ const Target = () => {
                 ))}
               </select>
             )}
+
             <input
-              type="date"
+              type="month"
               className="p-2 border rounded"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              value={fromDate.slice(0, 7)}
+              onChange={(e) => {
+                const selected = new Date(e.target.value);
+                const first = formatDate(new Date(selected.getFullYear(), selected.getMonth(), 1));
+                const last = formatDate(new Date(selected.getFullYear(), selected.getMonth() + 1, 0));
+                setFromDate(first);
+                setToDate(last);
+              }}
             />
-            <input
-              type="date"
-              className="p-2 border rounded"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
+
+
           </div>
 
           <div className="relative min-h-[200px]">
@@ -666,25 +728,25 @@ const Target = () => {
                 />
               </>
             )}
-            <label className="block font-medium">Start Date</label>
+            <label className="block font-medium">Month</label>
             <input
-              type="date"
+              type="month"
               name="startDate"
-              value={formData.startDate}
-              onChange={handleFormChange}
+              value={formData.startDate.slice(0, 7)}
+              onChange={(e) => {
+                const date = new Date(e.target.value);
+                const first = formatDate(new Date(date.getFullYear(), date.getMonth(), 1));
+                const last = formatDate(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+                setFormData((prev) => ({
+                  ...prev,
+                  startDate: first,
+                  endDate: last,
+                }));
+              }}
               className="w-full p-2 border rounded bg-gray-100"
-              required
             />
-            <label className="block font-medium">End Date</label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleFormChange}
-              className="w-full p-2 border rounded bg-gray-100"
-              required
-            />
-            <label className="block font-medium">Total Target</label>
+
+            <label className="block font-medium">Target Amount</label>
             <input
               type="number"
               name="totalTarget"
@@ -693,14 +755,7 @@ const Target = () => {
               className="w-full p-2 border rounded"
               required
             />
-            {/* <label className="block font-medium">Incentive (%)</label>
-            <input
-              type="number"
-              name="incentive"
-              value={formData.incentive}
-              readOnly
-              className="w-full p-2 border rounded bg-gray-100"
-            /> */}
+
             <button
               type="submit"
               className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -714,4 +769,9 @@ const Target = () => {
   );
 };
 
+
+
+
 export default Target;
+
+
