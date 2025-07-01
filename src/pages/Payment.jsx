@@ -208,56 +208,67 @@ const Payment = () => {
                 group?.admin_type?.admin_name ||
                 "Super Admin",
               action: (
+                // <div className="flex justify-center gap-2">
+                //   <Dropdown
+                //     trigger={["click"]}
+                //     menu={{
+                //       items: [
+                //         // {
+                //         //   key: "1",
+                //         //   label: (
+                //         //     <div
+                //         //       className="text-orange-600 "
+                //         //       onClick={() => handleEditAmountModalOpen(group._id)}
+                //         //     >
+                //         //       Edit
+                //         //     </div>
+                //         //   ),
+                //         // },
+                //         {
+                //           key: "2",
+                //           label: (
+                //             <div
+                //               className="text-green-600 "
+                //               onClick={() => handleViewModalOpen(group._id)}
+                //             >
+                //               View
+                //             </div>
+                //           ),
+                //         },
+                //         {
+                //           key: "3",
+                //           label: (
+                //             <Link
+                //               to={`/print/${group._id}`}
+                //               className="text-blue-600 "
+                //             >
+                //               Print
+                //             </Link>
+                //           ),
+                //         },
+                //         {
+                //           key: "4",
+                //           label: (
+                //             <div
+                //               className="text-red-600 "
+                //               onClick={() => handleDeleteModalOpen(group._id)}
+                //             >
+                //               Delete
+                //             </div>
+                //           ),
+                //         },
+                //       ],
+                //     }}
+                //     placement="bottomLeft"
+                //   >
+                //     <IoMdMore className="text-bold" />
+                //   </Dropdown>
+                // </div>
                 <div className="flex justify-center gap-2">
                   <Dropdown
-                    trigger={["click"]}
+                  trigger={["click"]}
                     menu={{
-                      items: [
-                        // {
-                        //   key: "1",
-                        //   label: (
-                        //     <div
-                        //       className="text-orange-600 "
-                        //       onClick={() => handleEditAmountModalOpen(group._id)}
-                        //     >
-                        //       Edit
-                        //     </div>
-                        //   ),
-                        // },
-                        {
-                          key: "2",
-                          label: (
-                            <div
-                              className="text-green-600 "
-                              onClick={() => handleViewModalOpen(group._id)}
-                            >
-                              View
-                            </div>
-                          ),
-                        },
-                        {
-                          key: "3",
-                          label: (
-                            <Link
-                              to={`/print/${group._id}`}
-                              className="text-blue-600 "
-                            >
-                              Print
-                            </Link>
-                          ),
-                        },
-                        {
-                          key: "4",
-                          label: (
-                            <div
-                              className="text-red-600 "
-                              onClick={() => handleDeleteModalOpen(group._id)}
-                            >
-                              Delete
-                            </div>
-                          ),
-                        },
-                      ],
+                      items: dropDownItems(group),
                     }}
                     placement="bottomLeft"
                   >
@@ -578,6 +589,7 @@ const Payment = () => {
               action: (
                 <div className="flex justify-center gap-2">
                   <Dropdown
+                  trigger={["click"]}
                     menu={{
                       items: dropDownItems(group),
                     }}

@@ -197,28 +197,28 @@ const Receipt = () => {
     if (value === "Today") {
       const formatted = formatDate(today);
       setSelectedFromDate(formatted);
-      selectedDate(formatted);
+      setSelectedDate(formatted);
     } else if (value === "Yesterday") {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
       const formatted = formatDate(yesterday);
       setSelectedFromDate(formatted);
-      selectedDate(formatted);
+      setSelectedDate(formatted);
     } else if (value === "ThisMonth") {
       const start = new Date(today.getFullYear(), today.getMonth(), 1);
       const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       setSelectedFromDate(formatDate(start));
-      selectedDate(formatDate(end));
+      setSelectedDate(formatDate(end));
     } else if (value === "LastMonth") {
       const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const end = new Date(today.getFullYear(), today.getMonth(), 0);
       setSelectedFromDate(formatDate(start));
-      selectedDate(formatDate(end));
+      setSelectedDate(formatDate(end));
     } else if (value === "ThisYear") {
       const start = new Date(today.getFullYear(), 0, 1);
       const end = new Date(today.getFullYear(), 11, 31);
       setSelectedFromDate(formatDate(start));
-      selectedDate(formatDate(end));
+      setSelectedDate(formatDate(end));
     } else if (value === "Custom") {
       setShowFilterField(true);
     }
@@ -253,6 +253,7 @@ const Receipt = () => {
             (sum, payment) => sum + Number(payment.amount || 0),
             0
           );
+          console.info(totalAmount,"check amount");
           setPayments(totalAmount);
 
           const formattedData = validPayments.map((group, index) => ({
