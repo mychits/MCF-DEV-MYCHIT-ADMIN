@@ -59,6 +59,7 @@ import PayOutReport from "../pages/PayoutReport";
 import ErrorPage from "./error/ErrorPage";
 import Guarantor from "../pages/Guarantor";
 import DreamAsset from "../pages/DreamAsset";
+import BecomeAgent from "../pages/BecomeAgent";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -305,6 +306,10 @@ const mainRoutes = createBrowserRouter([
           {
             path: "groups/asset",
             element: <DreamAsset />,
+          },
+          {
+            path: "groups/become-agent",
+            element: <BecomeAgent />,
           },
         ],
       },

@@ -24,6 +24,7 @@ const Home = () => {
   const [searchValue, setSearchValue] = useState("")
   const [totalAmount, setTotalAmount] = useState(0);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+    const [hidePayment, setHidePayment] = useState(false);
   const [notRendered, setNotRendered] = useState(true)
   useEffect(() => {
     const fetchGroups = async () => {
@@ -36,6 +37,23 @@ const Home = () => {
     };
     fetchGroups();
   }, [reloadTrigger]);
+
+    useEffect(() => {
+      const user = localStorage.getItem("user");
+      const userObj = JSON.parse(user);
+  
+      if (
+        userObj &&
+        userObj.admin_access_right_id?.access_permissions?.edit_payment
+      ) {
+        const isModify =
+          userObj.admin_access_right_id?.access_permissions?.edit_payment ===
+          "true"
+            ? true
+            : false;
+        setHidePayment(isModify);
+      }
+    }, []);
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -186,27 +204,30 @@ const Home = () => {
       redirect: "/employee",
     },
 
-    {
-      icon: <MdOutlinePayments size={16} />,
-      text: "Payments",
-      count: `${totalAmount}`,
-      bgColor: "bg-red-200",
-      iconColor: "bg-red-900",
-      redirect: "/payment",
-    },
-    {
-      icon: (
-        <div className="text-center">
-          {" "}
-          <SlCalender size={16} /> ₹{" "}
-        </div>
-      ),
-      text: "Current Month Payments",
-      count: `${paymentsPerMonthValue}`,
-      bgColor: "bg-purple-200",
-      iconColor: "bg-purple-900",
-      redirect: "/payment",
-    },
+    ...(hidePayment
+    ? [
+        {
+          icon: <MdOutlinePayments size={16} />,
+          text: "Payments",
+          count: `${totalAmount}`,
+          bgColor: "bg-red-200",
+          iconColor: "bg-red-900",
+          redirect: "/payment",
+        },
+        {
+          icon: (
+            <div className="text-center">
+              <SlCalender size={16} /> ₹
+            </div>
+          ),
+          text: "Current Month Payments",
+          count: `${paymentsPerMonthValue}`,
+          bgColor: "bg-purple-200",
+          iconColor: "bg-purple-900",
+          redirect: "/payment",
+        },
+      ]
+    : []),
   ].filter((ele) => ele.text.toLowerCase().includes(searchValue.toLocaleLowerCase()));
 
   const onGlobalSearchChangeHandler = (e) => {

@@ -22,6 +22,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";
 import { MdAppSettingsAlt } from "react-icons/md";
 import { ImHappy } from "react-icons/im";
+import { FaPersonMilitaryPointing } from "react-icons/fa6";
 
 const MenuSidebar = [
   { title: "Dashboard", icon: <RiDashboardFill />, link: "/dashboard" },
@@ -51,6 +52,11 @@ const MenuSidebar = [
             title: "Dream Asset",
             icon: <ImHappy size={20} />,
             link: "/lead-setting/app-settings/groups/asset",
+          },
+          {
+            title: "Become Agent",
+            icon: <FaPersonMilitaryPointing size={20} />,
+            link: "/lead-setting/app-settings/groups/become-agent",
           },
         ],
       },
