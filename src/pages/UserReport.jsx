@@ -6,6 +6,1342 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import { Select } from "antd";
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
+// const UserReport = () => {
+//   const [groups, setGroups] = useState([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [TableDaybook, setTableDaybook] = useState([]);
+//   const [TableAuctions, setTableAuctions] = useState([]);
+//   const [selectedGroup, setSelectedGroup] = useState("");
+//   const [group, setGroup] = useState([]);
+//   const [commission, setCommission] = useState("");
+//   const [TableEnrolls, setTableEnrolls] = useState([]);
+//   const [TableEnrollsDate, setTableEnrollsDate] = useState([]);
+//   const [filteredUsers, setFilteredUsers] = useState([]);
+//   const [groupPaid, setGroupPaid] = useState("");
+//   const [groupToBePaid, setGroupToBePaid] = useState("");
+//   const [fromDate, setFromDate] = useState(() => {
+//     const today = new Date();
+//     return today.toISOString().split("T")[0];
+//   });
+//   const [toDate, setToDate] = useState(() => {
+//     const today = new Date();
+//     return today.toISOString().split("T")[0];
+//   });
+//   const [totalAmount, setTotalAmount] = useState(0);
+//   const [groupPaidDate, setGroupPaidDate] = useState("");
+//   const [groupToBePaidDate, setGroupToBePaidDate] = useState("");
+//   const [detailsLoading, setDetailLoading] = useState(false);
+//   const [basicLoading, setBasicLoading] = useState(false);
+//   const [dateLoading, setDateLoading] = useState(false);
+//   const [EnrollGroupId, setEnrollGroupId] = useState({
+//     groupId: "",
+//     ticket: "",
+//   });
+//   const [TotalToBepaid, setTotalToBePaid] = useState("");
+//   const [Totalpaid, setTotalPaid] = useState("");
+//   const [Totalprofit, setTotalProfit] = useState("");
+//   const [NetTotalprofit, setNetTotalProfit] = useState("");
+//   const [selectedAuctionGroupId, setSelectedAuctionGroupId] = useState("");
+//   const [filteredAuction, setFilteredAuction] = useState([]);
+//   const [groupInfo, setGroupInfo] = useState({});
+
+//   const [selectedDate, setSelectedDate] = useState(() => {
+//     const today = new Date();
+//     return today.toISOString().split("T")[0];
+//   });
+//   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+//   const [selectedCustomers, setSelectedCustomers] = useState("");
+//   const [payments, setPayments] = useState([]);
+//   const [availableTickets, setAvailableTickets] = useState([]);
+//   const [screenLoading, setScreenLoading] = useState(true);
+//   const [activeTab, setActiveTab] = useState("groupDetails");
+//   const [searchText, setSearchText] = useState("");
+//   const [groupDetails, setGroupDetails] = useState(" ");
+//   const [loanCustomers, setLoanCustomers] = useState([]);
+//   const [borrowersData, setBorrowersData] = useState([]);
+//   const [borrowerId, setBorrowerId] = useState("No");
+//   const [filteredBorrowerData, setFilteredBorrowerData] = useState([]);
+//   const [filteredDisbursement, setFilteredDisbursement] = useState([]);
+//   const [disbursementLoading, setDisbursementLoading] = useState(false);
+//   const onGlobalSearchChangeHandler = (e) => {
+//     setSearchText(e.target.value);
+//   };
+//   const handleTabChange = (tab) => {
+//     setActiveTab(tab);
+//   };
+
+//   const [formData, setFormData] = useState({
+//     group_id: "",
+//     user_id: "",
+//     ticket: "",
+//     receipt_no: "",
+//     pay_date: "",
+//     amount: "",
+//     pay_type: "cash",
+//     transaction_id: "",
+//   });
+
+//   const BasicLoanColumns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "pay_date", header: "Payment Date" },
+//     { key: "receipt_no", header: "Receipt No" },
+//     { key: "amount", header: "Amount" },
+//     { key: "pay_type", header: "Payment Type" },
+//     { key: "balance", header: "Balance" },
+//   ];
+//   const DisbursementColumns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "pay_date", header: "Disbursed Date" },
+//     { key: "transaction_date", header: "Transaction Date" },
+//     { key: "amount", header: "Amount" },
+//     { key: "receipt_no", header: "Receipt No" },
+//     { key: "pay_type", header: "Payment Type" },
+//     { key: "disbursed_by", header: "Disbursed By" },
+//     { key: "balance", header: "Balance" },
+//   ];
+//   useEffect(() => {
+//     const fetchAllLoanPaymentsbyId = async () => {
+//       setBorrowersData([]);
+//       setBasicLoading(true);
+
+//       try {
+//         const response = await api.get(
+//           `/loan-payment/get-all-loan-payments/${EnrollGroupId.ticket}`
+//         );
+
+//         if (response.data && response.data.length > 0) {
+//           let balance = 0;
+//           const formattedData = response.data.map((loanPayment, index) => {
+//             balance += Number(loanPayment.amount);
+//             return {
+//               _id: loanPayment._id,
+//               id: index + 1,
+//               pay_date: formatPayDate(loanPayment?.pay_date),
+//               amount: loanPayment.amount,
+//               receipt_no: loanPayment.receipt_no,
+//               pay_type: loanPayment.pay_type,
+//               balance,
+//             };
+//           });
+//           formattedData.push({
+//             _id: "",
+//             id: "",
+//             pay_date: "",
+//             receipt_no: "",
+//             amount: "",
+//             pay_type: "",
+//             balance,
+//           });
+//           setBorrowersData(formattedData);
+//         } else {
+//           setBorrowersData([]);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching loan payment data:", error);
+//         setBorrowersData([]);
+//       } finally {
+//         setBasicLoading(false);
+//       }
+//     };
+
+//     if (EnrollGroupId.groupId === "Loan") fetchAllLoanPaymentsbyId();
+//   }, [EnrollGroupId.ticket]);
+
+//   useEffect(() => {
+//     const fetchGroupById = async () => {
+//       try {
+//         const response = await api.get(
+//           `/group/get-by-id-group/${EnrollGroupId.groupId}`
+//         );
+//         if (response.status >= 400) throw new Error("API ERROR");
+//         setGroupDetails(response.data);
+//       } catch (err) {
+//         console.log("Failed to fetch group details by ID:", err.message);
+//       }
+//     };
+//     if (EnrollGroupId.groupId !== "Loan") fetchGroupById();
+//   }, [EnrollGroupId?.ticket]);
+
+//   useEffect(() => {
+//     setScreenLoading(true);
+
+//     const fetchGroups = async () => {
+//       setDetailLoading(true);
+//       try {
+//         const response = await api.get("/user/get-user");
+//         setGroups(response.data);
+//         setScreenLoading(false);
+//         setDetailLoading(false);
+//       } catch (error) {
+//         console.error("Error fetching group data:", error);
+//       } finally {
+//         setDetailLoading(false);
+//       }
+//     };
+//     fetchGroups();
+//   }, []);
+
+//   useEffect(() => {
+//     const fetchBorrower = async () => {
+//       try {
+//         setLoanCustomers([]);
+//         const response = await api.get(
+//           `/loans/get-borrower-by-user-id/${selectedGroup}`
+//         );
+//         if (response.data) {
+//           const filteredBorrowerData = response.data.map((loan, index) => ({
+//             sl_no: index + 1,
+//             loan: loan.loan_id,
+//             loan_amount: loan.loan_amount,
+//             tenure: loan.tenure,
+//             service_charge: loan.service_charges,
+//           }));
+//           setFilteredBorrowerData(filteredBorrowerData);
+//         }
+//         setLoanCustomers(response.data);
+
+//         if (response.status >= 400) throw new Error("Failed to send message");
+//       } catch (err) {
+//         console.log("failed to fetch loan customers", err.message);
+//         setFilteredBorrowerData([]);
+//       }
+//     };
+//     setBorrowersData([]);
+//     setBorrowerId("No");
+//     fetchBorrower();
+//   }, [selectedGroup]);
+
+//   useEffect(() => {
+//     const fetchGroups = async () => {
+//       try {
+//         const response = await api.get(`/user/get-user-by-id/${selectedGroup}`);
+//         setGroup(response.data);
+//       } catch (error) {
+//         console.error("Error fetching group data:", error);
+//       }
+//     };
+//     fetchGroups();
+//   }, [selectedGroup]);
+
+//   useEffect(() => {
+//     const fetchGroups = async () => {
+//       try {
+//         const response = await api.get("/user/get-user");
+//         setFilteredUsers(response.data);
+//       } catch (error) {
+//         console.error("Error fetching group data:", error);
+//       }
+//     };
+//     fetchGroups();
+//   }, []);
+//   // disbursement report
+
+//   useEffect(() => {
+//     const fetchDisbursement = async () => {
+//       try {
+//         setDisbursementLoading(true);
+//         const response = await api.get(
+//           `/payment-out/get-payment-out-report-daybook`,
+//           {
+//             params: {
+//               pay_for: "chit",
+//               userId: selectedGroup,
+//             },
+//           }
+//         );
+
+//         if (response.data) {
+//           const formattedData = response.data.map((payment, index) => {
+//             let balance = 0;
+
+//             balance += Number(payment.amount);
+//             return {
+//               _id: payment._id,
+//               id: index + 1,
+//               pay_date: formatPayDate(payment?.pay_date),
+//               transaction_date: formatPayDate(payment.createdAt),
+//               amount: payment.amount,
+//               receipt_no: payment.receipt_no,
+//               pay_type: payment.pay_type,
+//               disbursed_by: payment.admin_type?.name,
+//               balance,
+//             };
+//           });
+
+//           setFilteredDisbursement(formattedData);
+//         } else {
+//           setFilteredDisbursement([]);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching disbursement data", error, error.message);
+//         setFilteredDisbursement([]);
+//       } finally {
+//         setDisbursementLoading(false);
+//       }
+//     };
+//     if (selectedGroup) fetchDisbursement();
+//   }, [selectedGroup]);
+//   const handleGroupPayment = async (groupId) => {
+//     setSelectedAuctionGroupId(groupId);
+//     setSelectedGroup(groupId);
+//     handleGroupAuctionChange(groupId);
+//   };
+
+//   const handleEnrollGroup = (event) => {
+//     const value = event.target.value;
+
+//     if (value) {
+//       const [groupId, ticket] = value.split("|");
+//       // for loan group id is "Loan" ticket is loan object Id
+//       setEnrollGroupId({ groupId, ticket });
+//     } else {
+//       setEnrollGroupId({ groupId: "", ticket: "" });
+//     }
+//   };
+
+//   useEffect(() => {
+//     const fetchPayments = async () => {
+//       try {
+//         const response = await api.get(`/payment/get-report-daybook`, {
+//           params: {
+//             pay_date: selectedDate,
+//             groupId: selectedAuctionGroupId,
+//             userId: selectedCustomers,
+//             pay_type: selectedPaymentMode,
+//           },
+//         });
+
+//         if (response.data && response.data.length > 0) {
+//           setFilteredAuction(response);
+//           const paymentData = response.data;
+//           const totalAmount = paymentData.reduce(
+//             (sum, payment) => sum + Number(payment.amount || 0),
+//             0
+//           );
+//           setPayments(totalAmount);
+//           const formattedData = response.data.map((group, index) => ({
+//             id: index + 1,
+//             group: group.group_id.group_name,
+//             name: group.user_id?.full_name,
+//             phone_number: group.user_id.phone_number,
+//             ticket: group.ticket,
+//             amount: group.amount,
+//             mode: group.pay_type,
+//           }));
+//           setTableDaybook(formattedData);
+//         } else {
+//           setFilteredAuction([]);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching payment data:", error);
+//         setFilteredAuction([]);
+//         setPayments(0);
+//       }
+//     };
+
+//     fetchPayments();
+//   }, [
+//     selectedAuctionGroupId,
+//     selectedDate,
+//     selectedPaymentMode,
+//     selectedCustomers,
+//   ]);
+
+//   const loanColumns = [
+//     { key: "sl_no", header: "SL. No" },
+//     { key: "loan", header: "Loan ID" },
+//     { key: "loan_amount", header: "Loan Amount" },
+//     { key: "service_charge", header: "Service Charge" },
+//     { key: "tenure", header: "Tenure" },
+//   ];
+//   const columns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "group", header: "Group Name" },
+//     { key: "name", header: "Customer Name" },
+//     { key: "phone_number", header: "Customer Phone Number" },
+//     { key: "ticket", header: "Ticket" },
+//     { key: "amount", header: "Amount" },
+//     { key: "mode", header: "Payment Mode" },
+//   ];
+
+//   const handleGroupAuctionChange = async (groupId) => {
+//     setFilteredAuction([]);
+//     if (groupId) {
+//       try {
+//         const response = await api.post(
+//           `/enroll/get-user-tickets-report/${groupId}`
+//         );
+
+//         if (response.data && response.data.length > 0) {
+//           setFilteredAuction(response.data);
+
+//           const formattedData = response.data
+//             .map((group, index) => {
+//               const groupName = group?.enrollment?.group?.group_name || "";
+//               const tickets = group?.enrollment?.tickets || "";
+//               const groupType = group?.enrollment?.group?.group_type;
+//               const groupInstall =
+//                 parseInt(group?.enrollment?.group?.group_install) || 0;
+//               const auctionCount = parseInt(group?.auction?.auctionCount) || 0;
+//               const totalPaidAmount = group?.payments?.totalPaidAmount || 0;
+//               const totalProfit = group?.profit?.totalProfit || 0;
+//               const totalPayable = group?.payable?.totalPayable || 0;
+//               const firstDividentHead =
+//                 group?.firstAuction?.firstDividentHead || 0;
+
+//               if (!group?.enrollment?.group) {
+//                 return null;
+//               }
+
+//               return {
+//                 id: index + 1,
+//                 group: groupName,
+//                 ticket: tickets,
+
+//                 totalBePaid:
+//                   groupType === "double"
+//                     ? groupInstall * auctionCount + groupInstall
+//                     : totalPayable + groupInstall + totalProfit,
+
+//                 profit: totalProfit,
+
+//                 toBePaidAmount:
+//                   groupType === "double"
+//                     ? groupInstall * auctionCount + groupInstall
+//                     : totalPayable + groupInstall + firstDividentHead,
+
+//                 paidAmount: totalPaidAmount,
+
+//                 balance:
+//                   groupType === "double"
+//                     ? groupInstall * auctionCount +
+//                       groupInstall -
+//                       totalPaidAmount
+//                     : totalPayable +
+//                       groupInstall +
+//                       firstDividentHead -
+//                       totalPaidAmount,
+//               };
+//             })
+//             .filter((item) => item !== null);
+
+//           setTableAuctions(formattedData);
+//           setCommission(0);
+
+//           const totalToBePaidAmount = formattedData.reduce((sum, group) => {
+//             return sum + (group?.totalBePaid || 0);
+//           }, 0);
+//           setTotalToBePaid(totalToBePaidAmount);
+
+//           const totalNetToBePaidAmount = formattedData.reduce((sum, group) => {
+//             return sum + (group?.toBePaidAmount || 0);
+//           }, 0);
+//           setNetTotalProfit(totalNetToBePaidAmount);
+
+//           const totalPaidAmount = response.data.reduce(
+//             (sum, group) => sum + (group?.payments?.totalPaidAmount || 0),
+//             0
+//           );
+//           setTotalPaid(totalPaidAmount);
+
+//           const totalProfit = response.data.reduce(
+//             (sum, group) => sum + (group?.profit?.totalProfit || 0),
+//             0
+//           );
+//           setTotalProfit(totalProfit);
+//         } else {
+//           setFilteredAuction([]);
+//           setCommission(0);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching enrollment data:", error);
+//         setFilteredAuction([]);
+//         setCommission(0);
+//       }
+//     } else {
+//       setFilteredAuction([]);
+//       setCommission(0);
+//     }
+//   };
+
+//   const Auctioncolumns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "group", header: "Group Name" },
+//     { key: "ticket", header: "Ticket" },
+//     { key: "totalBePaid", header: "Amount to be Paid" },
+//     { key: "profit", header: "Profit" },
+//     { key: "toBePaidAmount", header: "Net To be Paid" },
+//     { key: "paidAmount", header: "Amount Paid" },
+//     { key: "balance", header: "Balance" },
+//   ];
+
+//   const formatPayDate = (dateString) => {
+//     const date = new Date(dateString);
+//     return date.toISOString().split("T")[0];
+//   };
+
+//   useEffect(() => {
+//     const fetchEnroll = async () => {
+//       setTableEnrolls([]);
+//       setBasicLoading(true);
+
+//       try {
+//         setIsLoading(true);
+//         const response = await api.get(
+//           `/enroll/get-user-payment?group_id=${EnrollGroupId.groupId}&ticket=${EnrollGroupId.ticket}&user_id=${selectedGroup}`
+//         );
+
+//         if (response.data && response.data.length > 0) {
+//           setFilteredUsers(response.data);
+
+//           const Paid = response.data;
+//           setGroupPaid(Paid[0].groupPaidAmount);
+
+//           const toBePaid = response.data;
+//           setGroupToBePaid(toBePaid[0].totalToBePaidAmount);
+
+//           let balance = 0;
+//           const formattedData = response.data.map((group, index) => {
+//             balance += Number(group.amount);
+//             return {
+//               _id: group._id,
+//               id: index + 1,
+//               date: formatPayDate(group?.pay_date),
+//               amount: group.amount,
+//               receipt: group.receipt_no,
+//               old_receipt: group.old_receipt_no,
+//               type: group.pay_type,
+//               balance,
+//             };
+//           });
+//           formattedData.push({
+//             id: "",
+//             date: "",
+//             amount: "",
+//             receipt: "",
+//             old_receipt: "",
+//             type: "",
+//             balance,
+//           });
+
+//           setTableEnrolls(formattedData);
+//         } else {
+//           setFilteredUsers([]);
+//           setTableEnrolls([]);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching enrollment data:", error);
+//         setFilteredUsers([]);
+//         setTableEnrolls([]);
+//       } finally {
+//         setBasicLoading(false);
+//         setIsLoading(false);
+//       }
+//     };
+//     if (EnrollGroupId.groupId !== "Loan") fetchEnroll();
+//   }, [selectedGroup, EnrollGroupId.groupId, EnrollGroupId.ticket]);
+
+//   const Basiccolumns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "date", header: "Date" },
+//     { key: "amount", header: "Amount" },
+//     { key: "receipt", header: "Receipt No" },
+//     { key: "old_receipt", header: "Old Receipt No" },
+//     { key: "type", header: "Payment Type" },
+//     { key: "balance", header: "Balance" },
+//   ];
+
+//   const formatDate = (dateString) => {
+//     const parts = dateString.split("-");
+//     if (parts.length === 3) {
+//       return `${parts[2]}-${parts[1]}-${parts[0]}`;
+//     }
+//     return dateString;
+//   };
+//   const formattedFromDate = formatDate(fromDate);
+//   const formattedToDate = formatDate(toDate);
+
+//   useEffect(() => {
+//     const fetchEnroll = async () => {
+//       try {
+//         const response = await api.get(
+//           `/group-report/get-group-enroll-date/${selectedGroup}?fromDate=${formattedFromDate}&toDate=${formattedToDate}`
+//         );
+//         if (response.data && response.data.length > 0) {
+//           setFilteredUsers(response.data);
+
+//           const Paid = response.data;
+//           setGroupPaidDate(Paid[0].groupPaidAmount || 0);
+
+//           const toBePaid = response.data;
+//           setGroupToBePaidDate(toBePaid[0].totalToBePaidAmount);
+
+//           const totalAmount = response.data.reduce(
+//             (sum, group) => sum + parseInt(group.amount),
+//             0
+//           );
+//           setTotalAmount(totalAmount);
+//           const formattedData = response.data.map((group, index) => ({
+//             id: index + 1,
+//             name: group?.user?.full_name,
+//             phone_number: group?.user?.phone_number,
+//             ticket: group.ticket,
+//             amount_to_be_paid:
+//               parseInt(group.group.group_install) + group.totalToBePaidAmount,
+//             amount_paid: group.totalPaidAmount,
+//             amount_balance:
+//               parseInt(group.group.group_install) +
+//               group.totalToBePaidAmount -
+//               group.totalPaidAmount,
+//           }));
+//           setTableEnrollsDate(formattedData);
+//         } else {
+//           setFilteredUsers([]);
+//           setTotalAmount(0);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching enrollment data:", error);
+//         setFilteredUsers([]);
+//         setTotalAmount(0);
+//       }
+//     };
+//     fetchEnroll();
+//   }, [selectedGroup, formattedFromDate, formattedToDate]);
+
+//   const Datecolumns = [
+//     { key: "id", header: "SL. NO" },
+//     { key: "name", header: "Customer Name" },
+//     { key: "phone_number", header: "Customer Phone Number" },
+//     { key: "ticket", header: "Ticket" },
+//     { key: "amount_to_be_paid", header: "Amount to be Paid" },
+//     { key: "amount_paid", header: "Amount Paid" },
+//     { key: "amount_balance", header: "Amount Balance" },
+//   ];
+
+//   useEffect(() => {
+//     if (groupInfo && formData.bid_amount) {
+//       const commission = (groupInfo.group_value * 5) / 100 || 0;
+//       const win_amount =
+//         (groupInfo.group_value || 0) - (formData.bid_amount || 0);
+//       const divident = (formData.bid_amount || 0) - commission;
+//       const divident_head = groupInfo.group_members
+//         ? divident / groupInfo.group_members
+//         : 0;
+//       const payable = (groupInfo.group_install || 0) - divident_head;
+//       setFormData((prevData) => ({
+//         ...prevData,
+//         group_id: groupInfo._id,
+//         commission,
+//         win_amount,
+//         divident,
+//         divident_head,
+//         payable,
+//       }));
+//     }
+//   }, [groupInfo, formData.bid_amount]);
+
+//   useEffect(() => {
+//     if (selectedGroup) {
+//       api
+//         .post(`/enroll/get-next-tickets/${selectedGroup}`)
+//         .then((response) => {
+//           setAvailableTickets(response.data.availableTickets || []);
+//         })
+//         .catch((error) => {
+//           console.error("Error fetching available tickets:", error);
+//         });
+//     } else {
+//       setAvailableTickets([]);
+//     }
+//   }, [selectedGroup]);
+//   if (screenLoading)
+//     return (
+//       <div className="w-screen m-24">
+//         <CircularLoader color="text-green-600" />
+//       </div>
+//     );
+
+//   return (
+//     <>
+//       <div className="w-screen min-h-screen">
+//         <div className="flex mt-30">
+//           <Navbar
+//             onGlobalSearchChangeHandler={onGlobalSearchChangeHandler}
+//             visibility={true}
+//           />
+//           <div className="flex-grow p-7">
+//             <h1 className="text-2xl font-bold text-center">
+//               Reports - Customer
+//             </h1>
+//             <div className="mt-6 mb-8">
+//               <div className="mb-2">
+//                 <div className="flex justify-center items-center w-full gap-4 bg-blue-50    p-2 w-30 h-40  rounded-3xl  border   space-x-2  ">
+//                   <div className="mb-2">
+//                     <label
+//                       className="block text-lg text-gray-500 text-center  font-semibold mb-2"
+//                       htmlFor={"SS"}
+//                     >
+//                       Customer
+//                     </label>
+//                     <Select
+//                       id="SS"
+//                       value={selectedAuctionGroupId || undefined}
+//                       onChange={handleGroupPayment}
+//                       showSearch
+//                       popupMatchSelectWidth={false}
+//                       placeholder="Search or Select Customer"
+//                       filterOption={(input, option) =>
+//                         option.children
+//                           .toString()
+//                           .toLowerCase()
+//                           .includes(input.toLowerCase())
+//                       }
+//                       style={{ height: "50px", width: "600px" }}
+//                     >
+//                       {groups.map((group) => (
+//                         <option key={group._id} value={group._id}>
+//                           {group.full_name} - {group.phone_number}
+//                         </option>
+//                       ))}
+//                     </Select>
+//                   </div>
+//                 </div>
+//               </div>
+//               {selectedGroup && (
+//                 <>
+//                   <div className="mt-6 mb-8">
+//                     <div className="flex justify-start border-b border-gray-300 mb-4">
+//                       <button
+//                         className={`px-6 py-2 font-medium ${
+//                           activeTab === "groupDetails"
+//                             ? "border-b-2 border-blue-500 text-blue-500"
+//                             : "text-gray-500"
+//                         }`}
+//                         onClick={() => handleTabChange("groupDetails")}
+//                       >
+//                         Customer Details
+//                       </button>
+//                       <button
+//                         className={`px-6 py-2 font-medium ${
+//                           activeTab === "basicReport"
+//                             ? "border-b-2 border-blue-500 text-blue-500"
+//                             : "text-gray-500"
+//                         }`}
+//                         onClick={() => handleTabChange("basicReport")}
+//                       >
+//                         Customer Ledger
+//                       </button>
+
+//                       <button
+//                         className={`px-6 py-2 font-medium ${
+//                           activeTab === "disbursement"
+//                             ? "border-b-2 border-blue-500 text-blue-500"
+//                             : "text-gray-500"
+//                         }`}
+//                         onClick={() => handleTabChange("disbursement")}
+//                       >
+//                         PayOut | Disbursement
+//                       </button>
+//                     </div>
+
+//                     {activeTab === "groupDetails" && (
+//                       <>
+//                         {detailsLoading ? (
+//                           <p>loading...</p>
+//                         ) : (
+//                           <div className="mt-10">
+//                             <div className="flex gap-4">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Name"
+//                                   value={group.full_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Email
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Email"
+//                                   value={group.email}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Phone Number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Phone Number"
+//                                   value={group.phone_number}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Adhaar Number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Adhaar Number"
+//                                   value={group.adhaar_no}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Pan Number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Pan Number"
+//                                   value={group.pan_no}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Pincode
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Pincode"
+//                                   value={group.pincode}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Address
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Address"
+//                                   value={group.address}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   gender
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Gender"
+//                                   value={group.gender}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Date of Birth
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Date of Birth"
+//                                   value={
+//                                     group.dateofbirth
+//                                       ? new Date(group.dateofbirth)
+//                                           .toISOString()
+//                                           .split("T")[0]
+//                                       : ""
+//                                   }
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Collection Area
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Collection Area"
+//                                   value={group?.collection_area?.route_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Marital Status
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Marital Status"
+//                                   value={group.marital_status}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Father Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Father Name"
+//                                   value={group.father_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Nationality
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Nationality"
+//                                   value={group.nationality}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Village
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Village"
+//                                   value={group.village}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Taluk
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Taluk"
+//                                   value={group.taluk}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   District
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="District"
+//                                   value={group.district}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   State
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Enter State"
+//                                   value={group.state}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Alternate number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Alternate number"
+//                                   value={group.alternate_number}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Referral Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Referral Name"
+//                                   value={group.referral_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Nominee Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Nominee Name"
+//                                   value={group.nominee_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Nominee Date Of Birth
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Nominee Date Of Birth"
+//                                   value={
+//                                     group.nominee_dateofbirth
+//                                       ? new Date(group.nominee_dateofbirth)
+//                                           .toISOString()
+//                                           .split("T")[0]
+//                                       : ""
+//                                   }
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Nominee Phone Number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Nominee Phone Number"
+//                                   value={group.nominee_phone_number}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Nominee Relationship
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Nominee Relationship"
+//                                   value={group.nominee_relationship}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Bank Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Bank Name"
+//                                   value={group.bank_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Bank Branch Name
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Bank Branch Name"
+//                                   value={group.bank_branch_name}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Bank Account Number
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Bank Account Number"
+//                                   value={group.bank_account_number}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Bank IFSC Code
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="Bank IFSC Code"
+//                                   value={group.bank_IFSC_code}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+
+//                             <div className="mt-10">
+//                               <h3 className="text-lg font-medium mb-4">
+//                                 Enrolled Groups
+//                               </h3>
+//                               {filteredAuction &&
+//                               filteredAuction.length > 0 &&
+//                               !isLoading ? (
+//                                 <div className="mt-5">
+//                                   <DataTable
+//                                     data={filterOption(
+//                                       TableAuctions,
+//                                       searchText
+//                                     )}
+//                                     columns={Auctioncolumns}
+//                                     exportedFileName={`CustomerReport-${
+//                                       TableAuctions.length > 0
+//                                         ? TableAuctions[0].date +
+//                                           " to " +
+//                                           TableAuctions[
+//                                             TableAuctions.length - 1
+//                                           ].date
+//                                         : "empty"
+//                                     }.csv`}
+//                                   />
+//                                   {/* yes you can */}
+//                                   {filteredBorrowerData.length > 0 && (
+//                                     <div className="mt-10">
+//                                       <h3 className="text-lg font-medium mb-4">
+//                                         Loan Details
+//                                       </h3>
+//                                       <DataTable
+//                                         data={filteredBorrowerData}
+//                                         columns={loanColumns}
+//                                         exportedFileName={`CustomerReport.csv`}
+//                                       />
+//                                     </div>
+//                                   )}
+//                                 </div>
+//                               ) : (
+//                                 <CircularLoader isLoading={isLoading} />
+//                               )}
+//                             </div>
+//                             <div className="flex gap-4 mt-5">
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Total Amount to be Paid
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="-"
+//                                   value={TotalToBepaid}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Total Profit
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="-"
+//                                   value={Totalprofit}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Total Net To be Paid
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="-"
+//                                   value={NetTotalprofit}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Total Amount Paid
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="-"
+//                                   value={Totalpaid}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                               <div className="flex flex-col flex-1">
+//                                 <label className="mb-1 text-sm font-medium text-gray-700">
+//                                   Total Balance
+//                                 </label>
+//                                 <input
+//                                   type="text"
+//                                   placeholder="-"
+//                                   value={NetTotalprofit - Totalpaid}
+//                                   readOnly
+//                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+//                                 />
+//                               </div>
+//                             </div>
+//                           </div>
+//                         )}
+//                       </>
+//                     )}
+
+//                     {activeTab === "basicReport" && (
+//                       <>
+//                         <div>
+//                           <div className="flex gap-4">
+//                             <div className="flex flex-col flex-1">
+//                               <label className="mb-1 text-sm font-medium text-gray-700">
+//                                 Groups and Tickets
+//                               </label>
+//                               <select
+//                                 value={
+//                                   EnrollGroupId.groupId
+//                                     ? `${EnrollGroupId.groupId}|${EnrollGroupId.ticket}`
+//                                     : ""
+//                                 }
+//                                 onChange={handleEnrollGroup}
+//                                 className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
+//                               >
+//                                 <option value="">Select Group | Ticket</option>
+//                                 {filteredAuction.map((group) => {
+//                                   if (group?.enrollment?.group) {
+//                                     return (
+//                                       <option
+//                                         key={group.enrollment.group._id}
+//                                         value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}
+//                                       >
+//                                         {group.enrollment.group.group_name} |{" "}
+//                                         {group.enrollment.tickets}
+//                                       </option>
+//                                     );
+//                                   }
+//                                   return null;
+//                                 })}
+//                                 {loanCustomers.map((loan) => (
+//                                   <option
+//                                     key={loan._id}
+//                                     value={`Loan|${loan._id}`}
+//                                   >
+//                                     {`${loan.loan_id} | ₹${loan.loan_amount}`}
+//                                   </option>
+//                                 ))}
+//                               </select>
+//                             </div>
+//                           </div>
+
+//                           {(TableEnrolls && TableEnrolls.length > 0) ||
+//                           (borrowersData.length > 0 && !basicLoading) ? (
+//                             <div className="mt-10">
+//                               <DataTable
+//                                 printHeaderKeys={[
+//                                   "Customer Name",
+//                                   "Customer Id",
+//                                   "Phone Number",
+//                                   "Ticket Number",
+//                                   "Group Name",
+//                                   "Start Date",
+//                                   "End Date",
+//                                 ]}
+//                                 printHeaderValues={[
+//                                   group.full_name,
+//                                   group.customer_id,
+//                                   group.phone_number,
+//                                   EnrollGroupId.ticket,
+//                                   groupDetails.group_name,
+//                                   new Date(
+//                                     groupDetails.start_date
+//                                   ).toLocaleDateString("en-GB"),
+//                                   new Date(
+//                                     groupDetails.end_date
+//                                   ).toLocaleDateString("en-GB"),
+//                                 ]}
+//                                 data={
+//                                   EnrollGroupId.groupId === "Loan"
+//                                     ? borrowersData
+//                                     : TableEnrolls
+//                                 }
+//                                 columns={
+//                                   EnrollGroupId.groupId === "Loan"
+//                                     ? BasicLoanColumns
+//                                     : Basiccolumns
+//                                 }
+//                               />
+//                             </div>
+//                           ) : (
+//                             <CircularLoader isLoading={basicLoading} />
+//                           )}
+//                         </div>
+//                       </>
+//                     )}
+//                     {activeTab === "disbursement" && (
+//                       <div className="flex flex-col flex-1">
+//                         <label className="mb-1 text-sm  text-gray-700 font-bold">
+//                           Disbursement
+//                         </label>
+
+//                         {disbursementLoading ? (
+//                           <CircularLoader />
+//                         ) : filteredDisbursement?.length > 0 ? (
+//                           <div className="mt-10">
+//                             <DataTable
+//                               data={filteredDisbursement}
+//                               columns={DisbursementColumns}
+//                             />
+//                           </div>
+//                         ) : (
+//                           <div className="p-40  w-full flex justify-center items-center ">
+//                             No Disbursement Data Found
+//                           </div>
+//                         )}
+//                       </div>
+//                     )}
+//                   </div>
+//                 </>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+/* eslint-disable no-unused-vars */
+
 const UserReport = () => {
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +1352,7 @@ const UserReport = () => {
   const [commission, setCommission] = useState("");
   const [TableEnrolls, setTableEnrolls] = useState([]);
   const [TableEnrollsDate, setTableEnrollsDate] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  // const [filteredUsers, setFilteredUsers] = useState([]); // REMOVED: Inconsistent use, causing issues
   const [groupPaid, setGroupPaid] = useState("");
   const [groupToBePaid, setGroupToBePaid] = useState("");
   const [fromDate, setFromDate] = useState(() => {
@@ -42,7 +1378,7 @@ const UserReport = () => {
   const [Totalprofit, setTotalProfit] = useState("");
   const [NetTotalprofit, setNetTotalProfit] = useState("");
   const [selectedAuctionGroupId, setSelectedAuctionGroupId] = useState("");
-  const [filteredAuction, setFilteredAuction] = useState([]);
+  const [filteredAuction, setFilteredAuction] = useState([]); // This holds the raw enrollment data for the selected user
   const [groupInfo, setGroupInfo] = useState({});
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -63,6 +1399,7 @@ const UserReport = () => {
   const [filteredBorrowerData, setFilteredBorrowerData] = useState([]);
   const [filteredDisbursement, setFilteredDisbursement] = useState([]);
   const [disbursementLoading, setDisbursementLoading] = useState(false);
+
   const onGlobalSearchChangeHandler = (e) => {
     setSearchText(e.target.value);
   };
@@ -99,9 +1436,11 @@ const UserReport = () => {
     { key: "disbursed_by", header: "Disbursed By" },
     { key: "balance", header: "Balance" },
   ];
+
+  // EFFECT: Fetch Loan Payments by Ticket
   useEffect(() => {
     const fetchAllLoanPaymentsbyId = async () => {
-      setBorrowersData([]);
+      setBorrowersData([]); // Clear previous data
       setBasicLoading(true);
 
       try {
@@ -134,21 +1473,28 @@ const UserReport = () => {
           });
           setBorrowersData(formattedData);
         } else {
-          setBorrowersData([]);
+          setBorrowersData([]); // Explicitly set to empty if no data
         }
       } catch (error) {
         console.error("Error fetching loan payment data:", error);
-        setBorrowersData([]);
+        setBorrowersData([]); // Explicitly set to empty on error
       } finally {
         setBasicLoading(false);
       }
     };
 
-    if (EnrollGroupId.groupId === "Loan") fetchAllLoanPaymentsbyId();
-  }, [EnrollGroupId.ticket]);
+    if (EnrollGroupId.groupId === "Loan" && EnrollGroupId.ticket) {
+      // Only fetch if ticket is also set
+      fetchAllLoanPaymentsbyId();
+    } else if (EnrollGroupId.groupId === "Loan" && !EnrollGroupId.ticket) {
+      setBorrowersData([]); // Clear if Loan selected but no ticket
+    }
+  }, [EnrollGroupId.ticket, EnrollGroupId.groupId]); // Dependency on groupId added for clarity
 
+  // EFFECT: Fetch Group Details by ID
   useEffect(() => {
     const fetchGroupById = async () => {
+      setGroupDetails(" "); // Clear previous data
       try {
         const response = await api.get(
           `/group/get-by-id-group/${EnrollGroupId.groupId}`
@@ -157,38 +1503,48 @@ const UserReport = () => {
         setGroupDetails(response.data);
       } catch (err) {
         console.log("Failed to fetch group details by ID:", err.message);
+        setGroupDetails(" "); // Explicitly set to empty string or suitable default on error
       }
     };
-    if (EnrollGroupId.groupId !== "Loan") fetchGroupById();
-  }, [EnrollGroupId?.ticket]);
+    if (EnrollGroupId.groupId && EnrollGroupId.groupId !== "Loan") {
+      // Only fetch if a non-loan group is selected
+      fetchGroupById();
+    } else if (!EnrollGroupId.groupId || EnrollGroupId.groupId === "Loan") {
+      setGroupDetails(" "); // Clear if no group selected or loan group
+    }
+  }, [EnrollGroupId?.groupId]); // Changed dependency to groupId only, as ticket isn't needed for group details
 
+  // EFFECT: Fetch All Users (for customer dropdown)
   useEffect(() => {
     setScreenLoading(true);
-
     const fetchGroups = async () => {
       setDetailLoading(true);
       try {
         const response = await api.get("/user/get-user");
         setGroups(response.data);
-        setScreenLoading(false);
-        setDetailLoading(false);
       } catch (error) {
         console.error("Error fetching group data:", error);
+        setGroups([]); // Explicitly set to empty on error
       } finally {
+        setScreenLoading(false);
         setDetailLoading(false);
       }
     };
     fetchGroups();
   }, []);
 
+  // EFFECT: Fetch Borrower details for selected user
   useEffect(() => {
     const fetchBorrower = async () => {
+      setLoanCustomers([]); // Clear previous data
+      setFilteredBorrowerData([]); // Clear previous data
+      setBorrowersData([]); // Clear any basic loan data
+      setBorrowerId("No"); // Reset borrowerId
       try {
-        setLoanCustomers([]);
         const response = await api.get(
           `/loans/get-borrower-by-user-id/${selectedGroup}`
         );
-        if (response.data) {
+        if (response.data && response.data.length > 0) {
           const filteredBorrowerData = response.data.map((loan, index) => ({
             sl_no: index + 1,
             loan: loan.loan_id,
@@ -197,49 +1553,74 @@ const UserReport = () => {
             service_charge: loan.service_charges,
           }));
           setFilteredBorrowerData(filteredBorrowerData);
+        } else {
+          setFilteredBorrowerData([]); // Explicitly set to empty if no data
         }
-        setLoanCustomers(response.data);
+        setLoanCustomers(response.data); // Keep this for the dropdown
 
         if (response.status >= 400) throw new Error("Failed to send message");
       } catch (err) {
         console.log("failed to fetch loan customers", err.message);
-        setFilteredBorrowerData([]);
+        setLoanCustomers([]);
+        setFilteredBorrowerData([]); // Explicitly set to empty on error
       }
     };
-    setBorrowersData([]);
-    setBorrowerId("No");
-    fetchBorrower();
+    if (selectedGroup) {
+      // Only fetch if a group is selected
+      fetchBorrower();
+    } else {
+      setLoanCustomers([]);
+      setFilteredBorrowerData([]);
+      setBorrowersData([]); // Ensure basic loan data is cleared too
+      setBorrowerId("No");
+    }
   }, [selectedGroup]);
 
+  // EFFECT: Fetch details for the *selected* group (customer)
   useEffect(() => {
-    const fetchGroups = async () => {
+    const fetchGroup = async () => {
+      // Renamed from fetchGroups to avoid confusion
+      setGroup([]); // Clear previous data
       try {
         const response = await api.get(`/user/get-user-by-id/${selectedGroup}`);
         setGroup(response.data);
       } catch (error) {
         console.error("Error fetching group data:", error);
+        setGroup([]); // Explicitly set to empty on error
       }
     };
-    fetchGroups();
+    if (selectedGroup) {
+      // Only fetch if a group is selected
+      fetchGroup();
+    } else {
+      setGroup([]); // Clear if no group selected
+    }
   }, [selectedGroup]);
 
+  // EFFECT: Fetch all users (redundant with initial fetchGroups, consider merging or removing)
+  // This useEffect seems to be setting 'filteredUsers' which we are aiming to remove.
+  // I will comment it out as it's likely causing issues.
+  /*
   useEffect(() => {
-    const fetchGroups = async () => {
+    const fetchUsers = async () => { // Renamed to clarify
       try {
         const response = await api.get("/user/get-user");
         setFilteredUsers(response.data);
       } catch (error) {
-        console.error("Error fetching group data:", error);
+        console.error("Error fetching user data:", error);
       }
     };
-    fetchGroups();
+    fetchUsers();
   }, []);
-  // disbursement report
+  */
 
+  // EFFECT: Fetch Disbursement Report
   useEffect(() => {
     const fetchDisbursement = async () => {
+      setDisbursementLoading(true);
+      setFilteredDisbursement([]); // Clear previous data
+
       try {
-        setDisbursementLoading(true)
         const response = await api.get(
           `/payment-out/get-payment-out-report-daybook`,
           {
@@ -250,10 +1631,9 @@ const UserReport = () => {
           }
         );
 
-        if (response.data) {
+        if (response.data && response.data.length > 0) {
           const formattedData = response.data.map((payment, index) => {
-            let balance = 0;
-
+            let balance = 0; // Balance calculation might need review based on your business logic
             balance += Number(payment.amount);
             return {
               _id: payment._id,
@@ -270,49 +1650,65 @@ const UserReport = () => {
 
           setFilteredDisbursement(formattedData);
         } else {
-          setFilteredDisbursement([]);
+          setFilteredDisbursement([]); // Explicitly set to empty if no data
         }
       } catch (error) {
         console.error("Error fetching disbursement data", error, error.message);
-        setFilteredDisbursement([])
+        setFilteredDisbursement([]); // Explicitly set to empty on error
       } finally {
         setDisbursementLoading(false);
       }
     };
-    if (selectedGroup) fetchDisbursement();
+    if (selectedGroup) {
+      // Only fetch if a group is selected
+      fetchDisbursement();
+    } else {
+      setFilteredDisbursement([]); // Clear if no group selected
+    }
   }, [selectedGroup]);
+
+  // Handler for selecting a customer in the main dropdown
   const handleGroupPayment = async (groupId) => {
     setSelectedAuctionGroupId(groupId);
     setSelectedGroup(groupId);
-    handleGroupAuctionChange(groupId);
+    handleGroupAuctionChange(groupId); // This will fetch auction data for the selected user
+    setEnrollGroupId({ groupId: "", ticket: "" }); // Reset enrollment/loan selection when customer changes
+    setTableEnrolls([]); // Clear basic report table
+    setBorrowersData([]); // Clear basic loan report table
   };
 
-  const handleEnrollGroup = (event) => {
-    const value = event.target.value;
-
+  // Handler for selecting a specific group/ticket for basic report
+  const handleEnrollGroup = (value) => {
     if (value) {
       const [groupId, ticket] = value.split("|");
-      // for loan group id is "Loan" ticket is loan object Id
       setEnrollGroupId({ groupId, ticket });
     } else {
       setEnrollGroupId({ groupId: "", ticket: "" });
+      setTableEnrolls([]); // Clear when selection is cleared
+      setBorrowersData([]); // Clear when selection is cleared
+      setGroupDetails(" "); // Clear group details
     }
   };
 
+  // EFFECT: Fetch Payments for Daybook (filtered by date, group, user, payment mode)
   useEffect(() => {
     const fetchPayments = async () => {
+      setTableDaybook([]); // Clear previous data
+      setPayments(0); // Reset total payments
+      // setFilteredAuction([]); // This seems out of place here, filteredAuction is for enrolled groups
+
       try {
         const response = await api.get(`/payment/get-report-daybook`, {
           params: {
             pay_date: selectedDate,
-            groupId: selectedAuctionGroupId,
-            userId: selectedCustomers,
+            groupId: selectedAuctionGroupId, // This is actually selectedUser ID from main dropdown
+            userId: selectedCustomers, // This is also selectedUser ID from main dropdown, potential conflict/redundancy
             pay_type: selectedPaymentMode,
           },
         });
 
         if (response.data && response.data.length > 0) {
-          setFilteredAuction(response);
+          // setFilteredAuction(response); // This line is incorrect, filteredAuction is for enrolled groups
           const paymentData = response.data;
           const totalAmount = paymentData.reduce(
             (sum, payment) => sum + Number(payment.amount || 0),
@@ -321,24 +1717,32 @@ const UserReport = () => {
           setPayments(totalAmount);
           const formattedData = response.data.map((group, index) => ({
             id: index + 1,
-            group: group.group_id.group_name,
-            name: group.user_id?.full_name,
-            phone_number: group.user_id.phone_number,
+            group: group.group_id?.group_name || "N/A", // Handle potential null/undefined
+            name: group.user_id?.full_name || "N/A",
+            phone_number: group.user_id?.phone_number || "N/A",
             ticket: group.ticket,
             amount: group.amount,
             mode: group.pay_type,
           }));
           setTableDaybook(formattedData);
         } else {
-          setFilteredAuction([]);
+          // setFilteredAuction([]); // This line is incorrect here
+          setTableDaybook([]); // Explicitly set to empty if no data
+          setPayments(0); // Reset total payments
         }
       } catch (error) {
         console.error("Error fetching payment data:", error);
-        setFilteredAuction([]);
-        setPayments(0);
+        // setFilteredAuction([]); // This line is incorrect here
+        setTableDaybook([]); // Explicitly set to empty on error
+        setPayments(0); // Reset total payments on error
       }
     };
 
+    // This useEffect's dependencies need to be carefully considered for the daybook report.
+    // It currently depends on selectedAuctionGroupId (which is selectedUser), selectedDate, selectedPaymentMode, selectedCustomers.
+    // Ensure these dependencies trigger fetches correctly for the 'Daybook' tab if you had one,
+    // otherwise, this useEffect might be for a different report entirely.
+    // For now, assuming it's related to some filtering.
     fetchPayments();
   }, [
     selectedAuctionGroupId,
@@ -346,6 +1750,7 @@ const UserReport = () => {
     selectedPaymentMode,
     selectedCustomers,
   ]);
+
   const loanColumns = [
     { key: "sl_no", header: "SL. No" },
     { key: "loan", header: "Loan ID" },
@@ -354,6 +1759,7 @@ const UserReport = () => {
     { key: "tenure", header: "Tenure" },
   ];
   const columns = [
+    // This seems to be for Daybook table
     { key: "id", header: "SL. NO" },
     { key: "group", header: "Group Name" },
     { key: "name", header: "Customer Name" },
@@ -363,8 +1769,16 @@ const UserReport = () => {
     { key: "mode", header: "Payment Mode" },
   ];
 
+  // Handler for fetching user's enrolled groups and their financial summary
   const handleGroupAuctionChange = async (groupId) => {
-    setFilteredAuction([]);
+    setFilteredAuction([]); // Clear raw enrollment data
+    setTableAuctions([]); // Clear formatted table data
+    setCommission(0);
+    setTotalToBePaid("");
+    setNetTotalProfit("");
+    setTotalPaid("");
+    setTotalProfit("");
+
     if (groupId) {
       try {
         const response = await api.post(
@@ -372,10 +1786,10 @@ const UserReport = () => {
         );
 
         if (response.data && response.data.length > 0) {
-          setFilteredAuction(response.data);
-
+          setFilteredAuction(response.data); // Store raw data for dropdowns
           const formattedData = response.data
-            .map((group, index) => {
+            .map((group) => {
+              // Removed index here, map doesn't need it if not used
               const groupName = group?.enrollment?.group?.group_name || "";
               const tickets = group?.enrollment?.tickets || "";
               const groupType = group?.enrollment?.group?.group_type;
@@ -393,7 +1807,8 @@ const UserReport = () => {
               }
 
               return {
-                id: index + 1,
+                // Using 0 for id if it's just for display within table
+                id: Math.random(), // Use a unique ID or generate based on index after filtering
                 group: groupName,
                 ticket: tickets,
 
@@ -424,15 +1839,21 @@ const UserReport = () => {
             })
             .filter((item) => item !== null);
 
-          setTableAuctions(formattedData);
-          setCommission(0);
+          // Re-index after filtering out nulls
+          const reIndexedData = formattedData.map((item, index) => ({
+            ...item,
+            id: index + 1, // Assign new sequential IDs
+          }));
 
-          const totalToBePaidAmount = formattedData.reduce((sum, group) => {
+          setTableAuctions(reIndexedData); // Set formatted data for display
+          setCommission(0); // Reset or set based on logic
+
+          const totalToBePaidAmount = reIndexedData.reduce((sum, group) => {
             return sum + (group?.totalBePaid || 0);
           }, 0);
           setTotalToBePaid(totalToBePaidAmount);
 
-          const totalNetToBePaidAmount = formattedData.reduce((sum, group) => {
+          const totalNetToBePaidAmount = reIndexedData.reduce((sum, group) => {
             return sum + (group?.toBePaidAmount || 0);
           }, 0);
           setNetTotalProfit(totalNetToBePaidAmount);
@@ -450,16 +1871,31 @@ const UserReport = () => {
           setTotalProfit(totalProfit);
         } else {
           setFilteredAuction([]);
+          setTableAuctions([]); // Explicitly set to empty if no data
           setCommission(0);
+          setTotalToBePaid("");
+          setNetTotalProfit("");
+          setTotalPaid("");
+          setTotalProfit("");
         }
       } catch (error) {
         console.error("Error fetching enrollment data:", error);
         setFilteredAuction([]);
+        setTableAuctions([]); // Explicitly set to empty on error
         setCommission(0);
+        setTotalToBePaid("");
+        setNetTotalProfit("");
+        setTotalPaid("");
+        setTotalProfit("");
       }
     } else {
       setFilteredAuction([]);
+      setTableAuctions([]); // Explicitly set to empty if no groupId
       setCommission(0);
+      setTotalToBePaid("");
+      setNetTotalProfit("");
+      setTotalPaid("");
+      setTotalProfit("");
     }
   };
 
@@ -475,14 +1911,18 @@ const UserReport = () => {
   ];
 
   const formatPayDate = (dateString) => {
+    if (!dateString) return ""; // Handle null/undefined dates
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
   };
 
+  // EFFECT: Fetch Enrollment Payments (Customer Ledger)
   useEffect(() => {
     const fetchEnroll = async () => {
-      setTableEnrolls([]);
+      setTableEnrolls([]); // Clear previous data
       setBasicLoading(true);
+      setGroupPaid(""); // Clear specific group totals
+      setGroupToBePaid(""); // Clear specific group totals
 
       try {
         setIsLoading(true);
@@ -491,13 +1931,11 @@ const UserReport = () => {
         );
 
         if (response.data && response.data.length > 0) {
-          setFilteredUsers(response.data);
-
+          // Removed setFilteredUsers(response.data);
           const Paid = response.data;
-          setGroupPaid(Paid[0].groupPaidAmount);
-
+          setGroupPaid(Paid[0]?.groupPaidAmount || 0); // Use optional chaining and default
           const toBePaid = response.data;
-          setGroupToBePaid(toBePaid[0].totalToBePaidAmount);
+          setGroupToBePaid(toBePaid[0]?.totalToBePaidAmount || 0); // Use optional chaining and default
 
           let balance = 0;
           const formattedData = response.data.map((group, index) => {
@@ -514,30 +1952,50 @@ const UserReport = () => {
             };
           });
           formattedData.push({
+            // This is for displaying total balance at the end
             id: "",
             date: "",
             amount: "",
             receipt: "",
             old_receipt: "",
-            type: "",
-            balance,
+            type: "TOTAL",
+            balance, // Final balance
           });
 
           setTableEnrolls(formattedData);
         } else {
-          setFilteredUsers([]);
-          setTableEnrolls([]);
+          // Removed setFilteredUsers([]);
+          setTableEnrolls([]); // Explicitly set to empty if no data
+          setGroupPaid("");
+          setGroupToBePaid("");
         }
       } catch (error) {
         console.error("Error fetching enrollment data:", error);
-        setFilteredUsers([]);
-        setTableEnrolls([]);
+        // Removed setFilteredUsers([]);
+        setTableEnrolls([]); // Explicitly set to empty on error
+        setGroupPaid("");
+        setGroupToBePaid("");
       } finally {
         setBasicLoading(false);
         setIsLoading(false);
       }
     };
-    if (EnrollGroupId.groupId !== "Loan") fetchEnroll();
+    // Only fetch if a user is selected AND either a specific group/ticket OR Loan is selected
+    if (selectedGroup && (EnrollGroupId.groupId || EnrollGroupId.ticket)) {
+      if (EnrollGroupId.groupId !== "Loan") {
+        // Ensure it's not handled by loan payments effect
+        fetchEnroll();
+      }
+    } else if (
+      selectedGroup &&
+      !EnrollGroupId.groupId &&
+      !EnrollGroupId.ticket
+    ) {
+      // If a customer is selected but no specific group/ticket, clear the table
+      setTableEnrolls([]);
+      setGroupPaid("");
+      setGroupToBePaid("");
+    }
   }, [selectedGroup, EnrollGroupId.groupId, EnrollGroupId.ticket]);
 
   const Basiccolumns = [
@@ -551,6 +2009,7 @@ const UserReport = () => {
   ];
 
   const formatDate = (dateString) => {
+    if (!dateString) return ""; // Handle null/undefined
     const parts = dateString.split("-");
     if (parts.length === 3) {
       return `${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -560,52 +2019,71 @@ const UserReport = () => {
   const formattedFromDate = formatDate(fromDate);
   const formattedToDate = formatDate(toDate);
 
+  // EFFECT: Fetch Enrollments by Date Range
   useEffect(() => {
     const fetchEnroll = async () => {
+      setTableEnrollsDate([]); // Clear previous data
+      setTotalAmount(0); // Reset total amount
+      setGroupPaidDate(""); // Clear specific group totals
+      setGroupToBePaidDate(""); // Clear specific group totals
+
       try {
         const response = await api.get(
           `/group-report/get-group-enroll-date/${selectedGroup}?fromDate=${formattedFromDate}&toDate=${formattedToDate}`
         );
         if (response.data && response.data.length > 0) {
-          setFilteredUsers(response.data);
-
+          // Removed setFilteredUsers(response.data);
           const Paid = response.data;
-          setGroupPaidDate(Paid[0].groupPaidAmount || 0);
-
+          setGroupPaidDate(Paid[0]?.groupPaidAmount || 0);
           const toBePaid = response.data;
-          setGroupToBePaidDate(toBePaid[0].totalToBePaidAmount);
+          setGroupToBePaidDate(toBePaid[0]?.totalToBePaidAmount || 0);
 
           const totalAmount = response.data.reduce(
-            (sum, group) => sum + parseInt(group.amount),
+            (sum, group) => sum + parseInt(group.amount || 0), // Ensure amount is number
             0
           );
           setTotalAmount(totalAmount);
           const formattedData = response.data.map((group, index) => ({
             id: index + 1,
-            name: group?.user?.full_name,
-            phone_number: group?.user?.phone_number,
+            name: group?.user?.full_name || "N/A",
+            phone_number: group?.user?.phone_number || "N/A",
             ticket: group.ticket,
             amount_to_be_paid:
-              parseInt(group.group.group_install) + group.totalToBePaidAmount,
-            amount_paid: group.totalPaidAmount,
+              parseInt(group.group?.group_install || 0) +
+              (group.totalToBePaidAmount || 0), // Handle potential null/undefined
+            amount_paid: group.totalPaidAmount || 0,
             amount_balance:
-              parseInt(group.group.group_install) +
-              group.totalToBePaidAmount -
-              group.totalPaidAmount,
+              parseInt(group.group?.group_install || 0) +
+              (group.totalToBePaidAmount || 0) -
+              (group.totalPaidAmount || 0),
           }));
           setTableEnrollsDate(formattedData);
         } else {
-          setFilteredUsers([]);
-          setTotalAmount(0);
+          // Removed setFilteredUsers([]);
+          setTableEnrollsDate([]); // Explicitly set to empty if no data
+          setTotalAmount(0); // Reset total amount
+          setGroupPaidDate("");
+          setGroupToBePaidDate("");
         }
       } catch (error) {
         console.error("Error fetching enrollment data:", error);
-        setFilteredUsers([]);
-        setTotalAmount(0);
+        // Removed setFilteredUsers([]);
+        setTableEnrollsDate([]); // Explicitly set to empty on error
+        setTotalAmount(0); // Reset total amount on error
+        setGroupPaidDate("");
+        setGroupToBePaidDate("");
       }
     };
-    fetchEnroll();
-  }, [selectedGroup, formattedFromDate, formattedToDate]);
+    // Only fetch if a group is selected for this report
+    if (selectedGroup) {
+      fetchEnroll();
+    } else {
+      setTableEnrollsDate([]);
+      setTotalAmount(0);
+      setGroupPaidDate("");
+      setGroupToBePaidDate("");
+    }
+  }, [selectedGroup, formattedFromDate, formattedToDate]); // Added selectedGroup to dependencies
 
   const Datecolumns = [
     { key: "id", header: "SL. NO" },
@@ -617,6 +2095,7 @@ const UserReport = () => {
     { key: "amount_balance", header: "Amount Balance" },
   ];
 
+  // This useEffect seems related to form data, not directly filtering display data
   useEffect(() => {
     if (groupInfo && formData.bid_amount) {
       const commission = (groupInfo.group_value * 5) / 100 || 0;
@@ -648,11 +2127,13 @@ const UserReport = () => {
         })
         .catch((error) => {
           console.error("Error fetching available tickets:", error);
+          setAvailableTickets([]); // Explicitly set to empty on error
         });
     } else {
-      setAvailableTickets([]);
+      setAvailableTickets([]); // Clear if no group selected
     }
   }, [selectedGroup]);
+
   if (screenLoading)
     return (
       <div className="w-screen m-24">
@@ -684,7 +2165,7 @@ const UserReport = () => {
                     </label>
                     <Select
                       id="SS"
-                      value={selectedAuctionGroupId || undefined}
+                      value={selectedGroup || undefined} // Use selectedGroup, not selectedAuctionGroupId here for the main customer
                       onChange={handleGroupPayment}
                       showSearch
                       popupMatchSelectWidth={false}
@@ -699,7 +2180,9 @@ const UserReport = () => {
                     >
                       {groups.map((group) => (
                         <option key={group._id} value={group._id}>
-                          {group.full_name} - {group.phone_number}
+                          {group.phone_number
+                            ? `${group.full_name} - ${group.phone_number}`
+                            : ""}
                         </option>
                       ))}
                     </Select>
@@ -749,6 +2232,7 @@ const UserReport = () => {
                           <p>loading...</p>
                         ) : (
                           <div className="mt-10">
+                            {/* Customer Details fields */}
                             <div className="flex gap-4">
                               <div className="flex flex-col flex-1">
                                 <label className="mb-1 text-sm font-medium text-gray-700">
@@ -756,8 +2240,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Name"
-                                  value={group.full_name}
+                                  placeholder="Name"
+                                  value={group.full_name || ""} // Ensure default to empty string
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -768,8 +2252,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Email"
-                                  value={group.email}
+                                  placeholder="Email"
+                                  value={group.email || ""}
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -780,8 +2264,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Phone Number"
-                                  value={group.phone_number}
+                                  placeholder="Phone Number"
+                                  value={group.phone_number || ""}
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -794,8 +2278,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Adhaar Number"
-                                  value={group.adhaar_no}
+                                  placeholder="Adhaar Number"
+                                  value={group.adhaar_no || ""}
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -806,8 +2290,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Pan Number"
-                                  value={group.pan_no}
+                                  placeholder="Pan Number"
+                                  value={group.pan_no || ""}
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -818,8 +2302,8 @@ const UserReport = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  placeholder="Enter Pincode"
-                                  value={group.pincode}
+                                  placeholder="Pincode"
+                                  value={group.pincode || ""}
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -833,23 +2317,291 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="Address"
-                                  value={group.address}
+                                  value={group.address || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  gender
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Gender"
+                                  value={group.gender || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Date of Birth
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Date of Birth"
+                                  value={
+                                    group.dateofbirth
+                                      ? new Date(group.dateofbirth)
+                                          .toISOString()
+                                          .split("T")[0]
+                                      : ""
+                                  }
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
                               </div>
                             </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Collection Area
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Collection Area"
+                                  value={
+                                    group?.collection_area?.route_name || ""
+                                  }
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Marital Status
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Marital Status"
+                                  value={group.marital_status || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Father Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Father Name"
+                                  value={group.father_name || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Nationality
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Nationality"
+                                  value={group.nationality || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Village
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Village"
+                                  value={group.village || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Taluk
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Taluk"
+                                  value={group.taluk || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  District
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="District"
+                                  value={group.district || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  State
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Enter State"
+                                  value={group.state || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Alternate number
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Alternate number"
+                                  value={group.alternate_number || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Referral Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Referral Name"
+                                  value={group.referral_name || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Nominee Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Nominee Name"
+                                  value={group.nominee_name || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Nominee Date Of Birth
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Nominee Date Of Birth"
+                                  value={
+                                    group.nominee_dateofbirth
+                                      ? new Date(group.nominee_dateofbirth)
+                                          .toISOString()
+                                          .split("T")[0]
+                                      : ""
+                                  }
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Nominee Phone Number
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Nominee Phone Number"
+                                  value={group.nominee_phone_number || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Nominee Relationship
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Nominee Relationship"
+                                  value={group.nominee_relationship || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Bank Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Bank Name"
+                                  value={group.bank_name || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-4 mt-5">
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Bank Branch Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Bank Branch Name"
+                                  value={group.bank_branch_name || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Bank Account Number
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Bank Account Number"
+                                  value={group.bank_account_number || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                  Bank IFSC Code
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Bank IFSC Code"
+                                  value={group.bank_IFSC_code || ""}
+                                  readOnly
+                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                                />
+                              </div>
+                            </div>
+
                             <div className="mt-10">
                               <h3 className="text-lg font-medium mb-4">
                                 Enrolled Groups
                               </h3>
-                              {filteredAuction &&
-                              filteredAuction.length > 0 &&
+                              {/* Changed conditional to check TableAuctions directly, as it's the formatted data */}
+                              {TableAuctions &&
+                              TableAuctions.length > 0 &&
                               !isLoading ? (
                                 <div className="mt-5">
                                   <DataTable
                                     data={filterOption(
-                                      TableAuctions,
+                                      TableAuctions, // Use TableAuctions for display
                                       searchText
                                     )}
                                     columns={Auctioncolumns}
@@ -880,6 +2632,12 @@ const UserReport = () => {
                               ) : (
                                 <CircularLoader isLoading={isLoading} />
                               )}
+                              {/* Display "No Data" if not loading and TableAuctions is empty */}
+                              {!isLoading && TableAuctions.length === 0 && (
+                                <div className="p-40 w-full flex justify-center items-center">
+                                  No Enrolled Group Data Found
+                                </div>
+                              )}
                             </div>
                             <div className="flex gap-4 mt-5">
                               <div className="flex flex-col flex-1">
@@ -889,7 +2647,7 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="-"
-                                  value={TotalToBepaid}
+                                  value={TotalToBepaid || ""} // Default to empty string
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -901,7 +2659,7 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="-"
-                                  value={Totalprofit}
+                                  value={Totalprofit || ""} // Default to empty string
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -913,7 +2671,7 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="-"
-                                  value={NetTotalprofit}
+                                  value={NetTotalprofit || ""} // Default to empty string
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -925,7 +2683,7 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="-"
-                                  value={Totalpaid}
+                                  value={Totalpaid || ""} // Default to empty string
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -937,7 +2695,11 @@ const UserReport = () => {
                                 <input
                                   type="text"
                                   placeholder="-"
-                                  value={NetTotalprofit - Totalpaid}
+                                  value={
+                                    NetTotalprofit && Totalpaid
+                                      ? NetTotalprofit - Totalpaid
+                                      : ""
+                                  } // Calculate only if both are numbers
                                   readOnly
                                   className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
                                 />
@@ -958,42 +2720,52 @@ const UserReport = () => {
                               </label>
                               <select
                                 value={
-                                  EnrollGroupId.groupId
+                                  EnrollGroupId.groupId && EnrollGroupId.ticket
                                     ? `${EnrollGroupId.groupId}|${EnrollGroupId.ticket}`
                                     : ""
                                 }
-                                onChange={handleEnrollGroup}
+                                onChange={(e) =>
+                                  handleEnrollGroup(e.target.value)
+                                }
                                 className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
                               >
                                 <option value="">Select Group | Ticket</option>
-                                {filteredAuction.map((group) => {
-                                  if (group?.enrollment?.group) {
-                                    return (
-                                      <option
-                                        key={group.enrollment.group._id}
-                                        value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}
-                                      >
-                                        {group.enrollment.group.group_name} |{" "}
-                                        {group.enrollment.tickets}
-                                      </option>
-                                    );
-                                  }
-                                  return null;
-                                })}
-                                {loanCustomers.map((loan) => (
-                                  <option
-                                    key={loan._id}
-                                    value={`Loan|${loan._id}`}
-                                  >
-                                    {`${loan.loan_id} | ₹${loan.loan_amount}`}
-                                  </option>
-                                ))}
+                                {/* Display available enrolled groups for the selected user */}
+                                {filteredAuction.length > 0 &&
+                                  filteredAuction.map((group) => {
+                                    if (group?.enrollment?.group) {
+                                      return (
+                                        <option
+                                          key={
+                                            group.enrollment.group._id +
+                                            group.enrollment.tickets
+                                          } // Unique key
+                                          value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}
+                                        >
+                                          {group.enrollment.group.group_name} |{" "}
+                                          {group.enrollment.tickets}
+                                        </option>
+                                      );
+                                    }
+                                    return null;
+                                  })}
+                                {/* Display available loan customers for the selected user */}
+                                {loanCustomers.length > 0 &&
+                                  loanCustomers.map((loan) => (
+                                    <option
+                                      key={loan._id}
+                                      value={`Loan|${loan._id}`}
+                                    >
+                                      {`${loan.loan_id} | ₹${loan.loan_amount}`}
+                                    </option>
+                                  ))}
                               </select>
                             </div>
                           </div>
 
-                          {(TableEnrolls && TableEnrolls.length > 0) ||
-                          (borrowersData.length > 0 && !basicLoading) ? (
+                          {(TableEnrolls.length > 0 ||
+                            borrowersData.length > 0) &&
+                          !basicLoading ? (
                             <div className="mt-10">
                               <DataTable
                                 printHeaderKeys={[
@@ -1006,17 +2778,21 @@ const UserReport = () => {
                                   "End Date",
                                 ]}
                                 printHeaderValues={[
-                                  group.full_name,
-                                  group.customer_id,
-                                  group.phone_number,
-                                  EnrollGroupId.ticket,
-                                  groupDetails.group_name,
-                                  new Date(
-                                    groupDetails.start_date
-                                  ).toLocaleDateString("en-GB"),
-                                  new Date(
-                                    groupDetails.end_date
-                                  ).toLocaleDateString("en-GB"),
+                                  group.full_name || "",
+                                  group.customer_id || "",
+                                  group.phone_number || "",
+                                  EnrollGroupId.ticket || "",
+                                  groupDetails.group_name || "",
+                                  groupDetails.start_date
+                                    ? new Date(
+                                        groupDetails.start_date
+                                      ).toLocaleDateString("en-GB")
+                                    : "",
+                                  groupDetails.end_date
+                                    ? new Date(
+                                        groupDetails.end_date
+                                      ).toLocaleDateString("en-GB")
+                                    : "",
                                 ]}
                                 data={
                                   EnrollGroupId.groupId === "Loan"
@@ -1033,6 +2809,13 @@ const UserReport = () => {
                           ) : (
                             <CircularLoader isLoading={basicLoading} />
                           )}
+                          {!basicLoading &&
+                            TableEnrolls.length === 0 &&
+                            borrowersData.length === 0 && (
+                              <div className="p-40 w-full flex justify-center items-center">
+                                No Ledger Data Found for selected Group/Ticket
+                              </div>
+                            )}
                         </div>
                       </>
                     )}
@@ -1052,7 +2835,9 @@ const UserReport = () => {
                             />
                           </div>
                         ) : (
-                          <div className="p-40  w-full flex justify-center items-center ">No Disbursement Data Found</div>
+                          <div className="p-40  w-full flex justify-center items-center ">
+                            No Disbursement Data Found
+                          </div>
                         )}
                       </div>
                     )}

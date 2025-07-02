@@ -2524,17 +2524,48 @@ const User = () => {
         message: "User Updated Successfully",
         type: "success",
       });
+      setErrors({});
     } catch (error) {
       console.error("Error updating user:", error);
-      setAlertConfig({
-        visibility: true,
-        message:
-          error?.response?.data?.message ||
-          "An unexpected error occurred. Please try again.",
-        type: "error",
-      });
+      //new code
+       if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message &&
+        error.response.data.message.toLowerCase().includes("phone number already exists")
+      ) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          phone_number: "Phone number already exists",
+        }));
+      } else if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setAlertConfig({
+          type: "error",
+          message: `${error?.response?.data?.message}`,
+          visibility: true,
+        });
+      } else {
+        setAlertConfig({
+          type: "error",
+          message: "An unexpected error occurred. Please try again.",
+          visibility: true,
+        });
+      }
     }
   };
+  //     setAlertConfig({
+  //       visibility: true,
+  //       message:
+  //         error?.response?.data?.message ||
+  //         "An unexpected error occurred. Please try again.",
+  //       type: "error",
+  //     });
+  //   }
+  // };
 
   return (
     <>

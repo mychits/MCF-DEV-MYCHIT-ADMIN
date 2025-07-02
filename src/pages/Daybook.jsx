@@ -43,6 +43,8 @@ const Daybook = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
+    const [hideAccountType, setHideAccountType] = useState("");
+    const [selectedAccountType, setSelectedAccountType] = useState("");
   const [payments, setPayments] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("Today")
@@ -77,6 +79,22 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
       setShowAllPaymentModes(showPaymentsModes);
     }
   }, []);
+   useEffect(() => {
+        const user = localStorage.getItem("user");
+        const userObj = JSON.parse(user);
+    
+        if (
+          userObj &&
+          userObj.admin_access_right_id?.access_permissions?.edit_payment
+        ) {
+          const isModify =
+            userObj.admin_access_right_id?.access_permissions?.edit_payment ===
+            "true"
+              ? true
+              : false;
+          setHideAccountType(isModify);
+        }
+      }, []);
   const handleModalClose = () => setShowUploadModal(false);
   useEffect(() => {
     const fetchGroups = async () => {
@@ -229,6 +247,7 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
             groupId: selectedAuctionGroupId,
             userId: selectedCustomers,
             pay_type: selectedPaymentMode,
+            account_type: selectedAccountType,
           },
         });
         if (response.data && response.data.length > 0) {
@@ -253,6 +272,7 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
             date:group.pay_date?.split("T")?.[0],
             transaction_date:group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
+            account_type: group?.account_type,
             collected_by:
               group?.collected_by?.name ||
               group?.admin_type?.admin_name ||
@@ -300,6 +320,7 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
     selectedDate,
     selectedPaymentMode,
     selectedCustomers,
+    selectedAccountType,
   ]);
 
   const columns = [
@@ -315,6 +336,8 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
     { key: "old_receipt_no", header: "Old Receipt" },
     { key: "amount", header: "Amount" },
     { key: "mode", header: "Payment Mode" },
+     ...(hideAccountType
+    ? [{ key: "account_type", header: "Account Type" }]: []),
     { key: "collected_by", header: "Collected By" },
     { key: "action", header: "Action" },
   ];
@@ -553,17 +576,39 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
                       <Select.Option value="">All</Select.Option>
                       <Select.Option value="cash">Cash</Select.Option>
                       <Select.Option value="online">Online</Select.Option>
-                       {showAllPaymentModes && (
+                      </Select>
+                  </div>
+                  {showAllPaymentModes && (
+                  <div className="mb-2">
+                    <label>Account Type</label>
+                    <Select
+                      value={selectedAccountType}
+                      showSearch
+                      placeholder="Search Or Account Type"
+                      popupMatchSelectWidth={false}
+                      onChange={(groupId) => setSelectedAccountType(groupId)}
+                      filterOption={(input, option) =>
+                        option.children
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      className="w-full max-w-xs h-11"
+                    // className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
+                    >
+                     
+                       
                           <>
+                           <option value="">Select Account Type</option>
                             <option value="suspense">Suspense</option>
                             <option value="credit">Credit</option>
                             <option value="adjustment">Adjustment</option>
                             <option value="others">Others</option>
                           </>
-                        )}
+                      
                     </Select>
                   </div>
-                 
+                   )}
 
                   <div className="text-md font-semibold text-blue-700 mb-2">
                     <label> Total Amount </label>

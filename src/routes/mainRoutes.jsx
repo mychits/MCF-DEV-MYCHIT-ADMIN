@@ -60,6 +60,7 @@ import ErrorPage from "./error/ErrorPage";
 import Guarantor from "../pages/Guarantor";
 import DreamAsset from "../pages/DreamAsset";
 import BecomeAgent from "../pages/BecomeAgent";
+import PayOutOthers from "../pages/PayOutOthers";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -256,7 +257,7 @@ const mainRoutes = createBrowserRouter([
     path: "/payment-out/others",
     element: (
       <ProtectedRoute>
-        <ErrorPage />
+        <PayOutOthers />
       </ProtectedRoute>
     ),
   },

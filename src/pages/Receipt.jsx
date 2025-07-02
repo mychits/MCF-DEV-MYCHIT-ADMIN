@@ -51,6 +51,8 @@ const Receipt = () => {
   const [selectedFromDate, setSelectedFromDate] = useState(todayString);
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+  const [hideAccountType, setHideAccountType] = useState("");
+  const [selectedAccountType, setSelectedAccountType] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [payments, setPayments] = useState([]);
   const [showAllPaymentModes, setShowAllPaymentModes] = useState(false);
@@ -86,6 +88,22 @@ const Receipt = () => {
       setShowAllPaymentModes(showPaymentsModes);
     }
   }, []);
+  useEffect(() => {
+      const user = localStorage.getItem("user");
+      const userObj = JSON.parse(user);
+  
+      if (
+        userObj &&
+        userObj.admin_access_right_id?.access_permissions?.edit_payment
+      ) {
+        const isModify =
+          userObj.admin_access_right_id?.access_permissions?.edit_payment ===
+          "true"
+            ? true
+            : false;
+        setHideAccountType(isModify);
+      }
+    }, []);
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -240,8 +258,10 @@ const Receipt = () => {
             groupId: selectedAuctionGroupId,
             userId: selectedCustomers,
             pay_type: selectedPaymentMode,
+            account_type: selectedAccountType,
           },
         });
+        console.info(response.data, "testing account type")
         if (response.data && response.data.length > 0) {
           const validPayments = response.data.filter(
             (payment) => payment.group_id !== null
@@ -270,6 +290,7 @@ const Receipt = () => {
             amount: group?.amount,
             transaction_date: group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
+            account_type: group?.account_type,
             collected_by:
               group?.collected_by?.name ||
               group?.admin_type?.admin_name ||
@@ -322,6 +343,7 @@ const Receipt = () => {
     selectedPaymentMode,
     selectedCustomers,
     selectedFromDate,
+    selectedAccountType,
   ]);
 
   const columns = [
@@ -337,6 +359,8 @@ const Receipt = () => {
     { key: "ticket", header: "Ticket" },
     { key: "amount", header: "Amount" },
     { key: "mode", header: "Payment Mode" },
+    ...(hideAccountType
+    ? [{ key: "account_type", header: "Account Type" }]: []),
     { key: "collected_by", header: "Collected By" },
     { key: "action", header: "Action" },
   ];
@@ -624,16 +648,47 @@ const Receipt = () => {
                       <Select.Option value="">All</Select.Option>
                       <Select.Option value="cash">Cash</Select.Option>
                       <Select.Option value="online">Online</Select.Option>
-                      {showAllPaymentModes && (
+                    
+                    </Select>
+                  </div>
+                  {showAllPaymentModes && (
+                  <div className="mb-2">
+                    <label>Account Type</label>
+                    {/* <select
+                      value={selectedPaymentMode}
+                      onChange={(e) => setSelectedPaymentMode(e.target.value)}
+                      className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
+                    >
+                      <option value="">All</option>
+                      <option value="cash">Cash</option>
+                      <option value="online">Online</option>
+                    </select> */}
+                    <Select
+                      value={selectedAccountType}
+                      showSearch
+                      placeholder="Search Or Select Account Type"
+                      popupMatchSelectWidth={false}
+                      onChange={(groupId) => setSelectedAccountType(groupId)}
+                      filterOption={(input, option) =>
+                        option.children
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      className="w-full max-w-xs h-11"
+                      // className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
+                    >
                         <>
+                         <option value="">Select Account Type</option>
                           <option value="suspense">Suspense</option>
                           <option value="credit">Credit</option>
                           <option value="adjustment">Adjustment</option>
                           <option value="others">Others</option>
                         </>
-                      )}
+                      
                     </Select>
                   </div>
+                  )}
                   <div>
                     <h1 className="text-md mt-6">
                       Total Amount:{" "}

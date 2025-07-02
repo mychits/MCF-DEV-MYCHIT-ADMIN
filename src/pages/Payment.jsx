@@ -57,7 +57,7 @@ const Payment = () => {
   const [openAntDDrawer, setOpenAntDDrawer] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [lastThreePayments, setLastThreePayments] = useState([]);
-
+  
   const dropDownItems = (group) => {
     const dropDownItemList = [
       {
@@ -126,6 +126,7 @@ const Payment = () => {
     pay_type: "cash",
     transaction_id: "",
     payment_group_tickets: [],
+    account_type: "",
   });
   const [updateFormData, setUpdateFormData] = useState({
     amount: "",
@@ -626,6 +627,15 @@ const Payment = () => {
       transaction_id: selectedMode === "online" ? prevData.transaction_id : "",
     }));
   };
+    const handleAccountTypeChange = (e) => {
+    const selectedMode = e.target.value;
+    setFormData((prevData) => ({
+      ...prevData,
+      account_type: selectedMode,
+
+     
+    }));
+  };
   const createReceipt = async (formData) => {
     try {
       const {
@@ -717,6 +727,7 @@ const Payment = () => {
             pay_type: "cash",
             transaction_id: "",
             payment_group_tickets: [],
+            account_type: "",
           });
           setAlertConfig({
             visibility: true,
@@ -739,6 +750,7 @@ const Payment = () => {
             pay_type: "cash",
             transaction_id: "",
             payment_group_tickets: [],
+            account_type: "",
           });
           setAlertConfig({
             visibility: true,
@@ -759,6 +771,7 @@ const Payment = () => {
         pay_type: "cash",
         transaction_id: "",
         payment_group_tickets: [],
+        account_type: "",
       });
       setAlertConfig({
         visibility: true,
@@ -806,6 +819,7 @@ const Payment = () => {
           message: "Payment deleted successfully",
           type: "success",
         });
+        window.location.reload();
       } catch (error) {
         console.error("Error deleting auction:", error);
       }
@@ -1325,14 +1339,7 @@ const Payment = () => {
                       >
                         <option value="cash">Cash</option>
                         <option value="online">Online</option>
-                        {modifyPayment && (
-                          <>
-                            <option value="suspense">Suspense</option>
-                            <option value="credit">Credit</option>
-                            <option value="adjustment">Adjustment</option>
-                            <option value="others">Others</option>
-                          </>
-                        )}
+                        
                       </select>
                     </div>
                   </div>
@@ -1380,6 +1387,35 @@ const Payment = () => {
                       )}
                     </div>
                   )}
+                  <div className="flex flex-row justify-between space-x-4">
+                    {modifyPayment && (
+                    <div className="w-full">
+                      <label
+                        className="block mb-2 text-sm font-medium text-gray-900"
+                        htmlFor="pay_mode"
+                      >
+                        Account Type
+                      </label>
+                      <select
+                        name="account_type"
+                        id="account_type"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                        onChange={handleAccountTypeChange}
+                      >
+                        
+                          <>
+                          <option value={""}>Select Account Type</option>
+                            <option value="suspense">Suspense</option>
+                            <option value="credit">Credit</option>
+                            <option value="adjustment">Adjustment</option>
+                            <option value="others">Others</option>
+                          </>
+                        
+                      </select>
+                      
+                    </div>
+                    )}
+                  </div>
 
                   <div className="flex flex-col items-center p-4 max-w-full bg-white rounded-lg shadow-sm space-y-4">
                     <div className="flex items-center space-x-1">

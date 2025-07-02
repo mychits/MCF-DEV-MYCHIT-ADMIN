@@ -134,7 +134,7 @@ const GeneralPaymentOut = () => {
     pay_type: "cash",
     transaction_id: "",
     payment_group_tickets: [],
-    disbursement_type: "",
+    disbursement_type: "Auction Winning Payout",
     note: "",
   });
   const [updateFormData, setUpdateFormData] = useState({
@@ -309,7 +309,7 @@ const GeneralPaymentOut = () => {
     if (name === "disbursement_type") {
       if (value === "Others") {
         setShowOthersField(true);
-        setDisbursementType("")
+        setDisbursementType("");
       } else {
         setShowOthersField(false);
       }
@@ -321,8 +321,17 @@ const GeneralPaymentOut = () => {
     setErrors((prevData) => ({ ...prevData, [name]: "" }));
   };
 
-  const handlePaymentAntSelect = (values) => {
-    setPaymentGroupTickets(values);
+  const handlePaymentAntSelect = (value) => {
+    // ✅ Now value is a string like "chit-<group_id>|<ticket>"
+    setPaymentGroupTickets([value]); // Still store as array for backend compatibility
+
+    if (value && value.startsWith("chit-")) {
+      const [, entity] = value.split("-");
+      const [groupId, ticket] = entity.split("|");
+
+      // Call win amount fetch
+      fetchWinAmount(formData.user_id, groupId, ticket);
+    }
   };
 
   const handleGroupChange = async (groupId) => {
@@ -342,6 +351,31 @@ const GeneralPaymentOut = () => {
       }
     } else {
       setFilteredUsers([]);
+    }
+  };
+
+  const fetchWinAmount = async (userId, groupId, ticket) => {
+    try {
+      if (!userId || !groupId || !ticket) return;
+
+      const response = await api.get(
+        "/auction/get-auction-by-user-group-ticket",
+        {
+          params: { user_id: userId, group_id: groupId, ticket },
+        }
+      );
+
+      if (response?.data?.win_amount) {
+        setFormData((prev) => ({
+          ...prev,
+          amount: response.data.win_amount,
+        }));
+        console.log("✅ Win Amount Set:", response.data.win_amount);
+      } else {
+        console.warn("⚠️ No win amount found for user/group/ticket");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching win amount:", error);
     }
   };
 
@@ -397,28 +431,30 @@ const GeneralPaymentOut = () => {
   //   }));
   // };
 
-  const handleCustomer = async (groupId) => {
-    setSelectedGroupId(groupId);
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      user_id: groupId,
-    }));
-    setErrors((prevData) => ({ ...prevData, customer: "" }));
-    setPaymentGroupTickets([]);
-    handleGroupChange(groupId);
-    handleGroupAuctionChange(groupId);
+  const handleCustomer = async (userId) => {
+    setSelectedGroupId(userId);
 
-    if (groupId) {
-      try {
-        const response = await api.get(`/group/get-by-id-group/${groupId}`);
-        setGroupInfo(response.data || {});
-      } catch (error) {
-        setGroupInfo({});
-      }
-    } else {
+    // ✅ Reset previously selected ticket & amount
+    setPaymentGroupTickets([]);
+    setFormData((prev) => ({
+      ...prev,
+      user_id: userId,
+      amount: "", // 🔥 Clear previous win amount
+    }));
+    setErrors((prev) => ({ ...prev, customer: "" }));
+
+    // 👇 Fetch ticket data and group info
+    handleGroupChange(userId);
+    handleGroupAuctionChange(userId);
+
+    try {
+      const response = await api.get(`/group/get-by-id-group/${userId}`);
+      setGroupInfo(response.data || {});
+    } catch (error) {
       setGroupInfo({});
     }
   };
+
   const handleGroupPayment = async (groupId) => {
     setSelectedAuctionGroupId(groupId);
     handleGroupPaymentChange(groupId);
@@ -937,7 +973,7 @@ const GeneralPaymentOut = () => {
                       Group & Ticket <span className="text-red-500 ">*</span>
                     </label>
                     <Select
-                      mode="multiple"
+                      // mode="multiple"
                       name="group_id"
                       placeholder="Select Group | Ticket"
                       onChange={handlePaymentAntSelect}
@@ -1101,33 +1137,19 @@ const GeneralPaymentOut = () => {
                       )}
                     </div>
                   )}
-                  <div className="w-full">
-                    <label
-                      className="block mb-2 text-sm font-medium text-gray-900"
-                      htmlFor="pay_mode"
-                    >
+                  <div className="mb-4">
+                    <label className="block font-medium mb-1">
                       Disbursement Type
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="disbursement_type"
-                      id="pay_mode"
                       value={formData.disbursement_type}
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-                      onChange={handleChange}
-                    >
-                      <option value="">Select any</option>
-                      {disbursementTypes.map((dType) => (
-                        <option key={dType.key} value={dType.value}>
-                          {dType.title}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.disbursement_type && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.disbursement_type}
-                      </p>
-                    )}
+                      readOnly
+                      className="w-full h-12 border px-4 rounded bg-gray-100 text-gray-700 cursor-not-allowed"
+                    />
                   </div>
+
                   {showOthersField && (
                     <>
                       <div className="w-full">
@@ -1162,7 +1184,7 @@ const GeneralPaymentOut = () => {
                       Note
                     </label>
                     <textarea
-                    rows={2}
+                      rows={2}
                       type="text"
                       className="w-full p-3 border border-gray-300 rounded-lg"
                       id="note"
@@ -1173,12 +1195,12 @@ const GeneralPaymentOut = () => {
                     />
                   </div>
                   <div className="w-full">
-                  <div className="w-full bg-blue-50 p-3 rounded-lg">
-                  <label className="block mb-1 text-sm font-medium text-gray-900">
-                    Disbursed By
-                  </label>
-                  <div className="font-semibold">{adminName}</div>
-                </div>
+                    <div className="w-full bg-blue-50 p-3 rounded-lg">
+                      <label className="block mb-1 text-sm font-medium text-gray-900">
+                        Disbursed By
+                      </label>
+                      <div className="font-semibold">{adminName}</div>
+                    </div>
                   </div>
                   <div className="flex flex-col items-center p-4 max-w-full bg-white rounded-lg shadow-sm space-y-4">
                     <div className="flex items-center space-x-1">
@@ -1200,13 +1222,13 @@ const GeneralPaymentOut = () => {
                     </div>
                   </div>
                   <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
-                  >
-                    Cancel
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
                     <Tooltip title="Saving Payment Out">
                       <button
                         type="submit"
