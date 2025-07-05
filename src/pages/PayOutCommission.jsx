@@ -50,6 +50,10 @@ const PayOutCommission = () => {
     admin_type: "",
   });
 
+  const [commissionBreakdown, setCommissionBreakdown] = useState([]);
+const [incentiveAmount, setIncentiveAmount] = useState("0.00");
+
+
   const fetchAgents = async () => {
     try {
       const response = await API.get("/agent/get-agent");
@@ -76,6 +80,8 @@ const PayOutCommission = () => {
         pay_date:payment.pay_date,
         amount: payment.amount,
         pay_type: payment.pay_type,
+         commission_from: payment.commissionCalculationFromDate?.split("T")[0] || "-",  
+  commission_to: payment.commissionCalculationToDate?.split("T")[0] || "-",      
         transaction_id: payment.transaction_id,
         note: payment.note,
         pay_for: payment.pay_for,
@@ -107,127 +113,135 @@ const PayOutCommission = () => {
     fetchCommissionPayments();
   }, [reRender]); // reRender is used to force a re-fetch of data.
 
-  // New function to calculate total payable commission - updated to use specific calculation dates
-  const calculateTotalPayableCommission = async (agentId, calcFromDate, calcToDate) => {
-    if (!agentId || !calcFromDate || !calcToDate) {
-      setCommissionForm((prev) => ({ ...prev, amount: "" }));
-      return;
+const calculateTotalPayableCommission = async (agentId, calcFromDate, calcToDate) => {
+  if (!agentId || !calcFromDate || !calcToDate) {
+    setCommissionForm((prev) => ({ ...prev, amount: "" }));
+    return;
+  }
+
+  setIsLoadingCommissionCalculation(true);
+  try {
+    const fromDateForCalc = calcFromDate;
+    const toDateForCalc = calcToDate;
+
+    // 1. Fetch Target Data
+    const targetRes = await API.get("/target/get-targets", {
+      params: { fromDate: fromDateForCalc, toDate: toDateForCalc, agentId },
+    });
+    const rawTargets = targetRes.data || [];
+
+    let totalTarget = 0;
+    const monthMap = {};
+    rawTargets.forEach((t) => {
+      if ((t.agentId?._id || t.agentId) !== agentId) return;
+      const date = new Date(t.startDate);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      if (!monthMap[key]) monthMap[key] = t.totalTarget || 0;
+    });
+
+    const start = new Date(fromDateForCalc);
+    const end = new Date(toDateForCalc);
+    let currentDate = new Date(start);
+    while (currentDate <= end) {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const key = `${year}-${month}`;
+      const monthTarget = monthMap[key] ?? Object.values(monthMap)[0] ?? 0;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const perDayTarget = daysInMonth > 0 ? monthTarget / daysInMonth : 0;
+      totalTarget += perDayTarget;
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    totalTarget = Math.round(totalTarget);
+
+    // 2. Fetch Commission Report (Customer-wise)
+    let comm = { summary: { actual_business: 0 }, commission_data: [] };
+    try {
+      const detailedCommRes = await API.get(
+        `/enroll/get-detailed-commission/${agentId}`,
+        { params: { from_date: fromDateForCalc, to_date: toDateForCalc } }
+      );
+      comm = detailedCommRes.data;
+    } catch (err) {
+      if (
+        err.response &&
+        err.response.status === 404 &&
+        err.response.data?.message === "No enrollments found"
+      ) {
+        console.log("No enrollments found for this period");
+      } else {
+        throw err;
+      }
     }
 
-    setIsLoadingCommissionCalculation(true);
-    try {
-      // Use calcFromDate and calcToDate directly from the arguments for the calculation period
-      const fromDateForCalc = calcFromDate;
-      const toDateForCalc = calcToDate;
+    // 3. Save Customer Breakdown to State
+    setCommissionBreakdown(comm.commission_data || []);
 
-      // Fetch target data (similar to CommissionReport)
-      const targetRes = await API.get("/target/get-targets", {
-        params: { fromDate: fromDateForCalc, toDate: toDateForCalc, agentId },
-      });
-      const rawTargets = targetRes.data || [];
+    // 4. Calculate Actual Business
+    let achievedBusiness = comm?.summary?.actual_business || 0;
+    if (typeof achievedBusiness === "string") {
+      achievedBusiness = Number(achievedBusiness.replace(/[^0-9.-]+/g, ""));
+    }
 
-      // Calculate total target for the period (mimicking CommissionReport logic)
-      let totalTarget = 0;
-      const monthMap = {};
-      rawTargets.forEach((t) => {
-        if ((t.agentId?._id || t.agentId) !== agentId) return;
-        const date = new Date(t.startDate);
-        const key = `${date.getFullYear()}-${date.getMonth()}`;
-        if (!monthMap[key]) monthMap[key] = t.totalTarget || 0;
-      });
-
-      const start = new Date(fromDateForCalc);
-      const end = new Date(toDateForCalc);
-      let currentDate = new Date(start);
-      while (currentDate <= end) {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const key = `${year}-${month}`;
-        // Fallback to the first target value if a month-specific target is not found
-        const monthTarget = monthMap[key] ?? Object.values(monthMap)[0] ?? 0;
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const perDayTarget = daysInMonth > 0 ? monthTarget / daysInMonth : 0;
-        totalTarget += perDayTarget;
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      totalTarget = Math.round(totalTarget);
-
-      let comm = { summary: { actual_business: 0 }, commission_data: [] };
-      try {
-        const detailedCommRes = await API.get(
-          `/enroll/get-detailed-commission/${agentId}`,
-          { params: { from_date: fromDateForCalc, to_date: toDateForCalc } }
-        );
-        comm = detailedCommRes.data;
-      } catch (err) {
-        // Check if the error is an AxiosError and if it's a 404 with specific message 'No enrollments found'
-        if (err.response && err.response.status === 404 && err.response.data && err.response.data.message === 'No enrollments found') {
-          // This is an expected scenario when no enrollments are found for the period.
-          // 'comm' will retain its initial default value (actual_business: 0, commission_data: []),
-          // which correctly translates to zero actualCommission.
-          console.log("No enrollments found for agent in the period. Actual commission set to 0.");
-        } else {
-          // Re-throw other unexpected errors to be caught by the outer catch block
-          throw err;
+    // 5. Sum Actual Commissions
+    let actualCommission = 0;
+    if (comm?.commission_data) {
+      actualCommission = comm.commission_data.reduce((sum, item) => {
+        const itemPayDate = new Date(item.start_date);
+        if (
+          itemPayDate >= new Date(fromDateForCalc) &&
+          itemPayDate <= new Date(toDateForCalc)
+        ) {
+          const val = parseFloat(
+            item.actual_commission_digits?.toString().replace(/[^0-9.-]+/g, "") || "0"
+          );
+          return sum + val;
         }
-      }
+        return sum;
+      }, 0);
+    }
 
-      let achievedBusiness = comm?.summary?.actual_business || 0;
-      if (typeof achievedBusiness === "string") {
-        achievedBusiness = Number(achievedBusiness.replace(/[^0-9.-]+/g, ""));
-      }
-
-      let actualCommission = 0;
-      if (comm?.commission_data) {
-          actualCommission = comm.commission_data.reduce((sum, item) => {
-          const itemPayDate = new Date(item.start_date);
-          // Ensure item date is within the calculated range (fromDateForCalc, toDateForCalc)
-          if (itemPayDate >= new Date(fromDateForCalc) && itemPayDate <= new Date(toDateForCalc)) {
-            const val = parseFloat(item.actual_commission_digits?.toString().replace(/[^0-9.-]+/g, "") || "0");
-            return sum + val;
-          }
-          return sum;
-        }, 0);
-      }
-
-
-      const difference = totalTarget - achievedBusiness;
-
-      // Determine incentive (mimicking CommissionReport logic)
-      const designation = rawTargets.find(
+    // 6. Calculate Incentive
+    const difference = totalTarget - achievedBusiness;
+    const designation =
+      rawTargets.find(
         (t) => (t.agentId?._id || t.agentId) === agentId
       )?.agentId?.designation_id?.title || "N/A";
 
-      let incentiveAmount = 0;
-      const title = designation.toLowerCase();
+    let incentiveAmount = 0;
+    const title = designation.toLowerCase();
 
-      if (title === "business agent" && achievedBusiness <= totalTarget) {
-        incentiveAmount = difference * 0.005; // 0.5% of remaining for business agent if target not met
-      } else if (difference < 0) {
-        incentiveAmount = Math.abs(difference) * 0.01; // 1% of extra business if target exceeded
-      }
-
-      const totalPayable = actualCommission + incentiveAmount;
-
-      setCommissionForm((prev) => ({
-        ...prev,
-        amount: totalPayable.toFixed(2), // Set the calculated amount, formatted to 2 decimal places
-      }));
-
-    } catch (error) {
-      console.error("Failed to calculate commission:", error);
-      setCommissionForm((prev) => ({ ...prev, amount: "" })); // Clear amount on error
-      api.open({
-        message: "Commission Calculation Failed",
-        description: error.message || "Could not calculate commission for the selected agent.",
-        className: "bg-red-400 rounded-lg font-bold",
-        showProgress: true,
-        pauseOnHover: false,
-      });
-    } finally {
-      setIsLoadingCommissionCalculation(false);
+    if (title === "business agent" && achievedBusiness <= totalTarget) {
+      incentiveAmount = difference * 0.005;
+    } else if (difference < 0) {
+      incentiveAmount = Math.abs(difference) * 0.01;
     }
-  };
+
+    // 7. Save Incentive to State
+    setIncentiveAmount(incentiveAmount.toFixed(2));
+
+    // 8. Final Total = Actual Commission + Incentive
+    const totalPayable = actualCommission + incentiveAmount;
+    setCommissionForm((prev) => ({
+      ...prev,
+      amount: totalPayable.toFixed(2),
+    }));
+  } catch (error) {
+    console.error("Failed to calculate commission:", error);
+    setCommissionForm((prev) => ({ ...prev, amount: "" }));
+    api.open({
+      message: "Commission Calculation Failed",
+      description: error.message || "Could not calculate commission for the selected agent.",
+      className: "bg-red-400 rounded-lg font-bold",
+      showProgress: true,
+      pauseOnHover: false,
+    });
+  } finally {
+    setIsLoadingCommissionCalculation(false);
+  }
+};
+
+
 
   const handleCommissionChange = (e) => {
     const { name, value } = e.target;
@@ -281,92 +295,76 @@ const PayOutCommission = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCommissionSubmit = async (e) => {
-    e.preventDefault();
-    const isValid = validateForm();
-    if (isValid) {
-      try {
-        setIsLoading(true);
-        const payload = {
-          ...commissionForm,
-          admin_type: adminId, 
-        };
-       
-        const { commissionCalculationFromDate, commissionCalculationToDate, ...apiPayload } = payload;
+ const handleCommissionSubmit = async (e) => {
+  e.preventDefault();
+  const isValid = validateForm();
+  if (isValid) {
+    try {
+      setIsLoading(true);
 
+      const payload = {
+        ...commissionForm,
+        admin_type: adminId,
+      };
 
-        await API.post("/payment-out/add-commission-payment", apiPayload);
-        api.open({
-          message: "Commission PayOut Added",
-          description: "Commission Payment Has Been Successfully Added",
-          className: "bg-green-400 rounded-lg  font-bold",
-          showProgress: true,
-          pauseOnHover: false,
-        });
+      // ✅ Send full payload including commissionCalculationFromDate & ToDate
+      await API.post("/payment-out/add-commission-payment", payload);
 
-        setShowCommissionModal(false);
-      
-        setCommissionForm({
-          agent_id: "",
-          pay_date: new Date().toISOString().split("T")[0],
-          commissionCalculationFromDate: firstDayOfMonth.toISOString().split("T")[0],
-          commissionCalculationToDate: today.toISOString().split("T")[0],
-          amount: "",
-          pay_type: "cash",
-          transaction_id: "",
-          note: "",
-          admin_type:adminId, 
-          pay_for:paymentFor
-        });
-        setReRender(val=>val+1)
-        
-        fetchCommissionPayments();
-      } catch (error) {
-        const message = error.message || "Something went wrong";
-        api.open({
-          message: "Failed to Add Commission Payout",
-          description: message,
-          showProgress: true,
-          pauseOnHover: false,
-          className: "bg-red-400 rounded-lg  font-bold",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      api.open({
+        message: "Commission PayOut Added",
+        description: "Commission Payment Has Been Successfully Added",
+        className: "bg-green-400 rounded-lg font-bold",
+        showProgress: true,
+        pauseOnHover: false,
+      });
+
+      setShowCommissionModal(false);
+
+      // Reset the form
+      setCommissionForm({
+        agent_id: "",
+        pay_date: new Date().toISOString().split("T")[0],
+        commissionCalculationFromDate: firstDayOfMonth.toISOString().split("T")[0],
+        commissionCalculationToDate: today.toISOString().split("T")[0],
+        amount: "",
+        pay_type: "cash",
+        transaction_id: "",
+        note: "",
+        admin_type: adminId,
+        pay_for: paymentFor,
+      });
+
+      setReRender((val) => val + 1);
+      fetchCommissionPayments();
+    } catch (error) {
+      const message = error.message || "Something went wrong";
+      api.open({
+        message: "Failed to Add Commission Payout",
+        description: message,
+        showProgress: true,
+        pauseOnHover: false,
+        className: "bg-red-400 rounded-lg font-bold",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
+};
 
-  const commissionColumns = [
-    { key: "id", header: "SL. NO" },
-    {
-      key: "pay_date",
-      header: "Pay Date",
-    },
-    {
-      header: "Agent",
-      key: "agent_name",
-    },
-    {
-      header: "Amount (₹)",
-      key: "amount",
-    },
-    {
-      header: "Payment Mode",
-      key: "pay_type",
-    },
-    {
-      header: "Receipt_no",
-      key: "receipt_no",
-    },
-    {
-      header: "Note",
-      key: "note",
-    },
-    {
-      header: "Disbursed by",
-      key: "disbursed_by",
-    }
-  ];
+
+const commissionColumns = [
+  { key: "id", header: "SL. NO" },
+  { key: "pay_date", header: "Pay Date" },
+  { key: "agent_name", header: "Agent" },
+  { key: "amount", header: "Amount (₹)" },
+  { key: "pay_type", header: "Payment Mode" },
+  { key: "commission_from", header: "From Date" },     
+  { key: "commission_to", header: "To Date" },         
+  { key: "receipt_no", header: "Receipt No" },
+  { key: "note", header: "Note" },
+  { key: "disbursed_by", header: "Disbursed by" },
+];
+
 
   return (
     <>
@@ -592,6 +590,48 @@ const PayOutCommission = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.amount}</p>
                   )}
                 </div>
+
+{commissionBreakdown.length > 0 && (
+  <div className="mt-6 bg-gray-100 p-3 rounded-lg shadow-inner border border-gray-300">
+    <h4 className="font-semibold text-gray-800 mb-3 text-lg">
+      Commission Breakdown (Customer-wise + Incentive)
+    </h4>
+    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+      <table className="min-w-full text-sm border">
+        <thead>
+          <tr className="bg-blue-100 text-gray-700">
+            <th className="border px-3 py-2 text-left">Customer</th>
+            <th className="border px-3 py-2 text-left">Phone</th>
+            <th className="border px-3 py-2 text-left">Group</th>
+            <th className="border px-3 py-2 text-right">Commission (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {commissionBreakdown.map((item, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="border px-3 py-2">{item.user_name || "-"}</td>
+              <td className="border px-3 py-2">{item.phone_number || "-"}</td>
+              <td className="border px-3 py-2">{item.group_name || "-"}</td>
+              <td className="border px-3 py-2 text-right">
+                {item.actual_commission_digits || "₹0"}
+              </td>
+            </tr>
+          ))}
+
+          {/* ✅ Final Incentive Row */}
+          <tr className="bg-green-100 font-semibold">
+            <td className="border px-3 py-2" colSpan={3}>
+              Incentive (Bonus)
+            </td>
+            <td className="border px-3 py-2 text-right text-green-800">
+              ₹{parseFloat(incentiveAmount).toLocaleString("en-IN")}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
                 {/* Payment Mode */}
                 <div className="w-full">

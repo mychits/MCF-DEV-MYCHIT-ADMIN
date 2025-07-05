@@ -354,49 +354,52 @@ const GeneralPaymentOut = () => {
     }
   };
 
-const fetchWinAmount = async (userId, groupId, ticket) => {
-  try {
-    if (!userId || !groupId || !ticket) return;
+  const fetchWinAmount = async (userId, groupId, ticket) => {
+    try {
+      if (!userId || !groupId || !ticket) return;
 
-    const response = await api.get(
-      "/auction/get-auction-by-user-group-ticket",
-      {
-        params: { user_id: userId, group_id: groupId, ticket },
+      const response = await api.get(
+        "/auction/get-auction-by-user-group-ticket",
+        {
+          params: { user_id: userId, group_id: groupId, ticket },
+        }
+      );
+
+      if (response?.data?.win_amount) {
+        setFormData((prev) => ({
+          ...prev,
+          amount: response.data.win_amount,
+        }));
+        console.log("✅ Win Amount Set:", response.data.win_amount);
+      } else {
+        Modal.warning({
+          title: "No Win Amount Found",
+          content:
+            "No win amount was returned for this user, group, and ticket.",
+        });
       }
-    );
+    } catch (error) {
+      const backendMessage = error?.response?.data?.message;
 
-    if (response?.data?.win_amount) {
-      setFormData((prev) => ({
-        ...prev,
-        amount: response.data.win_amount,
-      }));
-      console.log("✅ Win Amount Set:", response.data.win_amount);
-    } else {
-      Modal.warning({
-        title: "No Win Amount Found",
-        content: "No win amount was returned for this user, group, and ticket.",
-      });
+      if (
+        error.response?.status === 404 &&
+        backendMessage === "Auction not found"
+      ) {
+        Modal.warning({
+          title: "Auction Not Found",
+          content:
+            "No auction was found for the selected user, group, and ticket.",
+        });
+      } else {
+        Modal.error({
+          title: "Error Fetching Win Amount",
+          content: "Something went wrong while trying to fetch win amount.",
+        });
+      }
+
+      console.error("❌ Error fetching win amount:", error);
     }
-  } catch (error) {
-    const backendMessage = error?.response?.data?.message;
-
-    if (error.response?.status === 404 && backendMessage === "Auction not found") {
-      Modal.warning({
-        title: "Auction Not Found",
-        content: "No auction was found for the selected user, group, and ticket.",
-      });
-    } else {
-      Modal.error({
-        title: "Error Fetching Win Amount",
-        content: "Something went wrong while trying to fetch win amount.",
-      });
-    }
-
-    console.error("❌ Error fetching win amount:", error);
-  }
-};
-
-
+  };
 
   const columns = [
     { key: "id", header: "SL. NO" },
@@ -824,8 +827,31 @@ const fetchWinAmount = async (userId, groupId, ticket) => {
                       ))}
                     </Select>
                     <div>
-                      <button
+                      {/* <button
                         onClick={() => setShowModal(true)}
+                        className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
+                      >
+                        +Add Payment Out
+                      </button> */}
+
+                      <button
+                        onClick={() => {
+                          setFormData({
+                            user_id: "",
+                            pay_date: today, // already defined earlier
+                            amount: "",
+                            pay_type: "cash",
+                            transaction_id: "",
+                            payment_group_tickets: [],
+                            disbursement_type: "Auction Winning Payout", 
+                            note: "",
+                          });
+                          setDisbursementType("Auction Winning Payout"); 
+                          setSelectedGroupId("");
+                          setPaymentGroupTickets([]);
+                          setErrors({});
+                          setShowModal(true);
+                        }}
                         className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
                       >
                         +Add Payment Out
