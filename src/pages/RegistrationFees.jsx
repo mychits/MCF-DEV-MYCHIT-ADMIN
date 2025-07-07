@@ -63,7 +63,7 @@ const RegistrationFee = () => {
       {
         key: "1",
         label: (
-          <Link to={`/print/${group._id}`} className="text-blue-600 ">
+          <Link to={`/reg-fee-print/${group._id}`} className="text-blue-600 ">
             Print
           </Link>
         ),

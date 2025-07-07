@@ -64,6 +64,7 @@ import PayOutOthers from "../pages/PayOutOthers";
 import PayInMenu from "../pages/PayInMenu";
 import RegistrationFee from "../pages/RegistrationFees";
 import PrintPaymentOut from "../pages/PrintPaymentOut";
+import RegistrationReceipt from "../pages/RegistrationReceipt";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -85,6 +86,11 @@ const mainRoutes = createBrowserRouter([
         <Navbar />
       </ProtectedRoute>
     ),
+  },
+    {
+    path: "/reg-fee-print/:id",
+
+    element: <RegistrationReceipt />,
   },
 
   {
