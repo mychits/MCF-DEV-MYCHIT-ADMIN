@@ -1003,27 +1003,29 @@ const [isVerified, setIsVerified] = useState(false);
                     <span className="text-red-500 ">*</span>
                   </label>
 
-                  <Select
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                    placeholder="Select Or Search Referred Employee"
-                    popupMatchSelectWidth={false}
-                    showSearch
-                    name="agent"
-                    filterOption={(input, option) =>
-                      option.children
-                        .toString()
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                    value={formData?.agent || undefined}
-                    onChange={(value) => handleAntDSelect("agent", value)}
-                  >
-                    {agents.map((agent) => (
-                      <Select.Option key={agent._id} value={agent._id}>
-                        {agent.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                 <Select
+  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+  placeholder="Select Or Search Referred Employee"
+  popupMatchSelectWidth={false}
+  showSearch
+  name="agent"
+  filterOption={(input, option) => {
+    if (!option || !option.children) return false;  // Ensure option and children exist
+
+    return option.children
+      .toString()
+      .toLowerCase()
+      .includes(input.toLowerCase());
+  }}
+  value={formData?.agent || undefined}
+  onChange={(value) => handleAntDSelect("agent", value)}
+>
+  {agents.map((agent) => (
+    <Select.Option key={agent._id} value={agent._id}>
+      {agent.name}
+    </Select.Option>
+  ))}
+</Select>
                 </div>
               )}
               {formData.group_id && availableTicketsAdd.length === 0 ? (

@@ -150,6 +150,9 @@ const DueMessage = () => {
                 groupType === "double"
                   ? groupInstall * auctionCount + groupInstall
                   : totalPayable + groupInstall + totalProfit;
+              const amountToBePaid = groupType === "double"
+                  ? groupInstall * auctionCount + groupInstall
+                  : totalPayable + groupInstall + totalProfit;
               const balance =
                 groupType === "double"
                   ? groupInstall * auctionCount + groupInstall - totalPaidAmount
