@@ -245,7 +245,7 @@ const mainMenus = [
       },
       {
         key: "#main-5",
-        title: "Promo",
+        title: "Promotion",
         icon: <FaWhatsapp size={20} />,
         subMenus: [
           {
