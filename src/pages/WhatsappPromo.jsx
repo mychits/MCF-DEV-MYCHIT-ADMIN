@@ -41,6 +41,9 @@ const WhatsappPromo = () => {
   const [groupNameFilter, setGroupNameFilter] = useState("");
   const [groupList, setGroupList] = useState([]);
   const [selectedGroupName, setSelectedGroupName] = useState("");
+  const [allLeads, setAllLeads] = useState([]);
+const [allEnrolls, setAllEnrolls] = useState([]);
+
   // Effect to update the header title based on selectedReferrerType
   useEffect(() => {
     const typeMap = {
@@ -74,6 +77,27 @@ const WhatsappPromo = () => {
 
     fetchLeads();
   }, []);
+
+  useEffect(() => {
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [leadRes, enrollRes] = await Promise.all([
+        api.get("/lead/get-lead"),
+        api.get("/enroll-report/get-enroll-report"),
+      ]);
+
+      setAllLeads(Array.isArray(leadRes.data) ? leadRes.data : leadRes.data?.leads || []);
+      setAllEnrolls(enrollRes.data || []);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
   useEffect(() => {
     const fetchReferrers = async () => {
       try {
@@ -96,10 +120,29 @@ const WhatsappPromo = () => {
             Array.isArray(res.data) ? res.data : res.data.leads || []
           );
         } else if (selectedReferrerType === "customer") {
-          const res = await api.get("/user/get-user");
-          setCustomerList(
-            Array.isArray(res.data) ? res.data : res.data.users || []
-          );
+          // const res = await api.get("/user/get-user");
+          // setCustomerList(
+          //   Array.isArray(res.data) ? res.data : res.data.users || []
+          // );
+           try {
+    // ✅ Fetch Agents
+    const agentRes = await api.get("/agent/get");
+    const allAgents = Array.isArray(agentRes.data)
+      ? agentRes.data
+      : agentRes.data.agent || [];
+    const filteredAgents = allAgents.filter((a) => a.agent_type === "agent");
+
+    // ✅ Fetch Employees
+    const empRes = await api.get("/agent/get-employee");
+    const employees = Array.isArray(empRes.data.employee)
+      ? empRes.data.employee
+      : [];
+
+    // ✅ Combine Agents + Employees
+    setAgentList([...filteredAgents, ...employees]); 
+  } catch (error) {
+    console.error("Error fetching agents and employees:", error);
+  }
         }
       } catch (err) {
         console.error("Error fetching referrer list:", err);
@@ -204,159 +247,256 @@ const WhatsappPromo = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        if (selectedReferrerType === "lead") {
-          const response = await api.get("/lead/get-lead");
-          const leads = Array.isArray(response.data)
-            ? response.data
-            : response.data?.leads || [];
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       if (selectedReferrerType === "lead") {
+  //         const response = await api.get("/lead/get-lead");
+  //         const leads = Array.isArray(response.data)
+  //           ? response.data
+  //           : response.data?.leads || [];
 
-          const from = fromDate
-            ? moment(fromDate, "YYYY-MM-DD").startOf("day")
-            : null;
-          const to = toDate ? moment(toDate, "YYYY-MM-DD").endOf("day") : null;
+  //         const from = fromDate
+  //           ? moment(fromDate, "YYYY-MM-DD").startOf("day")
+  //           : null;
+  //         const to = toDate ? moment(toDate, "YYYY-MM-DD").endOf("day") : null;
 
-          const filtered = leads.filter((lead) => {
-            const created = lead?.createdAt ? moment(lead.createdAt) : null;
+  //         const filtered = leads.filter((lead) => {
+  //           const created = lead?.createdAt ? moment(lead.createdAt) : null;
 
-            const isWithinDateRange =
-              (!from || (created && created.isSameOrAfter(from))) &&
-              (!to || (created && created.isSameOrBefore(to)));
+  //           const isWithinDateRange =
+  //             (!from || (created && created.isSameOrAfter(from))) &&
+  //             (!to || (created && created.isSameOrBefore(to)));
 
-            const lead_type_name =
-              lead.lead_type === "customer"
-                ? lead?.lead_customer?.full_name
-                : lead.lead_type === "agent"
-                ? lead?.lead_agent?.name
-                : "";
+  //           const lead_type_name =
+  //             lead.lead_type === "customer"
+  //               ? lead?.lead_customer?.full_name
+  //               : lead.lead_type === "agent"
+  //               ? lead?.lead_agent?.name
+  //               : "";
 
-            const normalizedLeadName = lead_type_name?.toLowerCase() || "";
-            const normalizedReferrerName = selectedReferrerName
-              .trim()
-              .toLowerCase();
+  //           const normalizedLeadName = lead_type_name?.toLowerCase() || "";
+  //           const normalizedReferrerName = selectedReferrerName
+  //             .trim()
+  //             .toLowerCase();
 
-            const nameMatches =
-              !normalizedReferrerName ||
-              normalizedLeadName.includes(normalizedReferrerName);
+  //           const nameMatches =
+  //             !normalizedReferrerName ||
+  //             normalizedLeadName.includes(normalizedReferrerName);
 
-            const groupName = lead?.group_id?.group_name?.toLowerCase() || "";
-            const matchesGroup =
-              !selectedGroupName ||
-              groupName === selectedGroupName.trim().toLowerCase();
+  //           const groupName = lead?.group_id?.group_name?.toLowerCase() || "";
+  //           const matchesGroup =
+  //             !selectedGroupName ||
+  //             groupName === selectedGroupName.trim().toLowerCase();
 
-            return isWithinDateRange && nameMatches && matchesGroup;
-          });
+  //           return isWithinDateRange && nameMatches && matchesGroup;
+  //         });
 
-          const formatted = filtered.map((lead, index) => ({
-            _id: lead._id,
-            id: index + 1,
-            full_name: lead?.lead_name || "NA",
-            phone_number: lead?.lead_phone || "NA",
-            group_name: lead?.group_id?.group_name || "NA",
-            group_id: lead?.group_id?._id || "NA",
-            createdAt: lead?.createdAt ? new Date(lead.createdAt) : null,
-            enrollment_date: lead?.createdAt
-              ? new Date(lead.createdAt).toISOString().split("T")[0]
-              : "NA",
-          }));
+  //         const formatted = filtered.map((lead, index) => ({
+  //           _id: lead._id,
+  //           id: index + 1,
+  //           full_name: lead?.lead_name || "NA",
+  //           phone_number: lead?.lead_phone || "NA",
+  //           group_name: lead?.group_id?.group_name || "NA",
+  //           group_id: lead?.group_id?._id || "NA",
+  //           createdAt: lead?.createdAt ? new Date(lead.createdAt) : null,
+  //           enrollment_date: lead?.createdAt
+  //             ? new Date(lead.createdAt).toISOString().split("T")[0]
+  //             : "NA",
+  //         }));
 
-          const newSelection = {};
-          formatted.forEach((u) => (newSelection[u._id] = false));
-          setSelectUser(newSelection);
-          setTableUsers(formatted);
-          return;
-        }
+  //         const newSelection = {};
+  //         formatted.forEach((u) => (newSelection[u._id] = false));
+  //         setSelectUser(newSelection);
+  //         setTableUsers(formatted);
+  //         return;
+  //       }
 
-        // -------- Enroll report ---------
-        const response = await api.get(`/enroll-report/get-enroll-report`);
-        if (!response.data) {
-          setIsLoading(false);
-          return;
-        }
+  //       // -------- Enroll report ---------
+  //       const response = await api.get(`/enroll-report/get-enroll-report`);
+  //       if (!response.data) {
+  //         setIsLoading(false);
+  //         return;
+  //       }
 
-        const from = fromDate
-          ? moment(fromDate, "YYYY-MM-DD").startOf("day")
-          : null;
-        const to = toDate ? moment(toDate, "YYYY-MM-DD").endOf("day") : null;
+  //       const from = fromDate
+  //         ? moment(fromDate, "YYYY-MM-DD").startOf("day")
+  //         : null;
+  //       const to = toDate ? moment(toDate, "YYYY-MM-DD").endOf("day") : null;
 
-        const filtered = response.data.filter((group) => {
-          const created = group?.createdAt ? moment(group.createdAt) : null;
+  //       const filtered = response.data.filter((group) => {
+  //         const created = group?.createdAt ? moment(group.createdAt) : null;
 
-          const isWithinDateRange =
-            (!from || (created && created.isSameOrAfter(from))) &&
-            (!to || (created && created.isSameOrBefore(to)));
+  //         const isWithinDateRange =
+  //           (!from || (created && created.isSameOrAfter(from))) &&
+  //           (!to || (created && created.isSameOrBefore(to)));
 
-          const normalizedReferrerName = selectedReferrerName
-            .trim()
-            .toLowerCase();
+  //         const normalizedReferrerName = selectedReferrerName
+  //           .trim()
+  //           .toLowerCase();
 
-          const agentName = group?.agent?.name?.toLowerCase();
-          const agentType = group?.agent?.agent_type;
-          const matchesAgent =
-            selectedReferrerType === "agent" &&
-            agentType === "agent" &&
-            agentName?.includes(normalizedReferrerName);
+  //         const agentName = group?.agent?.name?.toLowerCase();
+  //         const agentType = group?.agent?.agent_type;
+  //         const matchesAgent =
+  //           selectedReferrerType === "agent" &&
+  //           agentType === "agent" &&
+  //           agentName?.includes(normalizedReferrerName);
 
-          const matchesEmployee =
-            selectedReferrerType === "employee" &&
-            agentType === "employee" &&
-            agentName?.includes(normalizedReferrerName);
+  //         const matchesEmployee =
+  //           selectedReferrerType === "employee" &&
+  //           agentType === "employee" &&
+  //           agentName?.includes(normalizedReferrerName);
 
-          const matchesCustomer =
-            selectedReferrerType === "customer" &&
-            group?.referred_customer?.full_name
-              ?.toLowerCase()
-              .includes(normalizedReferrerName);
+  //         const matchesCustomer =
+  //           selectedReferrerType === "customer" &&
+  //           group?.referred_customer?.full_name
+  //             ?.toLowerCase()
+  //             .includes(normalizedReferrerName);
 
-          const typeMatch =
-            selectedReferrerType === "" ||
-            matchesAgent ||
-            matchesEmployee ||
-            matchesCustomer;
+  //         const typeMatch =
+  //           selectedReferrerType === "" ||
+  //           matchesAgent ||
+  //           matchesEmployee ||
+  //           matchesCustomer;
 
-          const groupName = group?.group_id?.group_name?.toLowerCase() || "";
-          const matchesGroup =
-            !selectedGroupName ||
-            groupName === selectedGroupName.trim().toLowerCase();
+  //         const groupName = group?.group_id?.group_name?.toLowerCase() || "";
+  //         const matchesGroup =
+  //           !selectedGroupName ||
+  //           groupName === selectedGroupName.trim().toLowerCase();
 
-          return typeMatch && isWithinDateRange && matchesGroup;
-        });
+  //         return typeMatch && isWithinDateRange && matchesGroup;
+  //       });
 
-        const formatted = filtered.map((group, index) => ({
-          _id: group._id,
-          id: index + 1,
-          full_name: group?.user_id?.full_name || "NA",
-          phone_number: group?.user_id?.phone_number || "NA",
-          group_name: group?.group_id?.group_name || "NA",
-          group_id: group?.group_id?._id || "NA",
-          createdAt: group?.createdAt ? new Date(group.createdAt) : null,
-          enrollment_date: group?.createdAt
-            ? new Date(group.createdAt).toISOString().split("T")[0]
-            : "NA",
-        }));
+  //       const formatted = filtered.map((group, index) => ({
+  //         _id: group._id,
+  //         id: index + 1,
+  //         full_name: group?.user_id?.full_name || "NA",
+  //         phone_number: group?.user_id?.phone_number || "NA",
+  //         group_name: group?.group_id?.group_name || "NA",
+  //         group_id: group?.group_id?._id || "NA",
+  //         createdAt: group?.createdAt ? new Date(group.createdAt) : null,
+  //         enrollment_date: group?.createdAt
+  //           ? new Date(group.createdAt).toISOString().split("T")[0]
+  //           : "NA",
+  //       }));
 
-        const newSelection = {};
-        formatted.forEach((u) => (newSelection[u._id] = false));
-        setSelectUser(newSelection);
-        setTableUsers(formatted);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       const newSelection = {};
+  //       formatted.forEach((u) => (newSelection[u._id] = false));
+  //       setSelectUser(newSelection);
+  //       setTableUsers(formatted);
+  //     } catch (error) {
+  //       console.error("Error fetching data:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    fetchUsers();
-  }, [
-    selectedReferrerName,
-    selectedReferrerType,
-    fromDate,
-    toDate,
-    selectedGroupName,
-  ]);
+  //   fetchUsers();
+  // }, [
+  //   selectedReferrerName,
+  //   selectedReferrerType,
+  //   fromDate,
+  //   toDate,
+  //   selectedGroupName,
+  // ]);
+const filteredData = useMemo(() => {
+  const from = fromDate ? moment(fromDate, "YYYY-MM-DD").startOf("day") : null;
+  const to = toDate ? moment(toDate, "YYYY-MM-DD").endOf("day") : null;
+
+  const filterFn = (item) => {
+    const created = item?.createdAt ? moment(item.createdAt) : null;
+
+    const isWithinDateRange =
+      (!from || (created && created.isSameOrAfter(from))) &&
+      (!to || (created && created.isSameOrBefore(to)));
+
+    const normalizedName = selectedReferrerName.trim().toLowerCase();
+
+    // 🔹 Lead Filtering
+    if (selectedReferrerType === "lead") {
+      const leadTypeName =
+        item.lead_type === "customer"
+          ? item?.lead_customer?.full_name
+          : item.lead_type === "agent"
+          ? item?.lead_agent?.name
+          : "";
+
+      // const nameMatches =
+      //   !normalizedName || leadTypeName.toLowerCase().includes(normalizedName);
+      const nameMatches =
+  !normalizedName || (leadTypeName || "").toLowerCase().includes(normalizedName);
+      const matchesGroup =
+        !selectedGroupName ||
+        (item?.group_id?.group_name || "").toLowerCase() ===
+          selectedGroupName.toLowerCase();
+
+      return isWithinDateRange && nameMatches && matchesGroup;
+    }
+
+    // 🔹 Enrollment Filtering
+    const agentName = item?.agent?.name?.toLowerCase();
+    const agentType = item?.agent?.agent_type;
+
+    const matchesAgent =
+      selectedReferrerType === "agent" &&
+      agentType === "agent" &&
+      agentName?.includes(normalizedName);
+
+    const matchesEmployee =
+      selectedReferrerType === "employee" &&
+      agentType === "employee" &&
+      agentName?.includes(normalizedName);
+
+    const matchesCustomer =
+      selectedReferrerType === "customer" &&
+      item?.agent?.name?.toLowerCase().includes(normalizedName);
+
+    const typeMatch =
+      selectedReferrerType === "" ||
+      matchesAgent ||
+      matchesEmployee ||
+      matchesCustomer;
+
+    const matchesGroup =
+      !selectedGroupName ||
+      (item?.group_id?.group_name || "").toLowerCase() ===
+        selectedGroupName.toLowerCase();
+
+    return typeMatch && isWithinDateRange && matchesGroup;
+  };
+
+  return selectedReferrerType === "lead"
+    ? allLeads.filter(filterFn)
+    : allEnrolls.filter(filterFn);
+}, [allLeads, allEnrolls, selectedReferrerName, selectedReferrerType, fromDate, toDate, selectedGroupName]);
+
+useEffect(() => {
+  const formatted = filteredData.map((item, index) => ({
+    _id: item._id,
+    id: index + 1,
+    full_name:
+      selectedReferrerType === "lead"
+        ? item?.lead_name || "NA"
+        : item?.user_id?.full_name || "NA",
+    phone_number:
+      selectedReferrerType === "lead"
+        ? item?.lead_phone || "NA"
+        : item?.user_id?.phone_number || "NA",
+    group_name: item?.group_id?.group_name || "NA",
+    group_id: item?.group_id?._id || "NA",
+    createdAt: item?.createdAt ? new Date(item.createdAt) : null,
+    enrollment_date: item?.createdAt
+      ? new Date(item.createdAt).toISOString().split("T")[0]
+      : "NA",
+  }));
+
+  const newSelection = {};
+  formatted.forEach((u) => (newSelection[u._id] = false));
+  setSelectUser(newSelection);
+  setTableUsers(formatted);
+}, [filteredData]);
+
 
   useEffect(() => {
     const selectedIds = Object.values(selectUser).filter((v) => v).length;
@@ -742,12 +882,18 @@ const WhatsappPromo = () => {
                                 </option>
                               );
                             })}
-                          {selectedReferrerType === "customer" &&
+                          {/* {selectedReferrerType === "customer" &&
                             customerList.map((user) => (
                               <option key={user._id} value={user.full_name}>
                                 {user.full_name} ({user.phone_number})
                               </option>
-                            ))}
+                            ))} */}
+                            {selectedReferrerType === "customer" &&
+  agentList.map((person) => (
+    <option key={person._id} value={person.name}>
+      {person.name} ({person.phone_number})
+    </option>
+  ))}
                         </select>
                       </div>
                     )}
