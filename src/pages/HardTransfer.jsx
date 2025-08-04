@@ -18,7 +18,7 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import filterOption from "../helpers/filterOption";
 import { LoadingOutlined } from "@ant-design/icons";
 
-const SoftTransferCustomer = () => {
+const HardTransfer = () => {
   const [loader, setLoader] = useState(false);
   const [allGroups, setAllGroups] = useState([]);
   const [transferData, setTransferData] = useState([]);
@@ -45,14 +45,17 @@ const SoftTransferCustomer = () => {
     try {
       setIsDataTableLoading(true);
       const res = await api.get("/enroll/transfer/get-all");
-      console.log(res.data, "response data");
+      console.log(res.data,"response data")
       const formattedData = (res.data || []).map((transfer, index) => {
-        const fromGroupName =
-          transfer?.fromGroup?.group_name || transfer?.fromGroup;
-        const toGroupName = transfer?.toGroup?.group_name || transfer?.toGroup;
+        const fromGroupName = (
+          transfer?.fromGroup?.group_name || transfer?.fromGroup
+        );
+        const toGroupName = (
+          transfer?.toGroup?.group_name || transfer?.toGroup
+        );
         const fromUser = transfer?.fromUser || {};
         const toUser = transfer?.toUser || {};
-
+        
         return {
           _id: transfer._id,
           id: index + 1,
@@ -66,7 +69,7 @@ const SoftTransferCustomer = () => {
           to_phone: toUser.phone_number || "-",
           to_ticket: transfer?.toTicket || "-",
           transfer_amount: transfer?.transferAmount ?? 0,
-
+         
           transfer_type: transfer?.transferType || "-",
           date: transfer?.createdAt?.split("T")[0] || "-",
         };
@@ -97,9 +100,7 @@ const SoftTransferCustomer = () => {
   const handleSourceCustomers = async () => {
     if (!sourceGroup) return;
     try {
-      const response = await api.get(
-        `/enroll/get-group-all-enroll/${sourceGroup}`
-      );
+      const response = await api.get(`/enroll/get-group-all-enroll/${sourceGroup}`);
       setSourceCustomers(response.data);
     } catch (error) {
       setSourceCustomers([]);
@@ -110,9 +111,7 @@ const SoftTransferCustomer = () => {
   const handleDestinationCustomers = async () => {
     if (!destinationGroup) return;
     try {
-      const response = await api.get(
-        `/enroll/get-group-all-enroll/${destinationGroup}`
-      );
+      const response = await api.get(`/enroll/get-group-all-enroll/${destinationGroup}`);
       setDestinationCustomers(response.data);
     } catch (error) {
       setDestinationCustomers([]);
@@ -221,7 +220,7 @@ const SoftTransferCustomer = () => {
         toGroup: destinationGroup,
         toUser: destinationCustomer,
         toTicket: Number(destinationTicket),
-        transferType: "Soft",
+        transferType: "Hard",
       };
       const res = await api.post("/enroll/transfer-customer", payload);
       if (res.status === 200 || res.status === 201) {
@@ -232,25 +231,15 @@ const SoftTransferCustomer = () => {
           transfer_id: `TRAN-${transferData.length + 1}`,
           from_group: getGroupNameById(sourceGroup),
           to_group: getGroupNameById(destinationGroup),
-          from_customer:
-            sourceCustomers.find((c) => c.user_id?._id === sourceCustomer)
-              ?.user_id?.full_name || "-",
-          from_phone:
-            sourceCustomers.find((c) => c.user_id?._id === sourceCustomer)
-              ?.user_id?.phone_number || "-",
+          from_customer: sourceCustomers.find(c => c.user_id?._id === sourceCustomer)?.user_id?.full_name || "-",
+          from_phone: sourceCustomers.find(c => c.user_id?._id === sourceCustomer)?.user_id?.phone_number || "-",
           from_ticket: sourceTicket,
-          to_customer:
-            destinationCustomers.find(
-              (c) => c.user_id?._id === destinationCustomer
-            )?.user_id?.full_name || "-",
-          to_phone:
-            destinationCustomers.find(
-              (c) => c.user_id?._id === destinationCustomer
-            )?.user_id?.phone_number || "-",
+          to_customer: destinationCustomers.find(c => c.user_id?._id === destinationCustomer)?.user_id?.full_name || "-",
+          to_phone: destinationCustomers.find(c => c.user_id?._id === destinationCustomer)?.user_id?.phone_number || "-",
           to_ticket: destinationTicket,
           transfer_amount: parseFloat(transferAmount),
           amount_paid: amountPaid,
-          transfer_type: "Soft",
+          transfer_type: "Hard",
           date: new Date().toISOString().split("T")[0],
         };
         setTransferData((prev) => [...prev, formatted]);
@@ -301,17 +290,13 @@ const SoftTransferCustomer = () => {
         <Sidebar />
         <div className="flex-grow p-7">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold">Soft Transfer</h1>
+            <h1 className="text-2xl font-semibold">Hard Transfer</h1>
             <Button
               onClick={handleAddTransferClick}
-              className="bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
+              className="bg-blue-950 text-white px-5 py-5 rounded shadow-md hover:bg-blue-800 transition duration-200 text-lg"
               disabled={loader}
             >
-              {loader ? (
-                <Spin indicator={<LoadingOutlined spin />} />
-              ) : (
-                "+ Add Transfer"
-              )}
+              {loader ? <Spin indicator={<LoadingOutlined spin />} /> : "+ Add Transfer"}
             </Button>
           </div>
           {transferData?.length > 0 ? (
@@ -330,7 +315,7 @@ const SoftTransferCustomer = () => {
       </div>
 
       <Drawer
-        title="Add Soft Transfer"
+        title="Add Hard Transfer"
         width={840}
         onClose={() => setShowModal(false)}
         open={showModal}
@@ -352,9 +337,7 @@ const SoftTransferCustomer = () => {
         <Form layout="vertical" size="large">
           <Row gutter={[16, 24]} className="px-2">
             <Col span={24}>
-              <Form.Item
-                label={<span className="font-medium">From Group</span>}
-              >
+              <Form.Item label={<span className="font-medium">From Group</span>}>
                 <Select
                   size="large"
                   placeholder="Select Group"
@@ -379,18 +362,12 @@ const SoftTransferCustomer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item
-                label={<span className="font-medium">From Customer</span>}
-              >
+              <Form.Item label={<span className="font-medium">From Customer</span>}>
                 <Select
                   size="large"
                   placeholder="Select Customer"
                   onChange={(value) => handleChange("sourceCustomer", value)}
-                  value={
-                    sourceCustomer && sourceTicket
-                      ? `${sourceCustomer}|${sourceTicket}`
-                      : undefined
-                  }
+                  value={sourceCustomer && sourceTicket ? `${sourceCustomer}|${sourceTicket}` : undefined}
                   showSearch
                   optionFilterProp="children"
                   filterOption={(input, option) =>
@@ -430,9 +407,7 @@ const SoftTransferCustomer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item
-                label={<span className="font-medium">Amount Paid</span>}
-              >
+              <Form.Item label={<span className="font-medium">Amount Paid</span>}>
                 <Input
                   disabled
                   size="large"
@@ -447,16 +422,12 @@ const SoftTransferCustomer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item
-                label={<span className="font-medium">Transfer Amount</span>}
-              >
+              <Form.Item label={<span className="font-medium">Transfer Amount</span>}>
                 <Input
                   size="large"
                   placeholder="Enter Amount to Transfer"
                   value={transferAmount}
-                  onChange={(e) =>
-                    handleChange("transfer_amount", e.target.value)
-                  }
+                  onChange={(e) => handleChange("transfer_amount", e.target.value)}
                   style={{ fontSize: "16px", height: "52px" }}
                 />
               </Form.Item>
@@ -488,15 +459,11 @@ const SoftTransferCustomer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item
-                label={<span className="font-medium">To Customer</span>}
-              >
+              <Form.Item label={<span className="font-medium">To Customer</span>}>
                 <Select
                   size="large"
                   placeholder="Select Destination Customer"
-                  onChange={(value) =>
-                    handleChange("destinationCustomer", value)
-                  }
+                  onChange={(value) => handleChange("destinationCustomer", value)}
                   value={
                     destinationCustomer && destinationTicket
                       ? `${destinationCustomer}|${destinationTicket}`
@@ -529,4 +496,4 @@ const SoftTransferCustomer = () => {
   );
 };
 
-export default SoftTransferCustomer;
+export default HardTransfer;

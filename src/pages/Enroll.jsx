@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/layouts/Sidebar";
 import api from "../instance/TokenInstance";
-import {fieldSize} from "../data/fieldSize"
+import { fieldSize } from "../data/fieldSize";
 import Modal from "../components/modals/Modal";
 import DataTable from "../components/layouts/Datatable";
 import CustomAlert from "../components/alerts/CustomAlert";
@@ -39,7 +39,8 @@ const Enroll = () => {
     message: "Something went wrong!",
     type: "info",
   });
-const [isExistingEnrollment, setIsExistingEnrollment] = useState(false);
+  const [isExistingEnrollment, setIsExistingEnrollment] = useState(false);
+  const [admin, setAdmin] = useState("");
   const [formData, setFormData] = useState({
     group_id: "",
     user_id: "",
@@ -51,7 +52,7 @@ const [isExistingEnrollment, setIsExistingEnrollment] = useState(false);
     referred_lead: "",
     chit_asking_month: "",
   });
-const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [updateFormData, setUpdateFormData] = useState({
     group_id: "",
     user_id: "",
@@ -70,7 +71,16 @@ const [isVerified, setIsVerified] = useState(false);
     const { value } = e.target;
     setSearchText(value);
   };
-
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    const userObj = JSON.parse(user);
+    const adminId = userObj._id;
+    if (adminId) {
+      setAdmin(userObj._id);
+    } else {
+      setAdmin("");
+    }
+  }, []);
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -108,16 +118,16 @@ const [isVerified, setIsVerified] = useState(false);
                 : "",
               chit_asking_month: group?.chit_asking_month,
               referred_type: group?.referred_type,
-              //referred_agent: group?.agent?.name,
-              //referred_customer: group?.referred_customer?.full_name,
-              //referred_lead: group?.referred_lead?.lead_name,
-               referred_by: group?.agent?.name && group?.agent?.phone_number
-                ? `${group.agent.name} | ${group.agent.phone_number}`
-                : group?.referred_customer?.full_name && group?.referred_customer?.phone_number
-                ? `${group.referred_customer.full_name} | ${group?.referred_customer?.phone_number }`
-                : group?.referred_lead?.lead_name && group?.referred_lead?.agent_number
-                ? `${group.referred_lead.lead_name} | ${group.referred_lead.agent_number}`
-                : "N/A",
+              referred_by:
+                group?.agent?.name && group?.agent?.phone_number
+                  ? `${group.agent.name} | ${group.agent.phone_number}`
+                  : group?.referred_customer?.full_name &&
+                    group?.referred_customer?.phone_number
+                  ? `${group.referred_customer.full_name} | ${group?.referred_customer?.phone_number}`
+                  : group?.referred_lead?.lead_name &&
+                    group?.referred_lead?.agent_number
+                  ? `${group.referred_lead.lead_name} | ${group.referred_lead.agent_number}`
+                  : "N/A",
               ticket: group.tickets,
               action: (
                 <div className="flex justify-center items-center gap-2">
@@ -135,7 +145,17 @@ const [isVerified, setIsVerified] = useState(false);
                             </div>
                           ),
                         },
-                    
+                        {
+                          key:"2",
+                           label: (
+                            <div
+                              className="text-red-600"
+                              onClick={() => handleDeleteModalOpen(group._id)}
+                            >
+                              Delete
+                            </div>
+                          ),
+                        }
                       ],
                     }}
                     placement="bottomLeft"
@@ -195,7 +215,7 @@ const [isVerified, setIsVerified] = useState(false);
     fetchLeads();
   }, []);
 
-  const handleAntDSelect = async(field, value) => {
+  const handleAntDSelect = async (field, value) => {
     setFormData((prevData) => ({
       ...prevData,
       [field]: value,
@@ -205,7 +225,7 @@ const [isVerified, setIsVerified] = useState(false);
       ...prevErrors,
       [field]: "",
     }));
-     if (field === "group_id") {
+    if (field === "group_id") {
       try {
         const response = await api.post(`/enroll/get-next-tickets/${value}`);
         setAvailableTicketsAdd(response.data.availableTickets || []);
@@ -239,7 +259,7 @@ const [isVerified, setIsVerified] = useState(false);
         setTableEnrolls([]);
         setIsDataTableLoading(true);
         const response = await api.get(url);
-        console.info(response,"response data this is data");
+        console.info(response, "response data this is data");
         if (response.data && response.data.length > 0) {
           setFilteredUsers(response.data);
           const formattedData = response.data.map((group, index) => {
@@ -251,19 +271,19 @@ const [isVerified, setIsVerified] = useState(false);
               phone_number: group?.user_id?.phone_number,
               group_name: group?.group_id?.group_name,
               payment_type: group?.payment_type,
-              enrollment_date:group?.createdAt.split("T")[0],
+              enrollment_date: group?.createdAt.split("T")[0],
               chit_asking_month: group?.chit_asking_month,
               referred_type: group?.referred_type,
-              referred_by: group?.agent?.name && group?.agent?.phone_number
-              ? `${group.agent.name} | ${group.agent.phone_number}`
-              : group?.referred_customer?.full_name && group?.referred_customer?.phone_number
-                ? `${group.referred_customer.full_name} | ${group?.referred_customer?.phone_number}`
-                : group?.referred_lead?.lead_name && group?.referred_lead?.agent_number
+              referred_by:
+                group?.agent?.name && group?.agent?.phone_number
+                  ? `${group.agent.name} | ${group.agent.phone_number}`
+                  : group?.referred_customer?.full_name &&
+                    group?.referred_customer?.phone_number
+                  ? `${group.referred_customer.full_name} | ${group?.referred_customer?.phone_number}`
+                  : group?.referred_lead?.lead_name &&
+                    group?.referred_lead?.agent_number
                   ? `${group.referred_lead.lead_name} | ${group.referred_lead.agent_number}`
                   : "N/A",
-              // referred_agent: group?.agent?.name,
-              // referred_customer: group?.referred_customer?.full_name,
-              // referred_lead: group?.referred_lead?.lead_name,
               ticket: group.tickets,
               action: (
                 <div className="flex justify-center items-center gap-2">
@@ -281,7 +301,18 @@ const [isVerified, setIsVerified] = useState(false);
                             </div>
                           ),
                         },
-                     
+                         {
+                          key:"2",
+                           label: (
+                            <div
+                              className="text-red-600"
+                              onClick={() => handleDeleteModalOpen(group._id)}
+                            >
+                              Delete
+                            </div>
+                          ),
+                        }
+                        
                       ],
                     }}
                     placement="bottomLeft"
@@ -322,9 +353,6 @@ const [isVerified, setIsVerified] = useState(false);
     { key: "payment_type", header: "Payment Type" },
     { key: "enrollment_date", header: "Enrollment Date" },
     { key: "chit_asking_month", header: "Chit Asking Month" },
-    // { key: "referred_agent", header: "Referred Employee | ID" },
-    // { key: "referred_customer", header: "Referred Customer | ID" },
-    // { key: "referred_lead", header: "Referred Lead | ID" },
     { key: "referred_by", header: "Referred By" },
     { key: "action", header: "Action" }
   );
@@ -408,7 +436,6 @@ const [isVerified, setIsVerified] = useState(false);
           chit_asking_month: Number(chit_asking_month),
           tickets: ticketNumber,
         }));
-      console.log(ticketEntries);
 
       try {
         for (const ticketEntry of ticketEntries) {
@@ -486,7 +513,10 @@ const [isVerified, setIsVerified] = useState(false);
   const handleDeleteGroup = async () => {
     if (currentGroup) {
       try {
-        await api.delete(`/enroll/delete-enroll/${currentGroup._id}`);
+        await api.delete(`/enroll/delete-enroll/${currentGroup._id}`,{
+          deleted_by:admin,
+          deleted_at:new Date()
+        });
 
         setShowModalDelete(false);
         setCurrentGroup(null);
@@ -535,8 +565,7 @@ const [isVerified, setIsVerified] = useState(false);
     }
   }, [selectedGroup]);
 
-
-      const handleVerify = async () => {
+  const handleVerify = async () => {
     const {
       user_id,
       group_id,
@@ -585,7 +614,9 @@ const [isVerified, setIsVerified] = useState(false);
         const referredInfoParts = [];
 
         if (agentName)
-          referredInfoParts.push(` Already referred by Agent Name: ${agentName}`);
+          referredInfoParts.push(
+            ` Already referred by Agent Name: ${agentName}`
+          );
         if (referredCustomerName)
           referredInfoParts.push(
             `👤 Already referred by Customer Name: ${referredCustomerName}`
@@ -618,7 +649,6 @@ const [isVerified, setIsVerified] = useState(false);
             response?.data?.chit_asking_month ?? prev.chit_asking_month,
         }));
 
-        // Show selectedBy based on referred_type
         let selectedBy = "Unknown";
         if (referred_type === "Agent")
           selectedBy = selectedAgent?.name || "Unknown Agent";
@@ -631,45 +661,40 @@ const [isVerified, setIsVerified] = useState(false);
         setIsExistingEnrollment(true);
         setEnrollmentStep("continue");
 
-        // notification.warning({
-        //   message: `User: "${selectedUser?.full_name}" "\n" Group: "${selectedGroup?.group_name}"`,
-        //   description: `Referred Type (${referred_type}) "\n" Name: ${selectedBy}\n${referredInfoParts.join(
-        //     "\n"
-        //   )}`,
-        //   duration: 20,
-        // });
         notification.warning({
-  message: (
-    <span style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '10px' }}>
-      Customer Name: "{selectedUser?.full_name}"
-      <br />
-      <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-      Group Name: "{selectedGroup?.group_name}"
-      <br />
-      <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-    </span>
-  ),
-  description: (
-    <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
-      {/* Referred Type ({referred_type})
-      <br />
-      <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-      Name: {selectedBy}
-      <br />
-      <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} /> */}
-      {referredInfoParts.map((part, index) => (
-        <span key={index}>
-          {part}
-          <br />
-          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-        </span>
-      ))}
-    </div>
-  ),
-  duration: 30,
-});
-        setIsExistingEnrollment(true); // ✅ Still set this
-        setIsVerified(true); // ✅ Allow submission
+          message: (
+            <span
+              style={{
+                fontWeight: "bold",
+                fontSize: "1.25rem",
+                marginBottom: "10px",
+              }}
+            >
+              Customer Name: "{selectedUser?.full_name}"
+              <br />
+              <hr style={{ margin: "10px 0", borderTop: "1px solid #ccc" }} />
+              Group Name: "{selectedGroup?.group_name}"
+              <br />
+              <hr style={{ margin: "10px 0", borderTop: "1px solid #ccc" }} />
+            </span>
+          ),
+          description: (
+            <div style={{ fontWeight: "bold", fontSize: "1.25rem" }}>
+              {referredInfoParts.map((part, index) => (
+                <span key={index}>
+                  {part}
+                  <br />
+                  <hr
+                    style={{ margin: "10px 0", borderTop: "1px solid #ccc" }}
+                  />
+                </span>
+              ))}
+            </div>
+          ),
+          duration: 30,
+        });
+        setIsExistingEnrollment(true);
+        setIsVerified(true);
         setEnrollmentStep("continue");
       } else {
         setIsExistingEnrollment(false);
@@ -677,7 +702,7 @@ const [isVerified, setIsVerified] = useState(false);
         setEnrollmentStep("continue");
 
         notification.success({
-          message: `✅ Eligible for Enrollment`,
+          message: `Eligible for Enrollment`,
           description: `User "${selectedUser?.full_name}" can be enrolled in "${selectedGroup?.group_name}".`,
           duration: 6,
         });
@@ -695,7 +720,7 @@ const [isVerified, setIsVerified] = useState(false);
     e.preventDefault();
 
     if (enrollmentStep === "verify") {
-      await handleVerify(); // this sets isVerified inside
+      await handleVerify();
     } else if (enrollmentStep === "continue") {
       setEnrollmentStep("submit");
     } else if (enrollmentStep === "submit") {
@@ -809,7 +834,7 @@ const [isVerified, setIsVerified] = useState(false);
                       .includes(input.toLowerCase())
                   }
                   value={formData?.group_id || undefined}
-                  onChange={(value) => handleAntDSelect("group_id", value )}
+                  onChange={(value) => handleAntDSelect("group_id", value)}
                 >
                   {groups.map((group) => (
                     <Select.Option key={group._id} value={group._id}>
@@ -846,7 +871,8 @@ const [isVerified, setIsVerified] = useState(false);
                 >
                   {users.map((user) => (
                     <Select.Option key={user._id} value={user._id}>
-                      {user.full_name} | {user.phone_number ? user.phone_number : "No Number"}
+                      {user.full_name} |{" "}
+                      {user.phone_number ? user.phone_number : "No Number"}
                     </Select.Option>
                   ))}
                 </Select>
@@ -915,11 +941,13 @@ const [isVerified, setIsVerified] = useState(false);
                   value={formData?.referred_type || undefined}
                   onChange={(value) => handleAntDSelect("referred_type", value)}
                 >
-                  {["Self Joining",
+                  {[
+                    "Self Joining",
                     "Customer",
                     "Employee",
                     "Leads",
-                    "Others"].map((refType) => (
+                    "Others",
+                  ].map((refType) => (
                     <Select.Option key={refType} value={refType}>
                       {refType}
                     </Select.Option>
@@ -936,7 +964,7 @@ const [isVerified, setIsVerified] = useState(false);
                     Select Referred Customer{" "}
                     <span className="text-red-500 ">*</span>
                   </label>
-                 
+
                   <Select
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     placeholder="Select Or Search Referred Customer"
@@ -950,11 +978,14 @@ const [isVerified, setIsVerified] = useState(false);
                         .includes(input.toLowerCase())
                     }
                     value={formData?.referred_customer || undefined}
-                    onChange={(value) => handleAntDSelect("referred_customer", value)}
+                    onChange={(value) =>
+                      handleAntDSelect("referred_customer", value)
+                    }
                   >
                     {users.map((user) => (
                       <Select.Option key={user._id} value={user._id}>
-                        {user.full_name} | {user.phone_number ? user.phone_number : "No Number"}
+                        {user.full_name} |{" "}
+                        {user.phone_number ? user.phone_number : "No Number"}
                       </Select.Option>
                     ))}
                   </Select>
@@ -983,7 +1014,9 @@ const [isVerified, setIsVerified] = useState(false);
                         .includes(input.toLowerCase())
                     }
                     value={formData?.referred_lead || undefined}
-                    onChange={(value) => handleAntDSelect("referred_lead", value)}
+                    onChange={(value) =>
+                      handleAntDSelect("referred_lead", value)
+                    }
                   >
                     {leads.map((lead) => (
                       <Select.Option key={lead._id} value={lead._id}>
@@ -1003,29 +1036,29 @@ const [isVerified, setIsVerified] = useState(false);
                     <span className="text-red-500 ">*</span>
                   </label>
 
-                 <Select
-  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  placeholder="Select Or Search Referred Employee"
-  popupMatchSelectWidth={false}
-  showSearch
-  name="agent"
-  filterOption={(input, option) => {
-    if (!option || !option.children) return false;  // Ensure option and children exist
+                  <Select
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    placeholder="Select Or Search Referred Employee"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="agent"
+                    filterOption={(input, option) => {
+                      if (!option || !option.children) return false; // Ensure option and children exist
 
-    return option.children
-      .toString()
-      .toLowerCase()
-      .includes(input.toLowerCase());
-  }}
-  value={formData?.agent || undefined}
-  onChange={(value) => handleAntDSelect("agent", value)}
->
-  {agents.map((agent) => (
-    <Select.Option key={agent._id} value={agent._id}>
-      {agent.name}
-    </Select.Option>
-  ))}
-</Select>
+                      return option.children
+                        .toString()
+                        .toLowerCase()
+                        .includes(input.toLowerCase());
+                    }}
+                    value={formData?.agent || undefined}
+                    onChange={(value) => handleAntDSelect("agent", value)}
+                  >
+                    {agents.map((agent) => (
+                      <Select.Option key={agent._id} value={agent._id}>
+                        {agent.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
                 </div>
               )}
               {formData.group_id && availableTicketsAdd.length === 0 ? (
@@ -1085,7 +1118,7 @@ const [isVerified, setIsVerified] = useState(false);
                 </div>
               </div>
               <div className="w-full flex justify-end">
-               <button
+                <button
                   type="button"
                   disabled={
                     loading ||
@@ -1196,7 +1229,9 @@ const [isVerified, setIsVerified] = useState(false);
                     option.children.toLowerCase().includes(input.toLowerCase())
                   }
                   value={updateFormData?.payment_type || undefined}
-                  onChange={(value) => handleAntInputDSelect("payment_type", value)}
+                  onChange={(value) =>
+                    handleAntInputDSelect("payment_type", value)
+                  }
                 >
                   {["Daily", "Weekly", "Monthly"].map((pType) => (
                     <Select.Option key={pType.toLowerCase()} value={pType}>
@@ -1226,7 +1261,7 @@ const [isVerified, setIsVerified] = useState(false);
                 >
                   Select Referred Type <span className="text-red-500 ">*</span>
                 </label>
-                 <Select
+                <Select
                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
                   placeholder="Select Referred Type"
                   popupMatchSelectWidth={false}
@@ -1236,13 +1271,17 @@ const [isVerified, setIsVerified] = useState(false);
                     option.children.toLowerCase().includes(input.toLowerCase())
                   }
                   value={updateFormData?.referred_type || undefined}
-                  onChange={(value) => handleAntInputDSelect("referred_type", value)}
+                  onChange={(value) =>
+                    handleAntInputDSelect("referred_type", value)
+                  }
                 >
-                  {["Self Joining",
+                  {[
+                    "Self Joining",
                     "Customer",
                     "Employee",
                     "Leads",
-                    "Others"].map((refType) => (
+                    "Others",
+                  ].map((refType) => (
                     <Select.Option key={refType} value={refType}>
                       {refType}
                     </Select.Option>
@@ -1259,7 +1298,7 @@ const [isVerified, setIsVerified] = useState(false);
                     Select Referred Customer{" "}
                     <span className="text-red-500 ">*</span>
                   </label>
-                 
+
                   <Select
                     className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
                     placeholder="Select Or Search Referred Customer"
@@ -1273,7 +1312,9 @@ const [isVerified, setIsVerified] = useState(false);
                         .includes(input.toLowerCase())
                     }
                     value={updateFormData?.referred_customer || undefined}
-                    onChange={(value) => handleAntDSelect("referred_customer", value)}
+                    onChange={(value) =>
+                      handleAntDSelect("referred_customer", value)
+                    }
                   >
                     {users.map((user) => (
                       <Select.Option key={user._id} value={user._id}>
@@ -1292,7 +1333,7 @@ const [isVerified, setIsVerified] = useState(false);
                     Select Referred Leads{" "}
                     <span className="text-red-500 ">*</span>
                   </label>
-              
+
                   <Select
                     className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
                     placeholder="Select Or Search Referred Lead"
@@ -1306,7 +1347,9 @@ const [isVerified, setIsVerified] = useState(false);
                         .includes(input.toLowerCase())
                     }
                     value={updateFormData?.referred_lead || undefined}
-                    onChange={(value) => handleAntInputDSelect("referred_lead", value)}
+                    onChange={(value) =>
+                      handleAntInputDSelect("referred_lead", value)
+                    }
                   >
                     {leads.map((lead) => (
                       <Select.Option key={lead._id} value={lead._id}>
@@ -1325,7 +1368,7 @@ const [isVerified, setIsVerified] = useState(false);
                     Select Referred Employee{" "}
                     <span className="text-red-500 ">*</span>
                   </label>
-                
+
                   <Select
                     className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
                     placeholder="Select Or Search Referred Employee"

@@ -74,6 +74,7 @@ import QuickSearch from "../pages/QuickSearch";
 import BidWinner from "../pages/BidWinner";
 import TransferCustomer from "../pages/SoftTransferCustomer";
 import SoftTransferCustomer from "../pages/SoftTransferCustomer";
+import HardTransferCustomer from "../pages/HardTransfer";
 import UnApprovedCustomer from "../pages/UnApprovedCustomer";
 const mainRoutes = createBrowserRouter([
   {
@@ -89,7 +90,7 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-    {
+  {
     path: "/quick-search",
     element: (
       <ProtectedRoute>
@@ -162,7 +163,6 @@ const mainRoutes = createBrowserRouter([
     ),
   },
   ,
-
   {
     path: "/un-approved-customer",
     element: (
@@ -179,7 +179,7 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
- 
+
   {
     path: "/target",
     element: (
@@ -397,14 +397,21 @@ const mainRoutes = createBrowserRouter([
     ),
   },
 
-
   ,
-
   {
-    path:"soft-transfer",
+    path: "soft-transfer",
     element: (
       <ProtectedRoute>
-         <SoftTransferCustomer/>
+        <SoftTransferCustomer />
+      </ProtectedRoute>
+    ),
+  },
+   ,
+  {
+    path: "hard-transfer",
+    element: (
+      <ProtectedRoute>
+        <HardTransferCustomer />
       </ProtectedRoute>
     ),
   },
@@ -492,7 +499,7 @@ const mainRoutes = createBrowserRouter([
       { path: "due-email", element: <DueEmail /> },
       { path: "over-due-email", element: <OverDueEmail /> },
       { path: "what-promo", element: <WhatsappPromo /> },
-      {path: "bid-winner", element: <BidWinner/>},
+      { path: "bid-winner", element: <BidWinner /> },
     ],
   },
 ]);
