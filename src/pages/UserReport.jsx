@@ -46,6 +46,31 @@ const UserReport = () => {
     amount: 0,
     createdAt: null,
   });
+  const [visibleRows, setVisibleRows] = useState({
+  row1: false,
+  row2: false,
+  row3: false,
+  row4: false,
+  row5: false,
+  row6: false,
+  row7: false,
+  row8: false,
+  row9: false,
+});
+
+// Reusable Input component
+const Input = ({ label, value }) => (
+  <div className="flex flex-col flex-1">
+    <label className="mb-1 text-sm font-medium text-gray-700">{label}</label>
+    <input
+      type="text"
+      placeholder={label}
+      value={value || ""}
+      readOnly
+      className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+    />
+  </div>
+);
   const [TotalToBepaid, setTotalToBePaid] = useState("");
   const [Totalpaid, setTotalPaid] = useState("");
   const [Totalprofit, setTotalProfit] = useState("");
@@ -976,363 +1001,159 @@ const UserReport = () => {
                                 })()}
                             </div>
 
-                            {/* Customer Details fields */}
-                            <div className="flex gap-4">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Name"
-                                  value={group.full_name || ""} // Ensure default to empty string
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Email
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Email"
-                                  value={group.email || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Phone Number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Phone Number"
-                                  value={group.phone_number || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Adhaar Number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Adhaar Number"
-                                  value={group.adhaar_no || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Pan Number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Pan Number"
-                                  value={group.pan_no || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Pincode
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Pincode"
-                                  value={group.pincode || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Address
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Address"
-                                  value={group.address || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  gender
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Gender"
-                                  value={group.gender || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Date of Birth
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Date of Birth"
-                                  value={
-                                    group.dateofbirth
-                                      ? new Date(group.dateofbirth)
-                                          .toISOString()
-                                          .split("T")[0]
-                                      : ""
-                                  }
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Collection Area
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Collection Area"
-                                  value={
-                                    group?.collection_area?.route_name || ""
-                                  }
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Marital Status
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Marital Status"
-                                  value={group.marital_status || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Father Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Father Name"
-                                  value={group.father_name || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Nationality
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Nationality"
-                                  value={group.nationality || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Village
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Village"
-                                  value={group.village || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Taluk
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Taluk"
-                                  value={group.taluk || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  District
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="District"
-                                  value={group.district || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  State
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Enter State"
-                                  value={group.state || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Alternate number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Alternate number"
-                                  value={group.alternate_number || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Referral Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Referral Name"
-                                  value={group.referral_name || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Nominee Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Nominee Name"
-                                  value={group.nominee_name || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Nominee Date Of Birth
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Nominee Date Of Birth"
-                                  value={
-                                    group.nominee_dateofbirth
-                                      ? new Date(group.nominee_dateofbirth)
-                                          .toISOString()
-                                          .split("T")[0]
-                                      : ""
-                                  }
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Nominee Phone Number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Nominee Phone Number"
-                                  value={group.nominee_phone_number || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Nominee Relationship
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Nominee Relationship"
-                                  value={group.nominee_relationship || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Bank Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Bank Name"
-                                  value={group.bank_name || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-5">
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Bank Branch Name
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Bank Branch Name"
-                                  value={group.bank_branch_name || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Bank Account Number
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Bank Account Number"
-                                  value={group.bank_account_number || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <label className="mb-1 text-sm font-medium text-gray-700">
-                                  Bank IFSC Code
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Bank IFSC Code"
-                                  value={group.bank_IFSC_code || ""}
-                                  readOnly
-                                  className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
-                                />
-                              </div>
-                            </div>
+      <div className="mt-5">
+  {/* Toggle Buttons */}
+  <div className="flex flex-wrap gap-4 mb-6">
+    <button
+      onClick={() => setVisibleRows((prev) => ({ ...prev, row1: !prev.row1 }))}
+      className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
+        ${visibleRows.row1
+          ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+          : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"}
+      `}
+    >
+      {visibleRows.row1 ? "✓ Hide Basic Info" : "Show Basic Info"}
+    </button>
+
+    <button
+      onClick={() => setVisibleRows((prev) => ({ ...prev, row2: !prev.row2 }))}
+      className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
+        ${visibleRows.row2
+          ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+          : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"}
+      `}
+    >
+      {visibleRows.row2 ? "✓ Hide Address Info" : "Show Address Info"}
+    </button>
+
+    <button
+      onClick={() => setVisibleRows((prev) => ({ ...prev, row3: !prev.row3 }))}
+      className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
+        ${visibleRows.row3
+          ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+          : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"}
+      `}
+    >
+      {visibleRows.row3 ? "✓ Hide Regional Info" : "Show Regional Info"}
+    </button>
+
+    <button
+      onClick={() => setVisibleRows((prev) => ({ ...prev, row4: !prev.row4 }))}
+      className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
+        ${visibleRows.row4
+          ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+          : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"}
+      `}
+    >
+      {visibleRows.row4
+        ? "✓ Hide Referral, Nominee & Bank Details"
+        : "Show Referral, Nominee & Bank Details"}
+    </button>
+  </div>
+
+  {/* Row 1: Basic Info */}
+  {visibleRows.row1 && (
+    <div className="flex gap-8 mb-6">
+      <div className="flex flex-col w-full gap-4">
+        <Input label="Name" value={group.full_name} />
+        <Input label="Email" value={group.email} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Phone Number" value={group.phone_number} />
+        <Input label="Adhaar Number" value={group.adhaar_no} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="PAN Number" value={group.pan_no} />
+        <Input label="Pincode" value={group.pincode} />
+      </div>
+    </div>
+  )}
+
+  {/* Row 2: Address Info */}
+  {visibleRows.row2 && (
+    <div className="flex gap-8 mb-6">
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Address" value={group.address} />
+        <Input label="Gender" value={group.gender} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input
+          label="Date of Birth"
+          value={
+            group.dateofbirth
+              ? new Date(group.dateofbirth).toISOString().split("T")[0]
+              : ""
+          }
+        />
+        <Input
+          label="Collection Area"
+          value={group?.collection_area?.route_name}
+        />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Marital Status" value={group.marital_status} />
+        <Input label="Father Name" value={group.father_name} />
+      </div>
+    </div>
+  )}
+
+  {/* Row 3: Regional Info */}
+  {visibleRows.row3 && (
+    <div className="flex gap-8 mb-6">
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Nationality" value={group.nationality} />
+        <Input label="Village" value={group.village} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Taluk" value={group.taluk} />
+        <Input label="District" value={group.district} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="State" value={group.state} />
+        <Input label="Alternate Number" value={group.alternate_number} />
+      </div>
+    </div>
+  )}
+
+  {/* Row 4: Referral, Nominee & Bank Info */}
+  {visibleRows.row4 && (
+    <div className="flex gap-8 mb-6">
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Referral Name" value={group.referral_name} />
+        <Input label="Nominee Name" value={group.nominee_name} />
+        <Input
+          label="Nominee DOB"
+          value={
+            group.nominee_dateofbirth
+              ? new Date(group.nominee_dateofbirth).toISOString().split("T")[0]
+              : ""
+          }
+        />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input
+          label="Nominee Phone Number"
+          value={group.nominee_phone_number}
+        />
+        <Input
+          label="Nominee Relationship"
+          value={group.nominee_relationship}
+        />
+        <Input label="Bank Name" value={group.bank_name} />
+      </div>
+      <div className="flex flex-col gap-4 w-full">
+        <Input label="Bank Branch Name" value={group.bank_branch_name} />
+        <Input label="Bank Account Number" value={group.bank_account_number} />
+        <Input label="Bank IFSC Code" value={group.bank_IFSC_code} />
+      </div>
+    </div>
+  )}
+</div>
+
+
+
+
+
 
                             <div className="mt-10">
                               <h3 className="text-lg font-medium mb-4">
