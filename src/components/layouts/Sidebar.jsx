@@ -85,6 +85,12 @@ const MenuSidebar = [
     link: "/enrollment",
   },
   {
+    id: "$83",
+    title: "Mobile Enrollments ",
+    icon: <FaPeopleArrows />,
+    link: "/mobile-app-enroll",
+  },
+  {
     id: "$67",
     title: "Guarantor ",
     icon: <FaHandshake />,

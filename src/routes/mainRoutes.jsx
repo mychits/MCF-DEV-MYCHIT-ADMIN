@@ -77,6 +77,7 @@ import SoftTransferCustomer from "../pages/SoftTransferCustomer";
 import HardTransferCustomer from "../pages/HardTransfer";
 import UnApprovedCustomer from "../pages/UnApprovedCustomer";
 import PaymentLink from "../pages/PaymentLink";
+import MobileAppEnroll from "../pages/MobileAppEnroll";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -153,6 +154,15 @@ const mainRoutes = createBrowserRouter([
         <PrintPaymentOut />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/mobile-app-enroll",
+    element :  (
+      <ProtectedRoute>
+      <MobileAppEnroll/>
+      </ProtectedRoute>
+    ),
+    
   },
 
   {

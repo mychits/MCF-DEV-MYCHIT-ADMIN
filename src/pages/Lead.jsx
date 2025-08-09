@@ -14,6 +14,7 @@ import { Input, Select, Dropdown, Tooltip } from "antd";
 import { fieldSize } from "../data/fieldSize";
 import CircularLoader from "../components/loaders/CircularLoader";
 import { FaWhatsappSquare } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 const Lead = () => {
   const [groups, setGroups] = useState([]);
   const [TableGroups, setTableGroups] = useState([]);
@@ -39,6 +40,7 @@ const Lead = () => {
     const { value } = e.target;
     setSearchText(value);
   };
+  const navigate = useNavigate();
   const [alertConfig, setAlertConfig] = useState({
     visibility: false,
     message: "Something went wrong!",
@@ -83,6 +85,21 @@ const Lead = () => {
     };
     fetchGroups();
   }, [reloadTrigger]);
+
+//     const handleAssignTask = (leadId) => {
+//   navigate("/task", { state: { leadId } }); // ✅ pass leadId
+// }
+
+const handleAssignTask = (lead) => {
+  navigate("/task", {
+    state: {
+      leadId: lead._id,
+      leadName: lead.lead_name,
+      leadType: lead.lead_type,
+      leadTypeName: lead.lead_type_name
+    }
+  });
+};
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -141,8 +158,19 @@ const Lead = () => {
                         </Tooltip>
                       ),
                     },
-                    {
+                     {
                       key: "3",
+                      label: (
+                        <div
+                          className="text-blue-600"
+                          onClick={() => handleAssignTask(group._id)}
+                        >
+                          Assign Task
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "4",
                       label: (
                         <div
                           className="text-rose-500"
@@ -553,9 +581,9 @@ const Lead = () => {
       setFormData({
         full_name: data?.lead_name || "",
         phone_number: data?.lead_phone || "",
-        lead_profession: data?.lead_profession || "", // ✅ Ensure added
-        group_id: data?.group_id?._id || "", // ✅ Ensure added
-        lead_type: data?.lead_type || "", // ✅ Ensure added
+        lead_profession: data?.lead_profession || "", //  Ensure added
+        group_id: data?.group_id?._id || "", //  Ensure added
+        lead_type: data?.lead_type || "", //  Ensure added
         lead_agent: data?.lead_agent?._id || "",
         email: "",
         password: "",

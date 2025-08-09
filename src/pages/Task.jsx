@@ -8,7 +8,7 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import { Dropdown } from "antd";
 import { IoMdMore } from "react-icons/io";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
-
+import { useLocation } from "react-router-dom";
 const Task = () => {
   const [agents, setAgents] = useState([]);
   const [leads, setLeads] = useState([]);
@@ -16,19 +16,20 @@ const Task = () => {
   const [tableTasks, setTableTasks] = useState([]);
   const [formData, setFormData] = useState({
     employeeId: "",
-    taskTitle: "",
+    taskTitle: "Pending  Lead Visit",
     taskDescription: "",
-    startDate: "",
+    startDate: new Date().toISOString().slice(0, 16),
     endDate: "",
     status: "Pending",
     lead: "",
   });
-
+  const location = useLocation();
+  const leadIdFromLocation = location?.state?.leadId || null;
   const [modalVisible, setModalVisible] = useState(false);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [currentTask, setCurrentTask] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-const [alertConfig, setAlertConfig] = useState({
+  const [alertConfig, setAlertConfig] = useState({
     visibility: false,
     message: "Something went wrong!",
     type: "info",
@@ -49,20 +50,31 @@ const [alertConfig, setAlertConfig] = useState({
 
       setAgents(agentData);
       setLeads(leadData);
+      if (leadIdFromLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          lead: leadIdFromLocation,
+        }));
+        setModalVisible(true); // opens modal with lead selected
+      }
       setTasks(taskData);
 
       const formatted = taskData.map((task, index) => {
         const emp = agentData.find((a) => a._id === task.employeeId);
+        
 
         return {
           _id: task._id,
           id: index + 1,
-          employeeName: emp?.name || "N/A",
+          employeeName:  emp?.name || "N/A",
           employeeCode: emp?.employeeCode || "N/A",
           taskTitle: task.taskTitle,
           status: task.status,
-          lead: task.lead?.name && task.lead?.phone ? `${task.lead.name} (${task.lead.phone})` : "N/A",
-  
+          lead:
+            task.lead?.name && task.lead?.phone
+              ? `${task.lead.name} (${task.lead.phone})`
+              : "N/A",
+
           action: (
             <Dropdown
               menu={{
@@ -70,7 +82,10 @@ const [alertConfig, setAlertConfig] = useState({
                   {
                     key: "1",
                     label: (
-                      <div className="text-green-600" onClick={() => openEdit(task)}>
+                      <div
+                        className="text-green-600"
+                        onClick={() => openEdit(task)}
+                      >
                         Edit
                       </div>
                     ),
@@ -78,7 +93,10 @@ const [alertConfig, setAlertConfig] = useState({
                   {
                     key: "2",
                     label: (
-                      <div className="text-red-600" onClick={() => handleDelete(task._id)}>
+                      <div
+                        className="text-red-600"
+                        onClick={() => handleDelete(task._id)}
+                      >
                         Delete
                       </div>
                     ),
@@ -104,7 +122,17 @@ const [alertConfig, setAlertConfig] = useState({
   useEffect(() => {
     fetchAllData();
   }, [reloadTrigger]);
-
+useEffect(() => {
+  if (leadIdFromLocation && leads.length > 0) {
+    const selectedLead = leads.find((l) => l._id === leadIdFromLocation);
+    setFormData((prev) => ({
+      ...prev,
+      lead: leadIdFromLocation,
+      startDate: new Date().toISOString().slice(0, 16),
+    }));
+    setModalVisible(true);
+  }
+}, [leadIdFromLocation, leads])
   const handleInput = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -116,24 +144,32 @@ const [alertConfig, setAlertConfig] = useState({
       const payload = {
         ...formData,
       };
-  
+
       if (currentTask) {
         await api.put(`/task/update-task/${currentTask}`, payload);
-        
-        setAlertConfig({ visibility: true, message: "Task updated successfully", type: "success" });
+
+        setAlertConfig({
+          visibility: true,
+          message: "Task updated successfully",
+          type: "success",
+        });
         setReloadTrigger((prev) => prev + 1);
       } else {
         await api.post("/task/add-task", payload);
         setReloadTrigger((prev) => prev + 1);
-        setAlertConfig({ visibility: true, message: "Task created successfully", type: "success" });
+        setAlertConfig({
+          visibility: true,
+          message: "Task created successfully",
+          type: "success",
+        });
       }
-  
+
       setModalVisible(false);
       setFormData({
         employeeId: "",
-        taskTitle: "",
+        taskTitle: "Pending Lead Visit",
         taskDescription: "",
-        startDate: "",
+        startDate: new Date().toISOString().slice(0, 16),
         endDate: "",
         status: "Pending",
         lead: "",
@@ -142,21 +178,27 @@ const [alertConfig, setAlertConfig] = useState({
       fetchAllData();
     } catch (err) {
       console.error("Task creation error:", err.response?.data || err.message);
-      setAlertConfig({ visibility: true, message: "Something went wrong", type: "error" });
+      setAlertConfig({
+        visibility: true,
+        message: "Something went wrong",
+        type: "error",
+      });
     }
   };
-  
 
   const openEdit = (task) => {
     setCurrentTask(task._id);
     setFormData({
-      employeeId: task.employeeId,
+      employeeId:
+        typeof task.employeeId === "object"
+          ? task.employeeId._id
+          : task.employeeId || "",
       taskTitle: task.taskTitle,
       taskDescription: task.taskDescription,
       startDate: task.startDate?.slice(0, 16) || "",
       endDate: task.endDate?.slice(0, 16) || "",
       status: task.status || "Pending",
-      lead: task.lead || "",
+      lead: typeof task.lead === "object" ? task.lead._id : task.lead || "",
     });
     setModalVisible(true);
   };
@@ -166,9 +208,17 @@ const [alertConfig, setAlertConfig] = useState({
       await api.delete(`/task/delete-task/${id}`);
       //fetchAllData();
       setReloadTrigger((prev) => prev + 1);
-      setAlertConfig({ visibility: true, message: "Task deleted", type: "success" });
+      setAlertConfig({
+        visibility: true,
+        message: "Task deleted",
+        type: "success",
+      });
     } catch (err) {
-      setAlertConfig({ visibility: true, message: "Delete failed", type: "error" });
+      setAlertConfig({
+        visibility: true,
+        message: "Delete failed",
+        type: "error",
+      });
     }
   };
 
@@ -194,7 +244,7 @@ const [alertConfig, setAlertConfig] = useState({
           }
         />
         <Sidebar />
-        
+
         <div className="flex-grow p-7">
           <div className="mt-6 mb-8">
             <div className="flex justify-between items-center w-full">
@@ -220,7 +270,7 @@ const [alertConfig, setAlertConfig] = useState({
             </div>
           </div>
 
-          {(tableTasks.length > 0 && !isLoading) ? (
+          {tableTasks.length > 0 && !isLoading ? (
             <DataTable
               updateHandler={(id) => openEdit(tasks.find((t) => t._id === id))}
               data={tableTasks}
@@ -228,17 +278,42 @@ const [alertConfig, setAlertConfig] = useState({
               exportedFileName="Tasks.csv"
             />
           ) : (
-            <CircularLoader isLoading={isLoading} failure={!isLoading} data="Task Data" />
+            <CircularLoader
+              isLoading={isLoading}
+              failure={!isLoading}
+              data="Task Data"
+            />
           )}
         </div>
       </div>
 
       <Modal isVisible={modalVisible} onClose={() => setModalVisible(false)}>
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">{currentTask ? "Edit Task" : "Add Task"}</h2>
+          <h2 className="text-xl font-bold mb-4">
+            {currentTask ? "Edit Task" : "Add Task"}
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium">Employee  <span className="text-red-500 ">*</span> </label>
+              <label className="block text-sm font-medium">Lead</label>
+              <select
+                name="lead"
+                value={formData.lead}
+                onChange={handleInput}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Select Lead</option>
+                {leads.map((lead) => (
+                  <option key={lead._id} value={lead._id}>
+                    {`${lead?.lead_name} - ${lead?.lead_phone}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">
+                Employee <span className="text-red-500 ">*</span>{" "}
+              </label>
               <select
                 name="employeeId"
                 value={formData.employeeId}
@@ -256,30 +331,14 @@ const [alertConfig, setAlertConfig] = useState({
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Lead</label>
-              <select
-                name="lead"
-                value={formData.lead}
-                onChange={handleInput}
-                className="w-full p-2 border rounded"
-              >
-                <option value="">Select Lead</option>
-                {leads.map((lead) => (
-                  <option key={lead._id} value={lead._id}>
-                  { `${lead?.lead_name} - ${lead?.lead_phone}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Task Title
+              <label className="block text-sm font-medium">
+                Task Title
                 <span className="text-red-500 ">*</span>
               </label>
               <input
                 type="text"
                 name="taskTitle"
-                value={formData.taskTitle}
+                value={formData.taskTitle || "Pending Lead Visit"}
                 onChange={handleInput}
                 className="w-full p-2 border rounded"
                 required
@@ -287,7 +346,8 @@ const [alertConfig, setAlertConfig] = useState({
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Task Description
+              <label className="block text-sm font-medium">
+                Task Description
                 <span className="text-red-500 ">*</span>
               </label>
               <textarea
@@ -300,7 +360,8 @@ const [alertConfig, setAlertConfig] = useState({
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Start Date & Time
+              <label className="block text-sm font-medium">
+                Start Date & Time
                 <span className="text-red-500 ">*</span>
               </label>
               <input
@@ -314,7 +375,8 @@ const [alertConfig, setAlertConfig] = useState({
             </div>
 
             <div>
-              <label className="block text-sm font-medium">End Date & Time
+              <label className="block text-sm font-medium">
+                End Date & Time
                 <span className="text-red-500 ">*</span>
               </label>
               <input
