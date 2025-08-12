@@ -58,11 +58,11 @@ const CommissionReport = () => {
     if (!employeeId) return;
     setLoading(true);
     try {
-      // MODIFIED: Changed endpoint and parameters to match backend expectation
+     
       const res = await api.get(
-        '/enroll/get-detailed-commission-per-month', // Correct endpoint
+        '/enroll/get-detailed-commission-per-month', 
         {
-          params: { agent_id: employeeId, from_date: fromDate, to_date: toDate }, // Correct: agent_id as query param
+          params: { agent_id: employeeId, from_date: fromDate, to_date: toDate }, 
         }
       );
       setEmployeeCustomerData(res.data?.commission_data);
@@ -84,7 +84,7 @@ const CommissionReport = () => {
 
       const rawTargets = targetRes.data || [];
 
-      // Step 1: Group by month key (YYYY-MM)
+     
       const monthMap = {};
       rawTargets.forEach((t) => {
         if ((t.agentId?._id || t.agentId) !== employeeId) return;
@@ -93,7 +93,7 @@ const CommissionReport = () => {
         if (!monthMap[key]) monthMap[key] = t.totalTarget || 0;
       });
 
-      // Step 2: Calculate daily targets
+      
       const defaultTarget = Object.values(monthMap)[0] || 0;
       let totalTarget = 0;
       const start = new Date(fromDate);
@@ -111,11 +111,10 @@ const CommissionReport = () => {
         date.setDate(date.getDate() + 1);
       }
 
-      // Step 3: Fetch achieved business
-      // MODIFIED: Changed endpoint and parameters to match backend expectation
+     
       const { data: comm } = await api.get(
-        '/enroll/get-detailed-commission-per-month', // Correct endpoint
-        { params: { agent_id: employeeId, from_date: fromDate, to_date: toDate } } // Correct: agent_id as query param
+        '/enroll/get-detailed-commission-per-month', 
+        { params: { agent_id: employeeId, from_date: fromDate, to_date: toDate } } 
       );
 
       let achieved = comm?.summary?.actual_business || 0;
@@ -414,7 +413,7 @@ const CommissionReport = () => {
                     if (tempToDate && tempToDate < newFrom) setTempToDate(newFrom);
                     setTempFromDate(newFrom);
                   }}
-                  className="border border-gray-300 rounded px-4 py-2 w-[200px]"
+                  className="border border-gray-300 rounded px-4 mt-7 py-2 w-[200px]"
                 />
 
                 <input
@@ -423,7 +422,7 @@ const CommissionReport = () => {
                   min={tempFromDate || ""}
                   max={today}
                   onChange={(e) => setTempToDate(e.target.value)}
-                  className="border border-gray-300 rounded px-4 py-2 w-[200px]"
+                  className="border border-gray-300 rounded px-4 mt-7 py-2 w-[200px]"
                 />
 
                 <button
@@ -432,7 +431,7 @@ const CommissionReport = () => {
                     setToDate(tempToDate);
                   }}
                   disabled={!tempFromDate || !tempToDate}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 mt-7 py-2 rounded"
                 >
                   Filter
                 </button>
@@ -653,7 +652,7 @@ const CommissionReport = () => {
                 </div>
 
                 <div>
-                  <label className="block font-medium">Total Payable Commission</label>
+                  <label className="block font-medium">Total Payable </label>
                   <input
                     readOnly
                     value={(() => {
@@ -665,7 +664,7 @@ const CommissionReport = () => {
                         (targetData?.incentiveAmount || "0").replace(/[^0-9.-]+/g, "")
                       );
 
-                      const total = actual + incentive;
+                      const total =  incentive;
 
                       return `₹${total.toLocaleString("en-IN")}`;
                     })()}
