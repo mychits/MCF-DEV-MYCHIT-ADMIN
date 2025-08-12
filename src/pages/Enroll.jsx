@@ -450,7 +450,7 @@ const Enroll = () => {
             "/enroll/add-enroll",
             {
               ...ticketEntry,
-             ...thirdPartyEnable
+              ...thirdPartyEnable,
             },
             {
               headers: {
@@ -955,7 +955,112 @@ const Enroll = () => {
                   ))}
                 </Select>
               </div>
+              {formData.referred_type === "Customer" && (
+                <div className="w-full">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="category"
+                  >
+                    Select Referred Customer{" "}
+                    <span className="text-red-500 ">*</span>
+                  </label>
 
+                  <Select
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full `}
+                    placeholder="Select Or Search Referred Customer"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="referred_customer"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toString()
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={formData?.referred_customer || undefined}
+                    onChange={(value) =>
+                      handleAntDSelect("referred_customer", value)
+                    }
+                  >
+                    {users.map((user) => (
+                      <Select.Option key={user._id} value={user._id}>
+                        {user.full_name} |{" "}
+                        {user.phone_number ? user.phone_number : "No Number"}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+              {formData.referred_type === "Leads" && (
+                <div className="w-full">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="category"
+                  >
+                    Select Referred Leads{" "}
+                    <span className="text-red-500 ">*</span>
+                  </label>
+
+                  <Select
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full `}
+                    placeholder="Select Or Search Referred Leads"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="referred_lead"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toString()
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={formData?.referred_lead || undefined}
+                    onChange={(value) =>
+                      handleAntDSelect("referred_lead", value)
+                    }
+                  >
+                    {leads.map((lead) => (
+                      <Select.Option key={lead._id} value={lead._id}>
+                        {lead.lead_name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+              {formData.referred_type === "Employee" && (
+                <div className="w-full">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="category"
+                  >
+                    Select Referred Employee{" "}
+                    <span className="text-red-500 ">*</span>
+                  </label>
+
+                  <Select
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full `}
+                    placeholder="Select Or Search Referred Employee"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="agent"
+                    filterOption={(input, option) => {
+                      if (!option || !option.children) return false; // Ensure option and children exist
+
+                      return option.children
+                        .toString()
+                        .toLowerCase()
+                        .includes(input.toLowerCase());
+                    }}
+                    value={formData?.agent || undefined}
+                    onChange={(value) => handleAntDSelect("agent", value)}
+                  >
+                    {agents.map((agent) => (
+                      <Select.Option key={agent._id} value={agent._id}>
+                        {agent.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </div>
+              )}
               {formData.group_id && availableTicketsAdd.length === 0 ? (
                 <p className="text-center text-red-600 font-medium">
                   Group is Full

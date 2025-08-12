@@ -74,7 +74,7 @@ const MenuSidebar = [
   ,
   {
     id: "&*&",
-    title: "Unverified Customer",
+    title: "Unverified Customers",
     icon: <MdCancel />,
     link: "/un-approved-customer",
   },
