@@ -290,7 +290,7 @@ const AllUserReport = () => {
                       searchText
                     )}
                     columns={Auctioncolumns}
-                    exportCols={ExcelColumns}
+                   
                     exportedFileName={`CustomerReport.csv`}
                   />
                 </div>
