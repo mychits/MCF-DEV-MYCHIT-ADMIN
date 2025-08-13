@@ -239,6 +239,18 @@ const columns = selectedEmployeeId === "ALL"
               <DataTable
                 data={processedTableData}
                 columns={columns}
+                exportedPdfName={`Employee Report`}
+                                    printHeaderKeys={[
+                                  "Name",
+                                  "Phone Number",
+                                  "Total Bussiness",
+                                ]}
+                                printHeaderValues={[
+                                  selectedEmployeeDetails?.name,
+                                  selectedEmployeeDetails?.phone_number,
+                                   totalBusiness.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,})
+                                ]}
                 exportedFileName={`EmployeeReport-${selectedEmployeeId || "all"}.csv`}
               />
               <div className="mt-6 pr-10 text-right flex justify-end gap-12">

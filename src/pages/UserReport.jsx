@@ -1170,6 +1170,25 @@ const Input = ({ label, value }) => (
                                       searchText
                                     )}
                                     columns={Auctioncolumns}
+                                    exportedPdfName={`Customer Report`}
+                                    printHeaderKeys={[
+                                  "Customer Name",
+                                  "Phone Number",
+                                  "Total Amount To Be Paid",
+                                  "Total Profit",
+                                  "Total Net To be Paid",
+                                  "Total Balance"
+                                ]}
+                                printHeaderValues={[
+                                  group.full_name,
+                                  group?.phone_number,
+                                  TotalToBepaid,
+                                  Totalprofit,
+                                  NetTotalprofit,
+                                   NetTotalprofit && Totalpaid
+                                      ? NetTotalprofit - Totalpaid
+                                      : "",
+                                ]}
                                     exportedFileName={`CustomerReport-${
                                       TableAuctions.length > 0
                                         ? TableAuctions[0].date +
@@ -1369,6 +1388,7 @@ const Input = ({ label, value }) => (
                           (borrowersData.length > 0 && !basicLoading) ? (
                             <div className="mt-10">
                               <DataTable
+                              exportedPdfName="Customer Ledger Report"
                                 printHeaderKeys={[
                                   "Customer Name",
                                   "Customer Id",
@@ -1422,6 +1442,15 @@ const Input = ({ label, value }) => (
                             <DataTable
                               data={filteredDisbursement}
                               columns={DisbursementColumns}
+                              exportedPdfName={`Customer Payout Report`}
+                                    printHeaderKeys={[
+                                  "Customer Name",
+                                   "Phone Number"
+                                ]}
+                                printHeaderValues={[
+                                  group?.full_name,
+                                  group?.phone_number,
+                                ]}
                             />
                           </div>
                         ) : (

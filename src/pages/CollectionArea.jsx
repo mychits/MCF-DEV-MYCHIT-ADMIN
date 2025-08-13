@@ -323,6 +323,7 @@ const [reloadTrigger, setReloadTrigger] = useState(0);
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(tableCollectionArea, searchText)}
                 columns={columns}
+                exportedPdfName="Collection Area"
               />
             ) : (
               <CircularLoader

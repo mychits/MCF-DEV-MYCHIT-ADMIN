@@ -662,6 +662,7 @@ const MobileAppEnroll = () => {
                   updateHandler={handleUpdateModalOpen}
                   data={filterOption(TableEnrolls, searchText)}
                   columns={columns}
+                  exportedPdfName="Mobile App Enroll"
                   exportedFileName={`Enrollments-${
                     TableEnrolls.length > 0
                       ? TableEnrolls[0].name +

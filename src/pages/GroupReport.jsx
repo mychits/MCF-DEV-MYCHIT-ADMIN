@@ -675,6 +675,14 @@ const GroupReport = () => {
                                   <DataTable
                                     data={filterOption(TableAuctions,searchText)}
                                     columns={Auctioncolumns}
+                                    exportedPdfName={`Group Details Report`}
+                                  printHeaderKeys={[
+                                  "Group Name",
+                                 
+                                ]}
+                                printHeaderValues={[
+                                  group?.group_name,
+                                ]}
                                     exportedFileName={`GroupReport-${
                                       TableAuctions.length > 0
                                         ? TableAuctions[0].name +
@@ -695,7 +703,7 @@ const GroupReport = () => {
                       </>
                     )}
 
-                    {activeTab === "basicReport" && (
+                    {/* {activeTab === "basicReport" && (
                       <>
                         <div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 mb-10">
@@ -813,6 +821,7 @@ const GroupReport = () => {
                               <DataTable
                                 data={TableEnrolls}
                                 columns={Basiccolumns}
+                                
                                 exportedFileName={`Employees-${
                                   TableEnrolls.length > 0
                                     ? TableEnrolls[0].date +
@@ -829,9 +838,127 @@ const GroupReport = () => {
                           )}
                         </div>
                       </>
-                    )}
+                    )} */}
+                    {activeTab === "basicReport" &&
+                    (() => {
+                      // Precompute values
+                      const members = parseInt(
+                        filteredUsers[0]?.group?.group_members || 0
+                      );
+                      const install = parseInt(
+                        filteredUsers[0]?.group?.group_install || 0
+                      );
+                      const auctionCount = parseInt(
+                        filteredUsers[0]?.auctionCount || 0
+                      );
+                      const divident = parseInt(
+                        TableAuctions[0]?.divident || 0
+                      );
 
-                    {activeTab === "dateWiseReport" && (
+                      let amountToBePaid = 0;
+                      if (filteredUsers[0]?.group?.group_type === "double") {
+                        amountToBePaid =
+                          install * members * auctionCount + install * members;
+                      } else {
+                        amountToBePaid = groupToBePaid
+                          ? groupToBePaid * members +
+                            install * members +
+                            divident * members
+                          : install * members;
+                      }
+
+                      const paidAmount = groupPaid || 0;
+
+                      let balanceAmount = 0;
+                      if (filteredUsers[0]?.group?.group_type === "double") {
+                        balanceAmount =
+                          install * members * auctionCount +
+                          install * members -
+                          groupPaid;
+                      } else {
+                        balanceAmount = groupToBePaid
+                          ? groupToBePaid * members +
+                            install * members +
+                            divident * members -
+                            groupPaid
+                          : install * members - groupPaid;
+                      }
+
+                      return (
+                        <div>
+                          {/* Summary Cards */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 mb-10">
+                            {/* Amount to be Paid */}
+                            <div className="bg-blue-300 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{amountToBePaid}
+                              </h3>
+                              <p className="mb-2 font-bold text-gray-700">
+                                Amount to be Paid
+                              </p>
+                            </div>
+
+                            {/* Paid Amount */}
+                            <div className="bg-yellow-300 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{paidAmount}
+                              </h3>
+                              <p className="mb-2 font-bold text-gray-700">
+                                Paid Amount
+                              </p>
+                            </div>
+
+                            {/* Balance Amount */}
+                            <div className="bg-red-400 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{balanceAmount}
+                              </h3>
+                              <p className="font-bold text-gray-700">
+                                Balance Amount
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Table */}
+                          {TableEnrolls &&
+                          TableEnrolls.length > 0 &&
+                          !isDateFilterLoading ? (
+                            <div className="mt-10">
+                              <DataTable
+                                data={TableEnrolls}
+                                columns={Basiccolumns}
+                                exportedPdfName="Basic Group Report"
+                                printHeaderKeys={[
+                                  "Group Name",
+                                  "Amount to be Paid",
+                                  "Paid Amount",
+                                  "Balance Amount",
+                                ]}
+                                printHeaderValues={[
+                                  group?.group_name,
+                                  `₹${amountToBePaid}`,
+                                  `₹${paidAmount}`,
+                                  `₹${balanceAmount}`,
+                                ]}
+                                exportedFileName={`Employees-${
+                                  TableEnrolls.length > 0
+                                    ? TableEnrolls[0].date +
+                                      " to " +
+                                      TableEnrolls[TableEnrolls.length - 1].date
+                                    : "empty"
+                                }.csv`}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-10 text-center text-gray-500">
+                              <CircularLoader isLoading={isDateFilterLoading} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* {activeTab === "dateWiseReport" && (
                       <div className="mt-7">
                         <div className="flex gap-4">
                           <div className="flex flex-col flex-1">
@@ -984,7 +1111,154 @@ const GroupReport = () => {
                           </div>
                         )}
                       </div>
-                    )}
+                    )} */}
+                     {activeTab === "dateWiseReport" &&
+                    (() => {
+                      // Precompute amounts for both UI and PDF
+                      const members = parseInt(
+                        filteredUsers[0]?.group?.group_members || 0
+                      );
+                      const install = parseInt(
+                        filteredUsers[0]?.group?.group_install || 0
+                      );
+                      const auctionCount = parseInt(
+                        filteredUsers[0]?.auctionCount || 0
+                      );
+                      const divident = parseInt(
+                        TableAuctions[0]?.divident || 0
+                      );
+
+                      let amountToBePaid = 0;
+                      if (filteredUsers[0]?.group?.group_type === "double") {
+                        amountToBePaid =
+                          install * members * auctionCount + install * members;
+                      } else {
+                        amountToBePaid = groupToBePaid
+                          ? groupToBePaid * members +
+                            install * members +
+                            divident * members
+                          : install * members;
+                      }
+
+                      const paidAmount = groupPaidDate || 0;
+
+                      let balanceAmount = 0;
+                      if (filteredUsers[0]?.group?.group_type === "double") {
+                        balanceAmount =
+                          install * members * auctionCount +
+                          install * members -
+                          groupPaid;
+                      } else {
+                        balanceAmount = groupToBePaid
+                          ? groupToBePaid * members +
+                            install * members +
+                            divident * members -
+                            groupPaid
+                          : install * members - groupPaid;
+                      }
+
+                      return (
+                        <div className="mt-7">
+                          {/* Date inputs */}
+                          <div className="flex gap-4">
+                            <div className="flex flex-col flex-1">
+                              <label className="mb-1 text-sm font-medium text-gray-700">
+                                From Date
+                              </label>
+                              <input
+                                type="date"
+                                value={fromDate}
+                                onChange={handleFromDateChange}
+                                className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                              />
+                            </div>
+                            <div className="flex flex-col flex-1">
+                              <label className="mb-1 text-sm font-medium text-gray-700">
+                                To Date
+                              </label>
+                              <input
+                                type="date"
+                                value={toDate}
+                                onChange={handleToDateChange}
+                                className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Summary cards */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 mb-10">
+                            <div className="bg-blue-300 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{amountToBePaid}
+                              </h3>
+                              <p className="mb-2 font-bold text-gray-700">
+                                Amount to be Paid
+                              </p>
+                            </div>
+                            <div className="bg-yellow-300 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{paidAmount}
+                              </h3>
+                              <p className="mb-2 font-bold text-gray-700">
+                                Paid Amount
+                              </p>
+                            </div>
+                            <div className="bg-red-400 shadow-md rounded-lg p-4">
+                              <h3 className="text-2xl font-semibold text-start mb-2">
+                                ₹{balanceAmount}
+                              </h3>
+                              <p className="font-bold text-gray-700">
+                                Balance Amount
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Table */}
+                          {TableEnrollsDate &&
+                          TableEnrollsDate.length > 0 &&
+                          !basicLoading ? (
+                            <div className="mt-10">
+                              <DataTable
+                                data={TableEnrollsDate}
+                                columns={Datecolumns}
+                                exportedPdfName={`Date-wise Group Report`}
+                                printHeaderKeys={[
+                                  "From Date",
+                                  "Group Name",
+                                  "To Date",
+                                  "Amount to be Paid",
+                                  "Paid Amount",
+                                  "Balance Amount",
+                                ]}
+                                printHeaderValues={[
+                                  new Date(fromDate).toLocaleDateString(
+                                    "en-GB"
+                                  ),
+                                  group?.group_name,
+                                  new Date(toDate).toLocaleDateString("en-GB"),
+                                  `₹${amountToBePaid}`,
+                                  `₹${paidAmount}`,
+                                  `₹${balanceAmount}`,
+                                ]}
+                                exportedFileName={`Employees-${
+                                  TableEnrollsDate.length > 0
+                                    ? TableEnrollsDate[0].name +
+                                      " to " +
+                                      TableEnrollsDate[
+                                        TableEnrollsDate.length - 1
+                                      ].name
+                                    : "empty"
+                                }.csv`}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-10 text-center text-gray-500">
+                              <CircularLoader isLoading={basicLoading} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}

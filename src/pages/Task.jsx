@@ -690,6 +690,7 @@ useEffect(() => {
               updateHandler={(id) => openEdit(tasks.find((t) => t._id === id))}
               data={tableTasks}
               columns={columns}
+              exportedPdfName="Task"
               exportedFileName="Tasks.csv"
             />
           ) : (

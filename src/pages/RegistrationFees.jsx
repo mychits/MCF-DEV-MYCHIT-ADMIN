@@ -994,6 +994,7 @@ const RegistrationFee = () => {
                       )
                     )}
                     columns={columns}
+                    exportedPdfName="Registration Fees"
                     exportedFileName={`Payments ${
                       TablePayments.length > 0
                         ? TablePayments[0].date +

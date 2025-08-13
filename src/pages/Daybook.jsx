@@ -36,6 +36,11 @@ const Daybook = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [receiptNo, setReceiptNo] = useState("");
   const [paymentMode, setPaymentMode] = useState("cash");
+    const [onlinePayments, setOnlinePayments] = useState([]);
+  const [cashPayments, setCashPayments] = useState([]);
+  const [totalCustomers, setTotalCustomers] = useState([]);
+  const [totalCashPaymentsCount, setCashPaymentsCount] = useState(0);
+const [totalOnlinePaymentsCount, setOnlinePaymentsCount] = useState(0);
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(todayString);
@@ -258,6 +263,33 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
             0
           );
           setPayments(totalAmount || 0);
+          const totalCash = paymentData
+            .filter((row) => row.pay_type?.toLowerCase() === "cash")
+            .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            setCashPayments(totalCash || 0);
+          console.info(totalCash, "cash");
+
+          const totalOnline = paymentData
+            .filter((row) => row.pay_type?.toLowerCase() === "online")
+            .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            setOnlinePayments(totalOnline || 0);
+          
+          const totalCustomers = new Set(
+          paymentData.map((row) => row?.user_id?.full_name || row.name)
+        ).size;
+        setTotalCustomers?.(totalCustomers); // Optional state if you have one
+
+        //  Count: Total Online Payments
+        const totalOnlineCount = paymentData.filter(
+          (row) => row.pay_type?.toLowerCase() === "online"
+        ).length;
+        setOnlinePaymentsCount?.(totalOnlineCount); // Optional state
+
+        //  Count: Total Cash Payments
+        const totalCashCount = paymentData.filter(
+          (row) => row.pay_type?.toLowerCase() === "cash"
+        ).length;
+        setCashPaymentsCount?.(totalCashCount);
           const formattedData = response.data.map((group, index) => ({
             _id: group._id,
             id: index + 1,
@@ -632,6 +664,7 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
                   <DataTable
                     data={filterOption(TableDaybook, searchText)}
                     columns={columns}
+                    exportedPdfName={`Daybook Report`}
                     exportedFileName={`Daybook-${TableDaybook.length > 0
                         ? TableDaybook[0].name +
                         " to " +

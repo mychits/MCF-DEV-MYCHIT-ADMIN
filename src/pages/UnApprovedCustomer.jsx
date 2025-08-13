@@ -648,6 +648,7 @@ const UnApprovedCustomer = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableUsers, searchText)}
                 columns={columns}
+                exportedPdfName="UnApproved Customer"
                 exportedFileName={`Customers-${
                   TableUsers.length > 0
                     ? TableUsers[0].name +

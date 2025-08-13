@@ -289,6 +289,7 @@ const DueEmail = () => {
                   data={filteredUsers}
                   columns={Auctioncolumns}
                   catcher="_id"
+                  exportedPdfName="Due Email"
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

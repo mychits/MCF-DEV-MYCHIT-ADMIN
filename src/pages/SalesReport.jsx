@@ -449,11 +449,39 @@ while (loop <= end) {
             <CircularLoader />
           </div>
         ) : (
+          // <DataTable
+          //   data={tableReportData}
+          //   columns={columns}
+          //   exportedFileName="SalesReport.csv"
+          // />
           <DataTable
-            data={tableReportData}
-            columns={columns}
-            exportedFileName="SalesReport.csv"
-          />
+  data={tableReportData}
+  columns={columns}
+  exportedFileName="SalesReport.csv"
+  exportedPdfName="Sales Report"
+  printHeaderKeys={[
+    "Agent Name",
+    "From Date",
+    "To Date",
+    "Total Leads",
+    "Total Customers",
+    "Total Sales",
+    "Target Set",
+    "Achieved",
+    "Remaining",
+  ]}
+  printHeaderValues={[
+    selectedAgentDetails?.name || "All Agents",
+    fromDate || "-",
+    toDate || "-",
+    totalLeads.toLocaleString("en-IN"),
+    totalCustomers.toLocaleString("en-IN"),
+    `₹${totalSales.toLocaleString("en-IN")}`,
+    `₹${targetData.target.toLocaleString("en-IN")}`,
+    `₹${targetData.achieved.toLocaleString("en-IN")}`,
+    `₹${targetData.remaining.toLocaleString("en-IN")}`,
+  ]}
+/>
         )}
       </div>
     </div>

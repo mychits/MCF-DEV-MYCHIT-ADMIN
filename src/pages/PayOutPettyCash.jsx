@@ -254,6 +254,7 @@ const PayOutPettyCash = () => {
                 <DataTable
                   data={pettyCashPayments}
                   columns={pettyCashColumns}
+                  exportedPdfName="PayOut Petty Cash"
                   exportedFileName={`petty_cash_transactions_${
                     new Date().toISOString().split("T")[0]
                   }.csv`}

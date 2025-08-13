@@ -778,12 +778,63 @@ const CommissionReport = () => {
             <CircularLoader isLoading={true} />
           ) : employeeCustomerData.length > 0 ? (
             <>
-              <DataTable
+              {/* <DataTable
                 data={processedTableData}
                 columns={columns}
                 exportedFileName={`CommissionReport-${selectedEmployeeId || "all"
                   }.csv`}
-              />
+              /> */}
+              <DataTable
+  data={processedTableData}
+  columns={columns}
+  exportedPdfName={`Commission Report`}
+  printHeaderKeys={[
+    "Name",
+    "Phone Number",
+    "From Date",
+    "To Date",
+    "Target Set",
+    "Achieved",
+    "Remaining",
+    "Incentive (%)",
+    "Incentive Amount",
+    "Total Payable Commission",
+    "Actual Business",
+    "Actual Commission",
+    "Gross Business",
+    "Gross Commission",
+    "Total Customers",
+    "Total Groups"
+  ]}
+  printHeaderValues={[
+    selectedEmployeeId === "ALL" ? "All Employees" : selectedEmployeeDetails?.name || "-",
+    selectedEmployeeId === "ALL" ? "-" : selectedEmployeeDetails?.phone_number || "-",
+    tempFromDate || "-",
+    tempToDate || "-",
+    `₹${targetData?.target?.toLocaleString("en-IN") || "0"}`,
+    `₹${targetData?.achieved?.toLocaleString("en-IN") || "0"}`,
+    `₹${targetData?.remaining?.toLocaleString("en-IN") || "0"}`,
+    targetData?.incentivePercent || "0%",
+    targetData?.incentiveAmount || "₹0.00",
+    (() => {
+      const actual = parseFloat(
+        (commissionTotalDetails?.total_actual || "0").toString().replace(/[^0-9.-]+/g, "")
+      );
+      const incentive = parseFloat(
+        (targetData?.incentiveAmount || "0").toString().replace(/[^0-9.-]+/g, "")
+      );
+      const total = actual + incentive;
+      return `₹${total.toLocaleString("en-IN")}`;
+    })(),
+    `₹${commissionTotalDetails?.actual_business?.toLocaleString("en-IN") || "0"}`,
+    `₹${commissionTotalDetails?.total_actual?.toLocaleString("en-IN") || "0"}`,
+    `₹${commissionTotalDetails?.expected_business?.toLocaleString("en-IN") || "0"}`,
+    `₹${commissionTotalDetails?.total_estimated?.toLocaleString("en-IN") || "0"}`,
+    commissionTotalDetails?.total_customers || "0",
+    commissionTotalDetails?.total_groups || "0"
+  ]}
+  exportedFileName={`CommissionReport-${selectedEmployeeId || "all"}.csv`}
+/>
             </>
           ) : (
             selectedEmployeeId && (

@@ -296,6 +296,7 @@ const BidWinner = () => {
                   data={filteredUsers}
                   columns={Auctioncolumns}
                   catcher="_id"
+                  exportedPdfName="Bid Winner"
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

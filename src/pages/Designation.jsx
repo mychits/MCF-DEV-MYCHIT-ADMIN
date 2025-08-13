@@ -379,6 +379,7 @@ const Designation = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableAgents, searchText)}
                 columns={columns}
+                exportedPdfName="Designation"
                 exportedFileName={`Employees-${
                   TableAgents.length > 0
                     ? TableAgents[0].name +

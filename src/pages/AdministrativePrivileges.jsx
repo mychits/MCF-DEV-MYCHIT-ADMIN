@@ -365,6 +365,7 @@ const AdministrativePrivileges = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableGroups, searchText)}
                 columns={columns}
+                exportedPdfName={`Administrative Privileges`}
               />
             ) : (
               <CircularLoader

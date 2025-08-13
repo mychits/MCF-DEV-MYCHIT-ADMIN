@@ -296,6 +296,7 @@ const DreamAsset = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableAsset, searchText)}
                 columns={columns}
+                exportedPdfName="Dream Asset"
                 exportedFileName={`Asset-${
                   TableAsset.length > 0
                     ? TableAsset[0].name +

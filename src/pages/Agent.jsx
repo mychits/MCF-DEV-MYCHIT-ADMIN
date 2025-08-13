@@ -532,6 +532,7 @@ const Agent = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableAgents, searchText)}
                 columns={columns}
+                exportedPdfName={`Agents`}
                 exportedFileName={`Employees-${TableAgents.length > 0
                   ? TableAgents[0].name +
                   " to " +

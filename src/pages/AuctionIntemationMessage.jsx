@@ -292,6 +292,7 @@ const AuctionIntemationMessage = () => {
                   data={filteredUsers}
                   columns={Auctioncolumns}
                   catcher="_id"
+                  exportedPdfName="Auction Intemation Message"
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

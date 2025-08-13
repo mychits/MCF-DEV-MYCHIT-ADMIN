@@ -484,6 +484,7 @@ const Group = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableGroups, searchText)}
                 columns={columns}
+                exportedPdfName="Groups"
                 exportedFileName={`Groups-${
                   TableGroups.length > 0
                     ? TableGroups[0].date.split("T")[0] +

@@ -325,6 +325,7 @@ useEffect(() => {
                   data={filteredUsers}
                   columns={Auctioncolumns}
                   catcher="_id"
+                  exportedPdfName="Due Message"
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

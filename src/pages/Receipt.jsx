@@ -708,6 +708,8 @@ const Receipt = () => {
                   <DataTable
                     data={filterOption(TableDaybook, searchText)}
                     columns={columns}
+                    exportedPdfName={`Receipt Report`}
+                 
                     exportedFileName={`ReportsReceipt-${
                       TableDaybook.length > 0
                         ? TableDaybook[0].name +

@@ -319,6 +319,7 @@ const SoftTransferCustomer = () => {
             <DataTable
               data={filterOption(transferData, searchText)}
               columns={columns}
+              exportedPdfName="Soft Amount Transfer Customer"
             />
           ) : (
             <CircularLoader

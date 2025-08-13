@@ -449,6 +449,7 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                 <DataTable
                   data={salaryPayments}
                   columns={salaryColumns}
+                  exportedPdfName="PayOut Salary"
                   exportedFileName={`salary_Payments_${today.toISOString().split("T")[0]
                     }.csv`}
                 />

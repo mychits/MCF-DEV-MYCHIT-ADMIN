@@ -404,6 +404,7 @@ const EnrollmentReport = () => {
               <DataTable
                 data={filterOption(TableGroups, searchText)}
                 columns={columns}
+                exportedPdfName={`Enrollment Report`}
                 exportedFileName={`Leads-${TableGroups.length > 0
                   ? TableGroups[0].date +
                   " to " +

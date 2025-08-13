@@ -356,6 +356,7 @@ const CollectionAreaMapping = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(tableCollectionAreaMapping, searchText)}
                 columns={columns}
+                exportedPdfName="Collection Area Mapping"
               />
             ) : (
               <CircularLoader

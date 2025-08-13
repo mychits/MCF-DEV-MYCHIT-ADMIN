@@ -423,6 +423,7 @@ const BecomeAgent = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableBecomeAgent, searchText)}
                 columns={columns}
+                exportedPdfName={`Become Agent`}
                 exportedFileName={`Agent-${
                   TableBecomeAgent.length > 0
                     ? TableBecomeAgent[0].name +

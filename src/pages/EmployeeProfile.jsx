@@ -649,6 +649,7 @@ const EmployeeProfile = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableEmployees, searchText)}
                 columns={columns}
+                exportedPdfName="Employee Profile"
                 exportedFileName={`Employees-${
                   TableEmployees.length > 0
                     ? TableEmployees[0].name +

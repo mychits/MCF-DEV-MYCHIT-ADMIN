@@ -580,6 +580,7 @@ const OverDueEmail = () => {
                   data={filteredUsers}
                   columns={Auctioncolumns}
                   catcher="_id"
+                  exportedPdfName="Overdue Email"
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

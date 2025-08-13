@@ -698,6 +698,7 @@ const Target = () => {
               <DataTable
                 data={tableData}
                 columns={getColumns()}
+                exportedPdfName="Target"
                 exportedFileName="Target-Report.csv"
               />
             )}

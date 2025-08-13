@@ -349,6 +349,7 @@ const Pigme = () => {
               updateHandler={handleUpdateModalOpen}
               data={filterOption(tableBorrowers, searchText)}
               columns={columns}
+              exportedPdfName="Pigme"
               exportedFileName={`Groups-${
                 tableBorrowers.length > 0
                   ? tableBorrowers[0].date +

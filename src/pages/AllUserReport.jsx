@@ -206,6 +206,28 @@ const AllUserReport = () => {
     { key: "balance", header: "Balance" },
     { key: "status", header: "Status" },
   ];
+  const filteredTableData = filterOption(
+  usersData.filter((u) => {
+    const matchGroup = groupFilter ? u.groupName === groupFilter : true;
+    const enrollmentDate = new Date(u.enrollmentDate);
+    const matchFromDate = fromDate ? enrollmentDate >= new Date(fromDate) : true;
+    const matchToDate = toDate ? enrollmentDate <= new Date(toDate) : true;
+    return matchGroup && matchFromDate && matchToDate;
+  }),
+  searchText
+);
+
+// 2️⃣ Totals calculation
+const total = {
+  totalCustomers: filteredTableData.length,
+  totalGroups: new Set(filteredTableData.map(u => u.groupName)).size,
+  totalToBePaid: filteredTableData.reduce((sum, u) => sum + (u.toBePaid || 0), 0),
+  totalProfit: filteredTableData.reduce((sum, u) => sum + (u.profit || 0), 0),
+  totalPaid: filteredTableData.reduce((sum, u) => sum + (u.paid || 0), 0),
+  totalBalance: filteredTableData.reduce((sum, u) => sum + (u.balance || 0), 0)
+};
+const selectednewGroup =
+  groupOptions.find((g) => g._id === groupFilter) || "—";
   return (
     <div className="w-screen">
       <div className="flex mt-30">
@@ -272,7 +294,7 @@ const AllUserReport = () => {
                     </div>
                   </div>
 
-                  <DataTable
+                  {/* <DataTable
                     data={filterOption(
                       usersData.filter((u) => {
                         const matchGroup = groupFilter
@@ -292,7 +314,35 @@ const AllUserReport = () => {
                     columns={Auctioncolumns}
                    
                     exportedFileName={`CustomerReport.csv`}
-                  />
+                  /> */}
+                  <DataTable
+  data={filteredTableData}
+  columns={Auctioncolumns}
+  exportedPdfName={`All Customer Report`}
+  printHeaderKeys={[
+    "From Date",
+    "Group Name",
+    "To Date",
+    "Total Customers",
+    "Total Groups",
+    "Amount to be Paid",
+    "Total Profit",
+    "Total Amount Paid",
+    "Total Balance"
+  ]}
+  printHeaderValues={[
+    fromDate ? new Date(fromDate).toLocaleDateString("en-GB") : "—",
+    groupFilter || "All Groups",
+    toDate ? new Date(toDate).toLocaleDateString("en-GB") : "—",
+    total.totalCustomers,
+    total.totalGroups,
+    `₹${total.totalToBePaid.toLocaleString("en-IN")}`,
+    `₹${total.totalProfit.toLocaleString("en-IN")}`,
+    `₹${total.totalPaid.toLocaleString("en-IN")}`,
+    `₹${total.totalBalance.toLocaleString("en-IN")}`
+  ]}
+  exportedFileName={`CustomerReport.csv`}
+/>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">

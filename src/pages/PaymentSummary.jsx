@@ -648,6 +648,11 @@ const PaymentSummary = () => {
               <DataTable
                 data={filteredData}
                 columns={columns}
+                exportedPdfName="Payment Summary Report"
+                printHeaderKeys={["Total Amount Paid",]}
+                printHeaderValues={[filteredData
+                      .reduce((sum, u) => sum + (u.latestPaymentAmount || 0), 0)
+                      .toLocaleString("en-IN", { minimumFractionDigits: 2 }),]}
                 exportedFileName={`PaymentSummaryReport.csv`}
               />
             </div>

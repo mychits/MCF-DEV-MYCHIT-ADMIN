@@ -408,6 +408,7 @@ const WhatsappFailed = () => {
             <DataTable
               data={TableUsers}
               columns={columns}
+              exportedPdfName="Whatsapp Failed"
               exportedFileName={`WhatsappFailedCustomers-${
                 TableUsers.length > 0
                   ? TableUsers[0].name +

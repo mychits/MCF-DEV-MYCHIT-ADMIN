@@ -986,7 +986,9 @@ const Payment = () => {
       setFilteredAuction([]);
     }
   };
-
+const selectednewGroup = actualGroups.find(
+  (g) => g._id === selectedAuctionGroupId
+);
   return (
     <>
       {openBackdropLoader ? (
@@ -1071,6 +1073,9 @@ const Payment = () => {
                       )
                     )}
                     columns={columns}
+                    exportedPdfName="Payments"
+                    printHeaderKeys={["Group Name"]}
+                    printHeaderValues={[selectednewGroup?.group_name]}
                     exportedFileName={`Payments ${
                       TablePayments.length > 0
                         ? TablePayments[0].date +

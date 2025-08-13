@@ -418,7 +418,7 @@ const GeneralPaymentOut = () => {
     { key: "status", header: "Status" },
     { key: "action", header: "Action" },
   ];
-
+const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
   return (
     <>
       <div className="flex mt-20">
@@ -476,6 +476,15 @@ const GeneralPaymentOut = () => {
                   updateHandler={handleUpdateModalOpen}
                   data={filterOption(TableAuctions, searchText)}
                   columns={columns}
+                  exportedPdfName="General Payment Out"
+                  printHeaderKeys={[
+                    "Group Name",
+                    "Balance"
+                  ]}
+                  printHeaderValues={[
+                    selectednewGroup?.group_name,
+                    double.amount
+                  ]}
                   exportedFileName={`Auctions ${
                     TableAuctions.length > 1
                       ? TableAuctions[1].date +

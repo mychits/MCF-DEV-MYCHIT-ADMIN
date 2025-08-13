@@ -243,7 +243,7 @@ const AuctionReport = () => {
       }
     }
   };
-
+const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
   return (
     <>
       <div className="w-screen min-h-screen">
@@ -297,6 +297,11 @@ const AuctionReport = () => {
                     updateHandler={handleUpdateModalOpen}
                     data={filterOption(TableAuctions, searchText)}
                     columns={columns}
+                     exportedPdfName={`Auction Report`}
+                    printHeaderKeys={["Group Name"]}
+                    printHeaderValues={[
+                      selectednewGroup?.group_name || "N/A",
+                    ]}
                     exportedFileName={`AuctionsReport-${
                       TableAuctions.length > 0
                         ? TableAuctions[1].name + " to " + TableAuctions[TableAuctions.length - 1].name

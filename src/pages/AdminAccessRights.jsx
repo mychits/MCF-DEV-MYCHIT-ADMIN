@@ -709,6 +709,7 @@ const AdminAccessRights = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableAgents, searchText)}
                 columns={columns}
+                exportedPdfName={`Admin Access Rights`}
                 exportedFileName={`Employees-${
                   TableAgents.length > 0
                     ? TableAgents[0].name +

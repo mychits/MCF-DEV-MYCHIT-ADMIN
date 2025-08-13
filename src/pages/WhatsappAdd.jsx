@@ -256,6 +256,7 @@ const WhatsappAdd = () => {
               isExportEnabled={false}
               data={TableUsers}
               columns={columns}
+              exportedPdfName="Whatsapp Add"
               exportedFileName={`whatsapp-${
                 TableUsers.length > 0 
                   ? TableUsers[0].name +

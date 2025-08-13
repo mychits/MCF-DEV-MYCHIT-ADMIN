@@ -795,6 +795,7 @@ useEffect(() => {
                 isExportEnabled={false}
                 data={filteredUsers}
                 columns={columns}
+                exportedPdfName="Whatsapp Promo"
                 exportedFileName={`whatsapp-${
                   filteredUsers.length > 0
                     ? filteredUsers[0].full_name +

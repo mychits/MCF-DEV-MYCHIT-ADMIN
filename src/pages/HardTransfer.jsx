@@ -304,6 +304,7 @@ const HardTransfer = () => {
             <DataTable
               data={filterOption(transferData, searchText)}
               columns={columns}
+              exportedPdfName="Hard Amount Transfer"
             />
           ) : (
             <CircularLoader
