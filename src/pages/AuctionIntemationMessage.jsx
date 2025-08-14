@@ -293,6 +293,8 @@ const AuctionIntemationMessage = () => {
                   columns={Auctioncolumns}
                   catcher="_id"
                   exportedPdfName="Auction Intemation Message"
+                  printHeaderKeys={["Group Name"]}
+                  printHeaderValues={[groupFilter]}
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

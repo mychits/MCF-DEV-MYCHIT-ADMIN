@@ -678,10 +678,29 @@ const GroupReport = () => {
                                     exportedPdfName={`Group Details Report`}
                                   printHeaderKeys={[
                                   "Group Name",
-                                 
+                                  "Group Type",
+                                  "Group Value",
+                                  "Group Installment Amount",
+                                  "Group Members",
+                                  "Group Duration",
+                                  "Earned Commission",
+                                  "Fullfilled",
+                                  "Vacant",
                                 ]}
                                 printHeaderValues={[
                                   group?.group_name,
+                                  group?.group_type?.charAt(0).toUpperCase() +
+                                    group?.group_type?.slice(1) +
+                                    " Auction",
+                                  group.group_value,
+                                  group?.group_install,
+                                  group?.group_members,
+                                  group?.group_duration,
+                                  commission,
+                                 group.group_members -
+                                      availableTickets.length || "-",
+                                  availableTickets.length || "-",
+                                  
                                 ]}
                                     exportedFileName={`GroupReport-${
                                       TableAuctions.length > 0

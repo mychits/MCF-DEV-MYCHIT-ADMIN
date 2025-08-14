@@ -1075,7 +1075,7 @@ const selectednewGroup = actualGroups.find(
                     columns={columns}
                     exportedPdfName="Payments"
                     printHeaderKeys={["Group Name"]}
-                    printHeaderValues={[selectednewGroup?.group_name]}
+                    printHeaderValues={[selectednewGroup?.group_name || "Today's"]}
                     exportedFileName={`Payments ${
                       TablePayments.length > 0
                         ? TablePayments[0].date +

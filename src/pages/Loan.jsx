@@ -371,7 +371,7 @@ const [isLoading,setIsLoading] = useState(false);
               updateHandler={handleUpdateModalOpen}
               data={filterOption(tableBorrowers, searchText)}
               columns={columns}
-              exportedPdfName="Loan"
+              exportedPdfName="Loans"
               exportedFileName={`Groups-${
                 tableBorrowers.length > 0
                   ? tableBorrowers[0].date +

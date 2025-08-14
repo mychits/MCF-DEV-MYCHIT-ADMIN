@@ -290,6 +290,8 @@ const DueEmail = () => {
                   columns={Auctioncolumns}
                   catcher="_id"
                   exportedPdfName="Due Email"
+                  printHeaderKeys={["Group Name"]}
+                  printHeaderValues={[groupFilter]}
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

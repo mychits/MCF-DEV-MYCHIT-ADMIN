@@ -326,6 +326,8 @@ useEffect(() => {
                   columns={Auctioncolumns}
                   catcher="_id"
                   exportedPdfName="Due Message"
+                  printHeaderKeys={["Group Name"]}
+                  printHeaderValues={[groupFilter]}
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

@@ -663,7 +663,7 @@ const User = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableUsers, searchText)}
                 columns={columns}
-                exportedPdfName="User"
+                exportedPdfName="Customers"
                 exportedFileName={`Customers-${
                   TableUsers.length > 0
                     ? TableUsers[0].name +

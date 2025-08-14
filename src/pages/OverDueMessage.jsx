@@ -620,6 +620,8 @@ useEffect(() => {
                   columns={Auctioncolumns}
                   catcher="_id"
                   exportedPdfName="Overdue Whatsapp Message"
+                  printHeaderKeys={["Group Name"]}
+                  printHeaderValues={[groupFilter]}
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

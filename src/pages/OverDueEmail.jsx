@@ -581,6 +581,8 @@ const OverDueEmail = () => {
                   columns={Auctioncolumns}
                   catcher="_id"
                   exportedPdfName="Overdue Email"
+                  printHeaderKeys={["Group Name"]}
+                  printHeaderValues={[groupFilter]}
                   exportedFileName={`CustomerReport.csv`}
                 />
               </div>

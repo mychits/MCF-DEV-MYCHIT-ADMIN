@@ -207,6 +207,7 @@ const GroupSettings = () => {
             <DataTable
               data={TableGroups}
               columns={columns}
+              exportedPdfName="View Mobile Group"
               exportedFileName={`Groups-${
                 TableGroups.length > 0
                   ? TableGroups[0].name +
