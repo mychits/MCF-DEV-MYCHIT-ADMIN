@@ -57,7 +57,7 @@ const Payment = () => {
   const [openAntDDrawer, setOpenAntDDrawer] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [lastThreePayments, setLastThreePayments] = useState([]);
-  
+
   const dropDownItems = (group) => {
     const dropDownItemList = [
       {
@@ -127,6 +127,10 @@ const Payment = () => {
     transaction_id: "",
     payment_group_tickets: [],
     account_type: "",
+    cheque_number: "",
+    cheque_date: "",
+    cheque_bank_name: "",
+    cheque_bank_branch: "",
   });
   const [updateFormData, setUpdateFormData] = useState({
     amount: "",
@@ -267,7 +271,7 @@ const Payment = () => {
                 // </div>
                 <div className="flex justify-center gap-2">
                   <Dropdown
-                  trigger={["click"]}
+                    trigger={["click"]}
                     menu={{
                       items: dropDownItems(group),
                     }}
@@ -430,6 +434,13 @@ const Payment = () => {
         "Transaction ID is required for online payments";
     }
 
+    if (paymentMode === "cheque" && !formData.cheque_date?.trim()) {
+      newErrors.cheque_date = "Cheque Date is required for cheque payments";
+    }
+    if (paymentMode === "cheque" && !formData.cheque_number?.trim()) {
+      newErrors.cheque_number = "Cheque Number is required for cheque payments";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -590,7 +601,7 @@ const Payment = () => {
               action: (
                 <div className="flex justify-center gap-2">
                   <Dropdown
-                  trigger={["click"]}
+                    trigger={["click"]}
                     menu={{
                       items: dropDownItems(group),
                     }}
@@ -627,13 +638,11 @@ const Payment = () => {
       transaction_id: selectedMode === "online" ? prevData.transaction_id : "",
     }));
   };
-    const handleAccountTypeChange = (e) => {
+  const handleAccountTypeChange = (e) => {
     const selectedMode = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
       account_type: selectedMode,
-
-     
     }));
   };
   const createReceipt = async (formData) => {
@@ -728,6 +737,10 @@ const Payment = () => {
             transaction_id: "",
             payment_group_tickets: [],
             account_type: "",
+            cheque_number: "",
+            cheque_date: "",
+            cheque_bank_name: "",
+            cheque_bank_branch: "",
           });
           setAlertConfig({
             visibility: true,
@@ -751,6 +764,10 @@ const Payment = () => {
             transaction_id: "",
             payment_group_tickets: [],
             account_type: "",
+            cheque_number: "",
+            cheque_date: "",
+            cheque_bank_name: "",
+            cheque_bank_branch: "",
           });
           setAlertConfig({
             visibility: true,
@@ -986,9 +1003,9 @@ const Payment = () => {
       setFilteredAuction([]);
     }
   };
-const selectednewGroup = actualGroups.find(
-  (g) => g._id === selectedAuctionGroupId
-);
+  const selectednewGroup = actualGroups.find(
+    (g) => g._id === selectedAuctionGroupId
+  );
   return (
     <>
       {openBackdropLoader ? (
@@ -1075,7 +1092,9 @@ const selectednewGroup = actualGroups.find(
                     columns={columns}
                     exportedPdfName="Payments"
                     printHeaderKeys={["Group Name"]}
-                    printHeaderValues={[selectednewGroup?.group_name || "Today's"]}
+                    printHeaderValues={[
+                      selectednewGroup?.group_name || "Today's",
+                    ]}
                     exportedFileName={`Payments-${selectednewGroup?.group_name} .csv`}
                   />
                 ) : (
@@ -1338,7 +1357,7 @@ const selectednewGroup = actualGroups.find(
                       >
                         <option value="cash">Cash</option>
                         <option value="online">Online</option>
-                        
+                        <option value="cheque">Cheque</option>
                       </select>
                     </div>
                   </div>
@@ -1386,34 +1405,128 @@ const selectednewGroup = actualGroups.find(
                       )}
                     </div>
                   )}
+                  {paymentMode === "cheque" && (
+                    <>
+                      {/* Row 1 */}
+                      <div className="flex gap-4">
+                        <div className="w-1/2 mt-4">
+                          <label
+                            className="block mb-2 text-sm font-medium text-gray-900"
+                            htmlFor="cheque_number"
+                          >
+                            Cheque Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="cheque_number"
+                            id="cheque_number"
+                            value={formData.cheque_number}
+                            onChange={handleChange}
+                            placeholder="Enter Cheque Number"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                     focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                          />
+                          {errors.cheque_number && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.cheque_number}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="w-1/2 mt-4">
+                          <label
+                            className="block mb-2 text-sm font-medium text-gray-900"
+                            htmlFor="cheque_date"
+                          >
+                            Cheque Date <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            name="cheque_date"
+                            id="cheque_date"
+                            value={formData.cheque_date.split("T")[0]}
+                            onChange={handleChange}
+                            placeholder="Enter Cheque Date"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                     focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                          />
+                          {errors.cheque_date && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.cheque_date}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Row 2 */}
+                      <div className="flex gap-4">
+                        <div className="w-1/2 mt-4">
+                          <label
+                            className="block mb-2 text-sm font-medium text-gray-900"
+                            htmlFor="cheque_bank_name"
+                          >
+                            Bank Name
+                          </label>
+                          <input
+                            type="text"
+                            name="cheque_bank_name"
+                            id="cheque_bank_name"
+                            value={formData.cheque_bank_name}
+                            onChange={handleChange}
+                            placeholder="Enter Bank Name"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                     focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                          />
+                        </div>
+
+                        <div className="w-1/2 mt-4">
+                          <label
+                            className="block mb-2 text-sm font-medium text-gray-900"
+                            htmlFor="cheque_bank_branch"
+                          >
+                            Bank Branch
+                          </label>
+                          <input
+                            type="text"
+                            name="cheque_bank_branch"
+                            id="cheque_bank_branch"
+                            value={formData.cheque_bank_branch}
+                            onChange={handleChange}
+                            placeholder="Enter Bank Branch"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                     focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <div className="flex flex-row justify-between space-x-4">
                     {modifyPayment && (
-                    <div className="w-full">
-                      <label
-                        className="block mb-2 text-sm font-medium text-gray-900"
-                        htmlFor="pay_mode"
-                      >
-                        Account Type
-                      </label>
-                      <select
-                        name="account_type"
-                        id="account_type"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-                        onChange={handleAccountTypeChange}
-                      >
-                        
+                      <div className="w-full">
+                        <label
+                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="pay_mode"
+                        >
+                          Account Type
+                        </label>
+                        <select
+                          name="account_type"
+                          id="account_type"
+                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+                          onChange={handleAccountTypeChange}
+                        >
                           <>
-                          <option value={""}>Select Account Type</option>
+                            <option value={""}>Select Account Type</option>
                             <option value="suspense">Suspense</option>
                             <option value="credit">Credit</option>
                             <option value="adjustment">Adjustment</option>
-                            <option value= "change group">Change Group</option>
+                            <option value="change group">Change Group</option>
                             <option value="others">Others</option>
                           </>
-                        
-                      </select>
-                      
-                    </div>
+                        </select>
+                      </div>
                     )}
                   </div>
 
@@ -1934,6 +2047,22 @@ const selectednewGroup = actualGroups.find(
                 <div className="mb-3 flex gap-x-2">
                   <strong>Updated At:</strong>{" "}
                   {currentViewGroup?.updatedAt?.split("T")[0]}
+                </div>
+                <div className="mb-3 flex gap-x-2">
+                  <strong>Cheque Number:</strong>{" "}
+                  {currentViewGroup?.cheque_number}
+                </div>
+                <div className="mb-3 flex gap-x-2">
+                  <strong>Cheque Date:</strong>{" "}
+                  {currentViewGroup?.cheque_date?.split("T")[0]}
+                </div>
+                <div className="mb-3 flex gap-x-2">
+                  <strong>Cheque Bank Name:</strong>{" "}
+                  {currentViewGroup?.cheque_bank_name}
+                </div>
+                <div className="mb-3 flex gap-x-2">
+                  <strong>Cheque Bank Branch Name :</strong>{" "}
+                  {currentViewGroup?.cheque_bank_branch}
                 </div>
               </div>
             </AntModal>
