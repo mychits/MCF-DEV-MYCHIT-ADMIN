@@ -4,10 +4,9 @@ import Sidebar from "../components/layouts/Sidebar";
 import api from "../instance/TokenInstance";
 import Modal from "../components/modals/Modal";
 import DataTable from "../components/layouts/Datatable";
-import CustomAlert from "../components/alerts/CustomAlert";
 import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
-import { Select, Dropdown, Modal as AntModal } from "antd";
+import { Select, Dropdown, Modal as AntModal, Alert } from "antd";
 import { IoMdMore } from "react-icons/io";
 import { Link } from "react-router-dom";
 import BackdropBlurLoader from "../components/loaders/BackdropBlurLoader";
@@ -29,6 +28,12 @@ const IndividualChitPaymentLink = () => {
   const [showModalView, setShowModalView] = useState(false);
   const [currentViewGroup, setCurrentViewGroup] = useState(null);
   const today = new Date().toISOString().split("T")[0];
+  
+  // Calculate tomorrow correctly (current date + 1 day)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowFormatted = tomorrow.toISOString().split("T")[0];
+
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [disabled, setDisabled] = useState(false);
@@ -40,6 +45,13 @@ const IndividualChitPaymentLink = () => {
   const [render, setRerender] = useState(0);
   const [openBackdropLoader, setOpenBackdropLoader] = useState(false);
   const [currentGroupId, setCurrentGroupId] = useState(null);
+  
+  // Alert state for Ant Design Alert
+  const [alert, setAlert] = useState({
+    visible: false,
+    message: "",
+    type: "info"
+  });
 
   const dropDownItems = (group) => {
     const dropDownItemList = [
@@ -66,24 +78,18 @@ const IndividualChitPaymentLink = () => {
 
     return dropDownItemList;
   };
+  
   const onGlobalSearchChangeHandler = (e) => {
     const { value } = e.target;
     setSearchText(value);
   };
-  const [alertConfig, setAlertConfig] = useState({
-    visibility: false,
-    message: "Something went wrong!",
-    noReload: false,
-    type: "info",
-  });
-  const tomorrow =new Date().toISOString().split("T")[0]
-
+  
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     user_id: "",
     amount: "",
     payment_group_tickets: [],
-    expiry: tomorrow,
+    expiry: tomorrowFormatted, // Use the correctly calculated tomorrow
     send_sms: true,
     send_email: true,
   });
@@ -145,6 +151,12 @@ const IndividualChitPaymentLink = () => {
       } catch (error) {
         console.error("Error fetching payment Link data:", error);
         setFilteredAuction([]);
+        // Show error alert
+        setAlert({
+          visible: true,
+          message: "Failed to load payment data",
+          type: "error"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -202,7 +214,7 @@ const IndividualChitPaymentLink = () => {
       }
     };
     fetchGroups();
-  }, [alertConfig]);
+  }, []);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -214,7 +226,7 @@ const IndividualChitPaymentLink = () => {
       }
     };
     fetchGroups();
-  }, [alertConfig]);
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -223,7 +235,7 @@ const IndividualChitPaymentLink = () => {
       newErrors.customer = "Please select a customer";
     }
 
-    if (!formData.payment_group_tickets) {
+    if (!paymentGroupTickets || paymentGroupTickets.length === 0) {
       newErrors.payment_group_tickets = "Please select a group and ticket";
     }
 
@@ -244,6 +256,7 @@ const IndividualChitPaymentLink = () => {
     }));
     setErrors((prevData) => ({ ...prevData, [name]: "" }));
   };
+  
   const handlePaymentAntSelect = (values) => {
     setPaymentGroupTickets(values);
   };
@@ -306,6 +319,7 @@ const IndividualChitPaymentLink = () => {
       setGroupInfo({});
     }
   };
+  
   const handleGroupPayment = async (groupId) => {
     setSelectedAuctionGroupId(groupId);
     handleGroupPaymentChange(groupId);
@@ -365,6 +379,12 @@ const IndividualChitPaymentLink = () => {
       } catch (error) {
         console.error("Error fetching payment data:", error);
         setFilteredAuction([]);
+        // Show error alert
+        setAlert({
+          visible: true,
+          message: "Failed to load payment data",
+          type: "error"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -379,10 +399,7 @@ const IndividualChitPaymentLink = () => {
     try {
       if (isValid) {
         setDisabled(true);
-        setAlertConfig((prev) => ({
-          ...prev,
-          visibility: false,
-        }));
+        setAlert({ visible: false, message: "", type: "info" });
         setShowModal(false);
         let payload;
         const usr = localStorage.getItem("user");
@@ -406,10 +423,12 @@ const IndividualChitPaymentLink = () => {
             user_id: "",
             amount: "",
             payment_group_tickets: [],
+            expiry: tomorrowFormatted, // Reset with correct tomorrow date
+            send_sms: true,
+            send_email: true,
           });
-          setAlertConfig({
-            visibility: true,
-            noReload: true,
+          setAlert({
+            visible: true,
             message: "Payment Added Successfully",
             type: "success",
           });
@@ -424,10 +443,12 @@ const IndividualChitPaymentLink = () => {
             user_id: "",
             amount: "",
             payment_group_tickets: [],
+            expiry: tomorrowFormatted, // Reset with correct tomorrow date
+            send_sms: true,
+            send_email: true,
           });
-          setAlertConfig({
-            visibility: true,
-            noReload: true,
+          setAlert({
+            visible: true,
             message: "Payment Added Failed",
             type: "error",
           });
@@ -440,11 +461,13 @@ const IndividualChitPaymentLink = () => {
         user_id: "",
         amount: "",
         payment_group_tickets: [],
+        expiry: tomorrowFormatted, // Reset with correct tomorrow date
+        send_sms: true,
+        send_email: true,
       });
-      setAlertConfig({
-        visibility: true,
-        noReload: true,
-        message: `Error submitting payment data`,
+      setAlert({
+        visible: true,
+        message: `Error submitting payment data: ${error.message}`,
         type: "error",
       });
       setDisabled(false);
@@ -465,6 +488,11 @@ const IndividualChitPaymentLink = () => {
       setCurrentViewGroup(response.data);
     } catch (error) {
       console.error("Error viewing Payment:", error);
+      setAlert({
+        visible: true,
+        message: "Failed to load payment details",
+        type: "error"
+      });
     } finally {
       setLoading(false);
       setViewLoader(false);
@@ -488,14 +516,22 @@ const IndividualChitPaymentLink = () => {
       } catch (error) {
         console.error("Error fetching enrollment data:", error);
         setFilteredAuction([]);
+        // Show error alert
+        setAlert({
+          visible: true,
+          message: "Failed to load group auction data",
+          type: "error"
+        });
       }
     } else {
       setFilteredAuction([]);
     }
   };
+  
   const selectednewGroup = actualGroups.find(
     (g) => g._id === selectedAuctionGroupId
   );
+  
   return (
     <>
       {openBackdropLoader ? (
@@ -508,12 +544,20 @@ const IndividualChitPaymentLink = () => {
               visibility={true}
             />
             <Sidebar />
-            <CustomAlert
-              type={alertConfig.type}
-              isVisible={alertConfig.visibility}
-              message={alertConfig.message}
-              noReload={alertConfig.noReload}
-            />
+            
+            {/* Ant Design Alert */}
+            {alert.visible && (
+              <div className="fixed top-4 right-4 z-50 w-96">
+                <Alert
+                  message={alert.message}
+                  type={alert.type}
+                  showIcon
+                  closable
+                  onClose={() => setAlert({ ...alert, visible: false })}
+                />
+              </div>
+            )}
+            
             <div className="flex-grow p-7">
               <h1 className="text-2xl font-semibold">Payment Links</h1>
               <div className="mt-6  mb-8">
@@ -746,6 +790,7 @@ const IndividualChitPaymentLink = () => {
                       id="expiry"
                       type="date"
                       name="expiry"
+                      min={tomorrowFormatted} // Prevent selecting past dates
                       value={formData.expiry}
                       onChange={handleChange}
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
