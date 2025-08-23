@@ -39,8 +39,9 @@ const Enroll = () => {
   const [thirdPartyEnable, setThirdPartyEnable] = useState({
     email: true,
     whatsapp: true,
-    paymentLink: false,
+    paymentLink: true,
   });
+  const [email, setEmail] = useState([]);
   const [enrollmentStep, setEnrollmentStep] = useState("verify");
   const [alertConfig, setAlertConfig] = useState({
     visibility: false,
@@ -58,6 +59,7 @@ const Enroll = () => {
     referred_customer: "",
     agent: "",
     referred_lead: "",
+    email_id: "",
     chit_asking_month: "",
   });
   const [isVerified, setIsVerified] = useState(false);
@@ -74,7 +76,7 @@ const Enroll = () => {
   });
 
   const [searchText, setSearchText] = useState("");
-
+  const [selectedCustomer, setSelectedCustomer] = useState([]);
   const onGlobalSearchChangeHandler = (e) => {
     const { value } = e.target;
     setSearchText(value);
@@ -364,6 +366,7 @@ const Enroll = () => {
     { key: "action", header: "Action" }
   );
 
+
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
@@ -387,11 +390,15 @@ const Enroll = () => {
     const newErrors = {};
     const data = type === "addEnrollment" ? formData : updateFormData;
     const noOfTickets = type === "addEnrollment" ? "no_of_tickets" : "tickets";
+    const regex = { email_id: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ };
     if (!data.group_id.trim()) {
       newErrors.group_id = "Please select a group";
     }
     if (!data.user_id) {
       newErrors.user_id = "Please select a customer";
+    }
+    if (data.email_id && !regex.email_id.test(data.email_id)) {
+      newErrors.email_id = "Invalid email format";
     }
 
     if (availableTicketsAdd.length > 0) {
@@ -427,6 +434,7 @@ const Enroll = () => {
         agent,
         referred_lead,
         chit_asking_month,
+        email_id,
       } = formData;
       const ticketsCount = parseInt(no_of_tickets, 10);
       const ticketEntries = availableTicketsAdd
@@ -442,6 +450,7 @@ const Enroll = () => {
           referred_type,
           chit_asking_month: Number(chit_asking_month),
           tickets: ticketNumber,
+          email_id,
         }));
 
       try {
@@ -471,6 +480,7 @@ const Enroll = () => {
           referred_customer: "",
           agent: "",
           referred_lead: "",
+          email_id,
         });
         setAlertConfig({
           visibility: true,
@@ -528,28 +538,28 @@ const Enroll = () => {
     e.preventDefault();
 
     if (currentGroup) {
-       const user_id = currentGroup.user_id?._id
-       if(user_id){
-      try {
-        await api.put(`/enroll/remove-enroll/${currentGroup._id}`, {
-          user_id,
-          deleted_by: admin,
-          deleted_at: new Date(),
-          removalReason
-        });
-        setRemovalReason("")
-        setShowModalRemove(false);
-        setCurrentGroup(null);
-        setAlertConfig({
-          visibility: true,
-          message: "Enroll deleted successfully",
-          type: "success",
-        });
-      } catch (error) {
-        setRemovalReason("")
-        console.error("Error deleting group:", error);
+      const user_id = currentGroup.user_id?._id;
+      if (user_id) {
+        try {
+          await api.put(`/enroll/remove-enroll/${currentGroup._id}`, {
+            user_id,
+            deleted_by: admin,
+            deleted_at: new Date(),
+            removalReason,
+          });
+          setRemovalReason("");
+          setShowModalRemove(false);
+          setCurrentGroup(null);
+          setAlertConfig({
+            visibility: true,
+            message: "Enroll deleted successfully",
+            type: "success",
+          });
+        } catch (error) {
+          setRemovalReason("");
+          console.error("Error deleting group:", error);
+        }
       }
-    }
     }
   };
 
@@ -884,7 +894,20 @@ const Enroll = () => {
                       .includes(input.toLowerCase())
                   }
                   value={formData?.user_id || undefined}
-                  onChange={(value) => handleAntDSelect("user_id", value)}
+                  //onChange={(value) => handleAntDSelect("user_id", value)}
+                  onChange={(value) => {
+                    handleAntDSelect("user_id", value);
+
+                    // find selected user
+                    const selectedUser = users.find((u) => u._id === value);
+                    if (selectedUser) {
+                      setEmail(selectedUser.email || "");
+                       setFormData((prev) => ({
+                          ...prev,
+                          email_id: selectedUser.email,
+                        }))
+                    }
+                  }}
                 >
                   {users.map((user) => (
                     <Select.Option key={user._id} value={user._id}>
@@ -892,8 +915,31 @@ const Enroll = () => {
                     </Select.Option>
                   ))}
                 </Select>
-                {errors.user_id && (
-                  <p className="mt-1 text-xs text-red-600">{errors.user_id}</p>
+                {formData?.user_id && (
+                  <div className="mt-3">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      title="Email ID For Payment Link Submission"
+                    >
+                      Email
+                    </label>
+                    <input
+                      title="Email ID For Payment Link Submission"
+                      type="email"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2"
+                      value={email|| ""}
+                      onChange={(e) => { setEmail(e.target.value);
+                        setFormData((prev) => ({
+                          ...prev,
+                          email_id: e.target.value,
+                        }))}
+                      }
+                    />
+                    
+                  </div>
+                )}
+                {errors.email_id && (
+                  <p className="mt-1 text-xs text-red-600">{errors.email_id}</p>
                 )}
               </div>
 
@@ -1127,7 +1173,9 @@ const Enroll = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <FiLink className="text-green-600 w-5 h-5" />
-                    <span className="text-gray-800">Enable Payment Link</span>
+                    <span className="text-gray-800">
+                      Enable Registration Payment Link
+                    </span>
                   </div>
                   <input
                     type="checkbox"
@@ -1480,47 +1528,47 @@ const Enroll = () => {
           }}
         >
           <div className="py-6 px-5 lg:px-8 text-left">
-      <h3 className="mb-4 text-xl font-bold text-gray-900">
-        Please Select a Reason for Removal
-      </h3>
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              Please Select a Reason for Removal
+            </h3>
 
-      {currentGroup && (
-        <form onSubmit={handleRemoveGroup} className="space-y-6">
-         
-          <div>
-            <label
-              htmlFor="removalReason"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Removal Reason <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="removalReason"
-              name="removalReason"
-              value={removalReason}
-              onChange={(e) => setRemovalReason(e.target.value)}
-              required
-              className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            >
-              <option value="">-- Select Reason --</option>
-              <option value="Group Closed">Group Closed</option>
-              <option value="Chit Cancellation">Chit Cancellation</option>
-              <option value="In Active Customer">InActive Customer</option>
-              <option value="Legal">Legal</option>
-              <option value="Others">Others</option>
-            </select>
+            {currentGroup && (
+              <form onSubmit={handleRemoveGroup} className="space-y-6">
+                <div>
+                  <label
+                    htmlFor="removalReason"
+                    className="block mb-2 text-sm font-medium text-gray-700"
+                  >
+                    Removal Reason <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="removalReason"
+                    name="removalReason"
+                    value={removalReason}
+                    onChange={(e) => setRemovalReason(e.target.value)}
+                    required
+                    className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="">-- Select Reason --</option>
+                    <option value="Group Closed">Group Closed</option>
+                    <option value="Chit Cancellation">Chit Cancellation</option>
+                    <option value="In Active Customer">
+                      InActive Customer
+                    </option>
+                    <option value="Legal">Legal</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5"
+                >
+                  Remove
+                </button>
+              </form>
+            )}
           </div>
-
-        
-          <button
-            type="submit"
-            className="w-full text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5"
-          >
-            Remove
-          </button>
-        </form>
-      )}
-    </div>
         </Modal>
       </div>
     </>
