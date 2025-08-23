@@ -61,6 +61,7 @@ const Enroll = () => {
     referred_lead: "",
     email_id: "",
     chit_asking_month: "",
+    admin_type: "",
   });
   const [isVerified, setIsVerified] = useState(false);
   const [updateFormData, setUpdateFormData] = useState({
@@ -73,6 +74,7 @@ const Enroll = () => {
     agent: "",
     referred_lead: "",
     chit_asking_month: "",
+    
   });
 
   const [searchText, setSearchText] = useState("");
@@ -87,6 +89,7 @@ const Enroll = () => {
     const adminId = userObj._id;
     if (adminId) {
       setAdmin(userObj._id);
+      setFormData(prev => ({...prev,admin_type:adminId}));
     } else {
       setAdmin("");
     }
