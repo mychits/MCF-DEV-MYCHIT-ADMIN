@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/layouts/Sidebar";
 import api from "../instance/TokenInstance";
-import { Modal } from "antd";
+import { Button, Drawer, Modal } from "antd";
 import { Dropdown } from "antd";
 import DataTable from "../components/layouts/Datatable";
 import CustomAlert from "../components/alerts/CustomAlert";
@@ -12,6 +12,7 @@ import { Select } from "antd";
 import { IoMdMore } from "react-icons/io";
 import filterOption from "../helpers/filterOption";
 import CircularLoader from "../components/loaders/CircularLoader";
+import { Space } from "lucide-react";
 
 const GeneralPaymentOut = () => {
   const [groups, setGroups] = useState([]);
@@ -500,12 +501,13 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
           </div>
         </div>
 
-        <Modal
+        <Drawer
+         title="Chit Payment Out"
           open={showPaymentModal}
-          title="Payment Out"
+       
           okText="Submit"
-          onCancel={() => setShowPaymentModal(false)}
-          onOk={handleSubmit}
+          onClose={() => setShowPaymentModal(false)}
+          
         >
           {paymentDetails ? (
             <form className="space-y-4">
@@ -516,7 +518,7 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                 <input
                   value={paymentDetails.customerName}
                   readOnly
-                  className="border bg-gray-200 rounded w-full p-2 cursor-not-allowed"
+                  className="border bg-gray-100 rounded w-full p-2 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -524,7 +526,7 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                 <input
                   value={paymentDetails.groupName}
                   readOnly
-                  className="border bg-gray-200 rounded w-full p-2 cursor-not-allowed"
+                  className="border bg-gray-100 rounded w-full p-2 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -533,7 +535,7 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                   name="ticket"
                   value={formData.ticket}
                   readOnly
-                  className="bg-gray-200 border rounded w-full p-2 cursor-not-allowed"
+                  className="bg-gray-100 border rounded w-full p-2 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -547,7 +549,7 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                       winAmount: e.target.value,
                     }))
                   }
-                  className="border bg-gray-200 rounded w-full p-2 cursor-not-allowed"
+                  className="border bg-gray-100 rounded w-full p-2 cursor-not-allowed"
                   readOnly
                 />
               </div>
@@ -559,7 +561,7 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                   name="disbursement_type"
                   value={formData.disbursement_type}
                   readOnly
-                  className="bg-gray-200 border rounded w-full p-2 cursor-not-allowed"
+                  className="bg-gray-100 border rounded w-full p-2 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -627,11 +629,17 @@ const selectednewGroup = groups.find(g => g._id === selectedAuctionGroupId);
                   rows={2}
                 />
               </div>
+              <div className="flex justify-between">
+            <Button  onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} type="primary">
+              Submit
+            </Button>
+          </div>
             </form>
           ) : (
             <p>Loading payment details…</p>
           )}
-        </Modal>
+        </Drawer>
 
         <Modal
           open={showModalUpdate}
