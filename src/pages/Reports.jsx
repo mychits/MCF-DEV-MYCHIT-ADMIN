@@ -66,6 +66,7 @@
 import Sidebar from "../components/layouts/Sidebar";
 import Navbar from "../components/layouts/Navbar";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { MdOutlinePending } from "react-icons/md";
 import {
   FaCalendarDays,
   FaPeopleGroup,
@@ -121,6 +122,11 @@ const subMenus = [
     title: "PayOut Report",
     link: "/reports/payout",
     Icon: MdOutlinePayment ,
+  },
+  {
+    title: "Due Report",
+    link: "/reports/due-report",
+    Icon: MdOutlinePending  ,
   },
   {
     title: "Auction Report",

@@ -46,6 +46,7 @@ import PaymentSummary from "../pages/PaymentSummary";
 import WhatsappAdd from "../pages/WhatsappAdd";
 import WhatsappFailed from "../pages/WhatsappFailed";
 import DueMessage from "../pages/DueMessage";
+import DueReport from "../pages/DueReport";
 import Reports from "../pages/Reports";
 import LeadSettings from "../pages/LeadSettings";
 import Designation from "../pages/Designation";
@@ -527,6 +528,9 @@ const mainRoutes = createBrowserRouter([
       { path: "commission-report", element: <CommissionReport /> },
       { path: "enrollment-report", element: <EnrollmentReport /> },
       { path: "payment-summary", element: <PaymentSummary /> },
+      {
+        path:"due-report", element:<DueReport/>
+      }
     ],
   },
   {
