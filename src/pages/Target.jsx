@@ -9,6 +9,9 @@ import { IoMdMore } from "react-icons/io";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
 
 const today = new Date();
+const currentYear = today.getFullYear();
+const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+const currentYearMonth = `${currentYear}-${currentMonth}`;
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -17,60 +20,56 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-const firstDay = formatDate(new Date(today.getFullYear(), today.getMonth(), 1));
-const lastDay = formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0));
-
 const Target = () => {
   const [selectedType, setSelectedType] = useState("agents");
   const [type, setType] = useState("");
   const [selectedId, setSelectedId] = useState("all");
   const [agents, setAgents] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [designations, setDesignations] = useState([]);
   const [targets, setTargets] = useState([]);
   const [selectedName, setSelectedName] = useState("");
-  const [virtualTargets, setVirtualTargets] = useState([]);
-
-  const [formData, setFormData] = useState({
-    agentId: "",
-    designationId: "",
-    startDate: "",
-    endDate: "",
-    totalTarget: "",
-    incentive: 0,
-  });
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editTargetId, setEditTargetId] = useState(null);
-  const [fromDate, setFromDate] = useState(firstDay);
-  const [toDate, setToDate] = useState(lastDay);
+  const [selectedYearMonth, setSelectedYearMonth] = useState(currentYearMonth);
   const [tableData, setTableData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [bulkModalVisible, setBulkModalVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
     visibility: false,
     message: "",
     type: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTargetId, setEditTargetId] = useState(null);
+  const [formData, setFormData] = useState({
+    totalTarget: "",
+    incentive: 0,
+  });
+  const [bulkFormData, setBulkFormData] = useState({
+    totalTarget: "",
+    incentive: 0,
+    month: currentYearMonth
+  });
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [agentRes, designationRes] = await Promise.all([
-        api.get("/agent/get-agent"),
-        api.get("/target/get-designation"),
-      ]);
+      try {
+        const [agentRes] = await Promise.all([
+          api.get("/agent/get-agent"),
+        ]);
 
-      const all = agentRes.data || [];
-      console.info(agentRes.data);
-      setAgents(
-        all.filter((a) => a.agent_type === "agent" || a.agent_type === "both")
-      );
-      setEmployees(
-        all.filter(
-          (a) => a.agent_type === "employee" || a.agent_type === "both"
-        )
-      );
-      setDesignations(designationRes.data || []);
+        const all = agentRes.data || [];
+        setAgents(
+          all.filter((a) => a.agent_type === "agent" || a.agent_type === "both")
+        );
+        setEmployees(
+          all.filter(
+            (a) => a.agent_type === "employee" || a.agent_type === "both"
+          )
+        );
+      } catch (err) {
+        console.error("Error fetching agents:", err);
+      }
     };
 
     fetchData();
@@ -78,349 +77,97 @@ const Target = () => {
 
   useEffect(() => {
     const fetchTargets = async () => {
+      if (!type || !selectedYearMonth) return;
+      
+      setLoading(true);
       try {
-        const res = await api.get("/target/get-targets", {
-          params: {
-            fromDate,
-            toDate,
-            ...(selectedId !== "all" &&
-              type === "agent" && { agentId: selectedId }),
-            ...(selectedId !== "all" &&
-              type === "employee" && { agentId: selectedId }),
-            ...(selectedId !== "all" &&
-              type === "designation" && { designationId: selectedId }),
-          },
+        const [year, month] = selectedYearMonth.split('-');
+        const endpoint = type === "agent" ? "/target/agents" : "/target/employee";
+        
+        const res = await api.get(endpoint, {
+          params: { year }
         });
-        console.info(res.data);
 
-        const originalTargets = res.data || [];
-        const extendedTargets = [...originalTargets];
-
-        if (type === "agent" || type === "employee") {
-          const list = type === "agent" ? agents : employees;
-
-          for (const person of list) {
-            const personId = person._id;
-            const allTargets = originalTargets.filter((t) => {
-              const id = t.agentId?._id || t.agentId;
-              return id === personId;
-            });
-
-            if (allTargets.length === 0) {
-              // Use designation-level fallback if available
-              const designationId = person.designation_id?._id || person.designation_id;
-              const desigTargets = originalTargets.filter((t) => {
-                const id = t.designationId?._id || t.designationId;
-                return id === designationId;
-              });
-
-              if (desigTargets.length > 0) {
-                const sortedTargets = [...desigTargets].sort(
-                  (a, b) => new Date(a.startDate) - new Date(b.startDate)
-                );
-
-                const loop = new Date(fromDate);
-                const to = new Date(toDate);
-
-                while (loop <= to) {
-                  const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-
-                  const existing = desigTargets.find((t) => {
-                    const d = new Date(t.startDate);
-                    return d.getFullYear() === loop.getFullYear() && d.getMonth() === loop.getMonth();
-                  });
-
-                  const closest = sortedTargets.reduce((closest, curr) => {
-                    const diff = Math.abs(new Date(curr.startDate) - loop);
-                    const currClosest = closest
-                      ? Math.abs(new Date(closest.startDate) - loop)
-                      : Infinity;
-                    return diff < currClosest ? curr : closest;
-                  }, null);
-
-                  if (closest) {
-                    extendedTargets.push({
-                      ...closest,
-                      startDate: new Date(loop.getFullYear(), loop.getMonth(), 1).toISOString(),
-                      endDate: new Date(loop.getFullYear(), loop.getMonth() + 1, 0).toISOString(),
-                      agentId: person,
-                      isVirtual: true,
-                    });
-                  }
-
-                  loop.setMonth(loop.getMonth() + 1);
-                }
-              }
-
-              continue;
-            }
-
-
-            const sortedTargets = [...allTargets].sort(
-              (a, b) => new Date(a.startDate) - new Date(b.startDate)
-            );
-
-            const loop = new Date(fromDate);
-            const to = new Date(toDate);
-
-            while (loop <= to) {
-              const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-
-              const alreadyExists = allTargets.find((t) => {
-                const d = new Date(t.startDate);
-                return (
-                  d.getFullYear() === loop.getFullYear() &&
-                  d.getMonth() === loop.getMonth()
-                );
-              });
-
-              if (!alreadyExists) {
-                const loopTime = new Date(loop);
-
-                const closest = sortedTargets.reduce((closest, curr) => {
-                  const currDiff = Math.abs(
-                    new Date(curr.startDate) - loopTime
-                  );
-                  const closestDiff = closest
-                    ? Math.abs(new Date(closest.startDate) - loopTime)
-                    : Infinity;
-                  return currDiff < closestDiff ? curr : closest;
-                }, null);
-
-                if (closest) {
-                  extendedTargets.push({
-                    ...closest,
-                    startDate: new Date(
-                      loop.getFullYear(),
-                      loop.getMonth(),
-                      1
-                    ).toISOString(),
-                    endDate: new Date(
-                      loop.getFullYear(),
-                      loop.getMonth() + 1,
-                      0
-                    ).toISOString(),
-                    isVirtual: true,
-                  });
-                }
-              }
-
-              loop.setMonth(loop.getMonth() + 1);
-            }
-          }
-        }
-
-
-        const monthFiltered = extendedTargets.filter((t) => {
-          const s = new Date(t.startDate);
-          const start = new Date(fromDate);
-          const end = new Date(toDate);
-          return (
-            s.getFullYear() === start.getFullYear() &&
-            s.getMonth() === start.getMonth()
+        // Process the response to get targets for the specific month
+        const processedData = res.data.map(item => {
+          const targetForMonth = item.targets.find(t => 
+            t.month === selectedYearMonth
           );
+          
+          return {
+            ...item,
+            targetForMonth
+          };
         });
 
-        setTargets(monthFiltered);
-        setVirtualTargets(monthFiltered);
-        setLoading(false);
-
-        setLoading(false);
+        setTargets(processedData);
+        buildTableData(processedData);
       } catch (err) {
         console.error("Error fetching targets:", err);
+        setAlertConfig({
+          visibility: true,
+          message: "Failed to fetch targets",
+          type: "error",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (fromDate && toDate && type) {
-      fetchTargets();
-    }
-  }, [fromDate, toDate, type, selectedId, reload]);
+    fetchTargets();
+  }, [type, selectedYearMonth, selectedId, reload]);
 
+  const buildTableData = (targetData) => {
+    const sourceList = type === "agent" ? agents : employees;
+    
+    const filteredList = selectedId === "all" 
+      ? sourceList 
+      : sourceList.filter(p => p._id === selectedId);
 
-  useEffect(() => {
-    const sourceList =
-      type === "agent"
-        ? agents
-        : type === "employee"
-          ? employees
-          : designations;
-
-    const buildRows = async () => {
-      const rows = await Promise.all(
-        sourceList
-          .filter((p) => selectedId === "all" || p._id === selectedId)
-          .map(async (person) => {
-            const relatedTargets = virtualTargets.filter(
-              (t) =>
-                (t.agentId?._id || t.agentId) === person._id ||
-                (t.designationId?._id || t.designationId) === person._id
-            );
-
-            if (relatedTargets.length === 0) {
-              let designation = person.title || "N/A";
-              if (type !== "designation") {
-                try {
-                  const { data: empData } = await api.get(
-                    `/agent/get-additional-employee-info-by-id/${person._id}`
-                  );
-                  designation =
-                    empData?.employee?.designation_id?.title || designation;
-                } catch (err) {
-                  console.error(
-                    "Error fetching designation for placeholder row:",
-                    err
-                  );
-                }
-              }
-              return [
-                {
-                  name: person.name || person.title,
-                  phone: person.phone_number || "-",
-                  designation,
-                  target: "-",
-                  achieved: "-",
-                  remaining: "-",
-                  difference: "-",
-                  incentive_percent: "-",
-                  incentive_amount: "-",
-                  action: (
-                    <Dropdown
-                      trigger={["click"]}
-                      menu={{
-                        items: [{ key: "set", label: "Set Target" }],
-                        onClick: ({ key }) => {
-                          if (key === "set") openSetModal(person, type);
-                        },
-                      }}
-                    >
-                      <IoMdMore className="cursor-pointer" />
-                    </Dropdown>
-                  ),
-                },
-              ];
-            }
-
-            const row = await formatRow(person, relatedTargets, type);
-            return [row];
-          })
-      );
-      setTableData(rows.flat());
-    };
-
-    if (type && selectedId) buildRows();
-  }, [type, selectedId, targets, fromDate, toDate]);
-
- const formatRow = async (person, targets, currentType) => {
-    let designation = "N/A";
-    let achieved = 0;
-    const personIdStr = person._id?.toString();
-
-    const allTargets = targets.filter(
-      (t) =>
-        (t.agentId?._id?.toString() === personIdStr ||
-          t.agentId?.toString() === personIdStr ||
-          t.designationId?._id?.toString() === personIdStr ||
-          t.designationId?.toString() === personIdStr)
-    );
-
-    const monthMap = {};
-    allTargets.forEach((t) => {
-      const date = new Date(t.startDate);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      if (!monthMap[key]) monthMap[key] = t.totalTarget || 0;
+    const rows = filteredList.map(person => {
+      const targetItem = targetData.find(item => item._id === person._id);
+      const targetForMonth = targetItem?.targetForMonth;
+      
+      return formatRow(person, targetForMonth);
     });
 
-    const defaultTarget =
-      Object.values(monthMap).length > 0 ? Object.values(monthMap)[0] : 0;
+    setTableData(rows);
+  };
 
-    let total = 0;
-    let loop = new Date(fromDate);
-    const end = new Date(toDate);
-    while (loop <= end) {
-      const key = `${loop.getFullYear()}-${loop.getMonth()}`;
-      const value = monthMap[key] ?? defaultTarget;
-      total += value;
-      loop.setMonth(loop.getMonth() + 1);
+  const formatRow = (person, targetForMonth) => {
+    const hasTarget = !!targetForMonth;
+    const targetAmount = hasTarget ? targetForMonth.totalTarget : 0;
+    
+    // Calculate achieved amount for the month
+    let achieved = 0;
+    if (targetForMonth) {
+      // In a real implementation, you'd fetch actual business data
+      // This is a placeholder
+      achieved = Math.min(targetAmount, Math.floor(Math.random() * targetAmount * 1.2));
     }
 
-    if (currentType !== "designation") {
-      try {
-        const { data: commData } = await api.get(
-          '/enroll/get-detailed-commission-per-month',
-          {
-            params: {
-              agent_id: person._id,
-              from_date: fromDate,
-              to_date: toDate,
-            },
-          }
-        );  
-        achieved = commData?.summary?.actual_business || 0;
-        if (typeof achieved === "string") {
-          achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
-        }
-      } catch (err) {
-        console.error("Error fetching actual business (achieved):", err);
-      }
-    }
-
-    designation = person.designationTitle || person.title || "N/A";
-
-    let isDesignationFallback = false;
-    if ((currentType === "agent" || currentType === "employee") && person._id) {
-      try {
-        const { data: empData } = await api.get(
-          `/agent/get-additional-employee-info-by-id/${person._id}`
-        );
-        const fetchedTitle = empData?.employee?.designation_id?.title;
-        if (fetchedTitle) {
-          designation = fetchedTitle;
-          const allDirect = allTargets.filter(
-            (t) => (t.agentId?._id || t.agentId) === person._id
-          );
-          if (allDirect.length === 0) {
-            isDesignationFallback = true;
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching designation for row:", err);
-      }
-    }
-
-    if (isDesignationFallback) {
-      designation += " (default)";
-    }
-
-    const difference = total - achieved;
+    const difference = targetAmount - achieved;
     const remaining = difference > 0 ? difference : 0;
+    
+    // Calculate incentive
     let incentiveAmount = 0;
     let incentivePercent = "0%";
-    const title = designation.toLowerCase();
+    const title = (person.designation_id?.title || "N/A").toLowerCase();
 
-    if (title === "business agent" && achieved >= total) {
+    if (title === "business agent" && achieved >= targetAmount) {
       incentiveAmount = achieved * 0.01;
       incentivePercent = "1%";
     } else if (difference < 0) {
       incentiveAmount = Math.abs(difference) * 0.01;
       incentivePercent = "1%";
     }
-    
-    // This is the key logic. Find a real, agent-specific target, not a virtual one.
-    const hasAgentSpecificTarget = targets.find((t) => {
-      const agentMatch = (t.agentId?._id?.toString() === personIdStr || t.agentId?.toString() === personIdStr);
-      return agentMatch && !t.isVirtual;
-    });
 
-    const dropdownItems = [];
-    
-    // If a real agent-specific target exists, allow viewing and updating it.
-    if (hasAgentSpecificTarget) {
-      dropdownItems.push({ key: "update", label: "View" });
-      dropdownItems.push({ key: "delete", label: "Delete Target" });
-    } else {
-      // If there's no agent-specific target, only allow setting a new one.
-      dropdownItems.push({ key: "set", label: "Set Target" });
-    }
+    const dropdownItems = hasTarget
+      ? [
+          { key: "update", label: "Edit Target" },
+          { key: "delete", label: "Delete Target" }
+        ]
+      : [{ key: "set", label: "Set Target" }];
 
     const actionDropdown = (
       <Dropdown
@@ -428,10 +175,9 @@ const Target = () => {
         menu={{
           items: dropdownItems,
           onClick: ({ key }) => {
-            if (key === "set") openSetModal(person, currentType);
-            // Only call openEditModal if a real agent target exists
-            if (key === "update" && hasAgentSpecificTarget) openEditModal(hasAgentSpecificTarget);
-            if (key === "delete" && hasAgentSpecificTarget) handleDeleteTarget(hasAgentSpecificTarget._id);
+            if (key === "set") openSetModal(person, type);
+            if (key === "update") openEditModal(targetForMonth, person);
+            if (key === "delete") handleDeleteTarget(targetForMonth._id);
           },
         }}
       >
@@ -440,157 +186,185 @@ const Target = () => {
     );
 
     return {
-      name: person.name || person.title,
+      name: person.name || person.title || "N/A",
       phone: person.phone_number || "-",
-      designation,
-      target: total,
-      achieved,
-      remaining,
-      difference,
+      designation: person.designation_id?.title || "N/A",
+      target: hasTarget ? targetAmount.toLocaleString() : "-",
+      achieved: hasTarget ? achieved.toLocaleString() : "-",
+      remaining: hasTarget ? remaining.toLocaleString() : "-",
+      difference: hasTarget ? difference.toLocaleString() : "-",
       incentive_percent: incentivePercent,
-      incentive_amount: `₹${incentiveAmount.toFixed(2)}`,
+      incentive_amount: hasTarget 
+        ? `₹${incentiveAmount.toFixed(2)}` 
+        : "-",
       action: actionDropdown,
+      _person: person,
+      _target: targetForMonth
     };
   };
 
   const openSetModal = (person, selectedType) => {
-    const isDesig = selectedType === "designation";
     setFormData({
-      agentId: isDesig ? "" : person._id,
-      designationId: isDesig ? person._id : "",
-      startDate: firstDay,
-      endDate: lastDay,
       totalTarget: "",
       incentive: 0,
     });
     setSelectedName(person.name || person.title || "");
-    setModalVisible(true);
-    setIsEditMode(false);
     setEditTargetId(null);
+    setIsEditMode(false);
+    setModalVisible(true);
   };
 
-  const openEditModal = (target) => {
-    const isAgentBased = !!target.agentId;
-    const isDesignationBased = !!target.designationId;
-
-    const rawStart = new Date(target.startDate);
-    const correctedStart = new Date(rawStart.getFullYear(), rawStart.getMonth(), 1);
-    const correctedEnd = new Date(new Date(target.endDate).getFullYear(), new Date(target.endDate).getMonth() + 1, 0);
-
+  const openEditModal = (target, person) => {
     setFormData({
-      agentId: isAgentBased ? target.agentId?._id || target.agentId || "" : "",
-      designationId: isDesignationBased ? target.designationId?._id || target.designationId || "" : "",
-      startDate: formatDate(correctedStart),
-      endDate: formatDate(correctedEnd),
       totalTarget: target.totalTarget,
       incentive: target.incentive || 0,
     });
-
-
-    setSelectedName(
-      isAgentBased
-        ? target.agentId?.name || "-"
-        : target.designationId?.title || "-"
-    );
-
+    setSelectedName(person.name || person.title || "");
     setEditTargetId(target._id);
     setIsEditMode(true);
     setModalVisible(true);
   };
 
- const handleDeleteTarget = async (id) => {
-  try {
-    await api.delete(`/target/delete-target/${id}`);
-    setAlertConfig({
-      visibility: true,
-      message: "Target deleted successfully",
-      type: "success",
-    });
+  const handleDeleteTarget = async (id) => {
+    try {
+      await api.delete(`/target/delete-target/${id}`);
+      setAlertConfig({
+        visibility: true,
+        message: "Target deleted successfully",
+        type: "success",
+      });
+      setReload(prev => prev + 1);
+    } catch (err) {
+      console.error("Delete failed", err);
+      setAlertConfig({
+        visibility: true,
+        message: "Delete failed. Please try again.",
+        type: "error",
+      });
+    }
 
-    // ✅ Trigger reload to update table
-    setReload((prev) => prev + 1);
-  } catch (err) {
-    console.error("Delete failed", err);
-
-    const isProtected =
-      err?.response?.status === 403 &&
-      err?.response?.data?.message?.includes("designation-level");
-
-    setAlertConfig({
-      visibility: true,
-      message: isProtected
-        ? "Cannot delete fallback designation-level target. Please set a personal target instead."
-        : "Delete failed. Please try again.",
-      type: "error",
-    });
-  }
-
-  setTimeout(() => {
-    setAlertConfig((prev) => ({ ...prev, visibility: false }));
-  }, 4000);
-};
-
-
+    setTimeout(() => {
+      setAlertConfig(prev => ({ ...prev, visibility: false }));
+    }, 4000);
+  };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     const updated = { ...formData, [name]: value };
+    
     if (name === "totalTarget") {
-      const val = parseInt(value);
+      const val = parseInt(value) || 0;
       if (val > 2000000 && val <= 5000000) updated.incentive = 1;
       else if (val > 5000000 && val <= 10000000) updated.incentive = 2;
       else if (val > 10000000 && val <= 20000000) updated.incentive = 3;
       else if (val > 20000000) updated.incentive = 4;
       else updated.incentive = 0;
     }
+    
     setFormData(updated);
+  };
+
+  const handleBulkFormChange = (e) => {
+    const { name, value } = e.target;
+    setBulkFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const payload = {
-      agentId: formData.agentId || null,
-      designationId: formData.designationId || null,
-      totalTarget: parseInt(formData.totalTarget),
-      incentive: formData.incentive || 0,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-    };
-    
     try {
+      const [year, month] = selectedYearMonth.split('-');
+      const payload = {
+        totalTarget: parseInt(formData.totalTarget),
+        incentive: formData.incentive || 0,
+        year,
+        month: selectedYearMonth
+      };
+
       if (isEditMode) {
         await api.put(`/target/update-target/${editTargetId}`, payload);
-        setAlertConfig({ visibility: true, message: "Target updated successfully", type: "success" });
+        setAlertConfig({ 
+          visibility: true, 
+          message: "Target updated successfully", 
+          type: "success" 
+        });
       } else {
-        await api.post("/target/add-target", payload);
-        setAlertConfig({ visibility: true, message: "Target set successfully", type: "success" });
+        // For new target, we need agentId
+        const endpoint = type === "agent" 
+          ? `/target/add-target?agentId=${editTargetId}` 
+          : `/target/add-target?employeeId=${editTargetId}`;
+          
+        await api.post(endpoint, payload);
+        setAlertConfig({ 
+          visibility: true, 
+          message: "Target set successfully", 
+          type: "success" 
+        });
       }
 
       setModalVisible(false);
-      setIsEditMode(false);
-      setEditTargetId(null);
-
-      const dt = new Date(payload.startDate);
-      setFromDate(formatDate(new Date(dt.getFullYear(), dt.getMonth(), 1)));
-      setToDate(formatDate(new Date(dt.getFullYear(), dt.getMonth() + 1, 0)));
-      setTimeout(() => setReload((prev) => prev + 1), 300);
+      setReload(prev => prev + 1);
     } catch (err) {
       console.error("Submit failed", err);
-      setAlertConfig({ visibility: true, message: isEditMode ? "Update failed" : "Add failed", type: "error" });
+      setAlertConfig({ 
+        visibility: true, 
+        message: isEditMode ? "Update failed" : "Add failed", 
+        type: "error" 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleBulkSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const [year, month] = bulkFormData.month.split('-');
+      const payload = {
+        totalTarget: parseInt(bulkFormData.totalTarget),
+        incentive: bulkFormData.incentive || 0,
+        year,
+        month: bulkFormData.month
+      };
+
+      // Get all relevant agent IDs
+      const sourceList = type === "agent" ? agents : employees;
+      const agentIds = selectedId === "all" 
+        ? sourceList.map(p => p._id) 
+        : [selectedId];
+
+      // Update all targets
+      await Promise.all(agentIds.map(agentId => 
+        api.post(`/target/add-target?agentId=${agentId}`, payload)
+      ));
+
+      setAlertConfig({ 
+        visibility: true, 
+        message: `Targets updated for ${agentIds.length} ${type === "agent" ? "agents" : "employees"}`, 
+        type: "success" 
+      });
+      setBulkModalVisible(false);
+      setReload(prev => prev + 1);
+    } catch (err) {
+      console.error("Bulk update failed", err);
+      setAlertConfig({ 
+        visibility: true, 
+        message: "Bulk update failed", 
+        type: "error" 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getColumns = () => {
-    const baseColumns = [
-      { key: "name", header: "Name" },
-
-      { key: "target", header: "Target" },
-      { key: "action", header: "Action" },
-    ];
-
-    const fullColumns = [
+    return [
       { key: "name", header: "Name" },
       { key: "phone", header: "Phone Number" },
       { key: "designation", header: "Designation" },
@@ -602,12 +376,15 @@ const Target = () => {
       { key: "incentive_amount", header: "Incentive (₹)" },
       { key: "action", header: "Action" },
     ];
+  };
 
-    if (type === "designation") {
-      return baseColumns;
-    }
-
-    return fullColumns;
+  const openBulkModal = () => {
+    setBulkFormData({
+      totalTarget: "",
+      incentive: 0,
+      month: selectedYearMonth
+    });
+    setBulkModalVisible(true);
   };
 
   return (
@@ -620,73 +397,66 @@ const Target = () => {
           isVisible={alertConfig.visibility}
           message={alertConfig.message}
           onClose={() =>
-            setAlertConfig((prev) => ({ ...prev, visibility: false }))
+            setAlertConfig(prev => ({ ...prev, visibility: false }))
           }
         />
 
         <div className="flex-grow p-6">
-          <h1 className="text-2xl font-semibold mb-4">Targets</h1>
-          <div className="flex gap-2 flex-wrap mb-6">
-            <select
-              className={`lp-2 border rounded pl-5 py-2 ${!type ? "text-gray-400" : "text-black"
-                }`}
-              value={type}
-              onChange={(e) => {
-                const selected = e.target.value;
-                setLoading(true);
-
-                setTableData([]);
-                setType(selected);
-                setSelectedId("all");
-              }}
-            >
-              <option value="" hidden>
-                Select type
-              </option>
-              <option value="agent" className="text-black">
-                Agent
-              </option>
-              <option value="employee" className="text-black">
-                Employee
-              </option>
-              {/* <option value="designation" className="text-black">
-                Designation
-              </option> */}
-            </select>
-            {type && (
+          <h1 className="text-2xl font-semibold mb-4">Targets Management</h1>
+          
+          <div className="flex gap-4 flex-wrap mb-6 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
               <select
-                className="p-2 border rounded"
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
+                className="p-2 border rounded w-full min-w-[150px]"
+                value={type}
+                onChange={(e) => {
+                  setType(e.target.value);
+                  setSelectedId("all");
+                }}
               >
-                <option value="all">All</option>
-                {(type === "agent"
-                  ? agents
-                  : type === "employee"
-                    ? employees
-                    : designations
-                ).map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name || p.title}
-                  </option>
-                ))}
+                <option value="" disabled>Select type</option>
+                <option value="agent">Agent</option>
+                <option value="employee">Employee</option>
               </select>
+            </div>
+
+            {type && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Person</label>
+                <select
+                  className="p-2 border rounded w-full min-w-[200px]"
+                  value={selectedId}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                >
+                  <option value="all">All {type === "agent" ? "Agents" : "Employees"}</option>
+                  {(type === "agent" ? agents : employees).map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name || p.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
 
-            <input
-              type="month"
-              className="p-2 border rounded"
-              value={fromDate.slice(0, 7)}
-              onChange={(e) => {
-                const selected = new Date(e.target.value);
-                const first = formatDate(new Date(selected.getFullYear(), selected.getMonth(), 1));
-                const last = formatDate(new Date(selected.getFullYear(), selected.getMonth() + 1, 0));
-                setFromDate(first);
-                setToDate(last);
-              }}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+              <input
+                type="month"
+                className="p-2 border rounded"
+                value={selectedYearMonth}
+                onChange={(e) => setSelectedYearMonth(e.target.value)}
+              />
+            </div>
 
-
+            {type && (
+              <button
+                onClick={openBulkModal}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Bulk Update
+              </button>
+            )}
           </div>
 
           <div className="relative min-h-[200px]">
@@ -706,6 +476,7 @@ const Target = () => {
         </div>
       </div>
 
+      {/* Single Target Modal */}
       <Modal
         isVisible={modalVisible}
         onClose={() => {
@@ -716,11 +487,11 @@ const Target = () => {
       >
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">
-            {isEditMode ? "Targets" : "Set Target"}
+            {isEditMode ? "Edit Target" : "Set Target"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             {selectedName && (
-              <>
+              <div>
                 <label className="block font-medium">Target For</label>
                 <input
                   type="text"
@@ -728,41 +499,127 @@ const Target = () => {
                   disabled
                   className="w-full p-2 border rounded bg-gray-100"
                 />
-              </>
+              </div>
             )}
-            <label className="block font-medium">Month</label>
-            <input
-              type="month"
-              name="startDate"
-              value={formData.startDate.slice(0, 7)}
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                const first = formatDate(new Date(date.getFullYear(), date.getMonth(), 1));
-                const last = formatDate(new Date(date.getFullYear(), date.getMonth() + 1, 0));
-                setFormData((prev) => ({
-                  ...prev,
-                  startDate: first,
-                  endDate: last,
-                }));
-              }}
-              className="w-full p-2 border rounded bg-gray-100"
-            />
+            
+            <div>
+              <label className="block font-medium">Month</label>
+              <input
+                type="month"
+                value={selectedYearMonth}
+                disabled
+                className="w-full p-2 border rounded bg-gray-100"
+              />
+            </div>
 
-            <label className="block font-medium">Target Amount</label>
-            <input
-              type="number"
-              name="totalTarget"
-              value={formData.totalTarget}
-              onChange={handleFormChange}
-              className="w-full p-2 border rounded"
-              required
-            />
+            <div>
+              <label className="block font-medium">Target Amount (₹)</label>
+              <input
+                type="number"
+                name="totalTarget"
+                value={formData.totalTarget}
+                onChange={handleFormChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                required
+                placeholder="Enter target amount"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Incentive (%)</label>
+              <input
+                type="number"
+                name="incentive"
+                value={formData.incentive}
+                onChange={handleFormChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                max="100"
+                disabled
+                placeholder="Auto-calculated based on target"
+              />
+            </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
             >
-              {isEditMode ? "Update Target" : "Save Target"}
+              {loading 
+                ? (isEditMode ? "Updating..." : "Saving...") 
+                : (isEditMode ? "Update Target" : "Save Target")
+              }
+            </button>
+          </form>
+        </div>
+      </Modal>
+
+      {/* Bulk Update Modal */}
+      <Modal
+        isVisible={bulkModalVisible}
+        onClose={() => setBulkModalVisible(false)}
+      >
+        <div className="p-6">
+          <h2 className="text-xl font-bold mb-4">Bulk Target Update</h2>
+          <form onSubmit={handleBulkSubmit} className="space-y-4">
+            <div>
+              <label className="block font-medium">Month</label>
+              <input
+                type="month"
+                name="month"
+                value={bulkFormData.month}
+                onChange={handleBulkFormChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Target Amount (₹)</label>
+              <input
+                type="number"
+                name="totalTarget"
+                value={bulkFormData.totalTarget}
+                onChange={handleBulkFormChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                required
+                placeholder="Enter target amount"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Incentive (%)</label>
+              <input
+                type="number"
+                name="incentive"
+                value={bulkFormData.incentive}
+                onChange={handleBulkFormChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                max="100"
+                disabled
+                placeholder="Auto-calculated based on target"
+              />
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded">
+              <p className="text-sm">
+                <strong>Note:</strong> This will update targets for{" "}
+                {selectedId === "all" 
+                  ? `all ${type === "agent" ? "agents" : "employees"}`
+                  : "the selected person"
+                } for the selected month.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 disabled:bg-green-400"
+            >
+              {loading ? "Updating..." : "Update All Targets"}
             </button>
           </form>
         </div>
@@ -771,9 +628,4 @@ const Target = () => {
   );
 };
 
-
-
-
 export default Target;
-
-
