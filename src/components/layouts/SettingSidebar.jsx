@@ -80,9 +80,25 @@ const MenuSidebar = [
   },
 
   {
-    title: "Agent Target",
+    title: "Targets",
     icon: <GoGraph />,
+    submenu:true,
     link: "/target",
+    submenuItems: [
+      {
+        title: "Groups",
+        icon: <MdOutlineGroups />,
+        submenu: true,
+        submenuItems: [
+          {
+            title: "Mobile Access",
+            icon: <MdAppSettingsAlt size={20} />,
+            link: "/lead-setting/app-settings/groups/mobile-access",
+          },
+          
+        ],
+      },
+    ],
   },
   {
     title: "Profile",
