@@ -6,7 +6,17 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
 import Modal from "../components/modals/Modal";
 import SettingSidebar from "../components/layouts/SettingSidebar";
-
+import { GiPartyPopper } from "react-icons/gi";
+import {
+  FileTextOutlined,
+  DollarOutlined,
+  UserOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
+import { Collapse } from "antd";
+import { FaMoneyBill } from "react-icons/fa";
+import { MdPayments } from "react-icons/md";
+import {Link} from "react-router-dom";
 const TargetCommission = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
@@ -439,7 +449,63 @@ const TargetCommission = () => {
             </div>
           ) : (
             <>
-              {/* Employee Info */}
+              <div className="my-6">
+                <Collapse
+                  items={[
+                    {
+                      key: "1",
+                      label: (
+                        <span className="font-semibold text-gray-800 text-base">
+                          Shortcut Keys
+                        </span>
+                      ),
+                      children: (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                          <Link
+                            to="/target-commission"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <DollarOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
+                            Commission Report
+                          </Link>
+
+                          <Link
+                            to="/target-incentive"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <FileTextOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
+                            Incentive Report
+                          </Link>
+
+                          <Link
+                            to="/target-commission-incentive"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <MdPayments className="text-blue-500" size={30} />
+                            Commission or Incentive Payout
+                          </Link>
+
+                          <Link
+                            to="/target-payout-salary"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <FaMoneyBill className="text-blue-500" size={30} />
+                            Salary Payout
+                          </Link>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  defaultActiveKey={["1"]}
+                  className="rounded-lg border border-gray-200 bg-white shadow-sm"
+                />
+              </div>
               {(selectedEmployeeId === "ALL" || selectedEmployeeDetails) && (
                 <div className="mb-8 bg-gray-50 rounded-md shadow-md p-6 space-y-4">
                   {selectedEmployeeId !== "ALL" && selectedEmployeeDetails && (
@@ -538,7 +604,7 @@ const TargetCommission = () => {
 
                     <div className="flex flex-col flex-1">
                       <label className="text-sm font-medium mb-1">
-                        Actual Commission
+                        Commission (1% each)
                       </label>
                       <input
                         value={commissionTotalDetails?.total_actual || "-"}
@@ -546,30 +612,9 @@ const TargetCommission = () => {
                         className="border border-gray-300 rounded px-4 py-2 bg-white  text-green-700 font-bold"
                       />
                     </div>
-
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Gross Business
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.expected_business || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
                   </div>
 
                   <div className="flex gap-4">
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Gross Commission
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.total_estimated || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
                     <div className="flex flex-col flex-1">
                       <label className="text-sm font-medium mb-1">
                         Total Customers
@@ -603,8 +648,18 @@ const TargetCommission = () => {
                     </h2>
 
                     {targetData.achieved >= targetData.target && (
-                      <div className="text-green-800 font-semibold mb-3">
-                        🎉 Target Achieved
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-100 border border-green-400 my-4">
+                        <GiPartyPopper size={30} color="green" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+
+                        <span className="text-green-800 font-semibold">
+                          Target Achieved
+                        </span>
                       </div>
                     )}
 

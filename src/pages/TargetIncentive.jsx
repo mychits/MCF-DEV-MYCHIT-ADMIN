@@ -6,7 +6,16 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
 import Modal from "../components/modals/Modal";
 import SettingSidebar from "../components/layouts/SettingSidebar";
+import { GiPartyPopper } from "react-icons/gi";
+import { Collapse } from "antd";
+import {Link} from "react-router-dom"
+import {
+  FileTextOutlined,
+  DollarOutlined,
 
+} from "@ant-design/icons";
+import { FaMoneyBill } from "react-icons/fa";
+import { MdPayments } from "react-icons/md";
 const TargetIncentive = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
@@ -74,12 +83,12 @@ const TargetIncentive = () => {
       const [year, month] = selectedMonth.split("-");
       const firstDay = `${year}-${month}-01`;
       const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
-      
+
       const res = await api.get("/enroll/get-detailed-commission-per-month", {
-        params: { 
-          agent_id: employeeId, 
-          from_date: firstDay, 
-          to_date: lastDay 
+        params: {
+          agent_id: employeeId,
+          from_date: firstDay,
+          to_date: lastDay,
         },
         signal: abortController.signal,
       });
@@ -101,11 +110,15 @@ const TargetIncentive = () => {
   // NEW: Calculate incentive commission (0% till target, 1% after target)
   const calculateIncentiveCommission = (achievedBusiness, targetAmount) => {
     // Convert to numbers if they're strings
-    const achievedNum = typeof achievedBusiness === 'string' ? 
-      Number(achievedBusiness.replace(/[^0-9.-]+/g, '')) : achievedBusiness;
-    const targetNum = typeof targetAmount === 'string' ? 
-      Number(targetAmount.replace(/[^0-9.-]+/g, '')) : targetAmount;
-    
+    const achievedNum =
+      typeof achievedBusiness === "string"
+        ? Number(achievedBusiness.replace(/[^0-9.-]+/g, ""))
+        : achievedBusiness;
+    const targetNum =
+      typeof targetAmount === "string"
+        ? Number(targetAmount.replace(/[^0-9.-]+/g, ""))
+        : targetAmount;
+
     if (achievedNum <= targetNum) {
       // Up to target: 0% commission
       return 0;
@@ -121,17 +134,25 @@ const TargetIncentive = () => {
       const abortController = new AbortController();
 
       const [year] = selectedMonth.split("-");
-      
-      
+
       const targetRes = await api.get(`/target/agent/${employeeId}`, {
         params: { year },
         signal: abortController.signal,
       });
 
-      
       const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
       ];
       const monthNumber = parseInt(selectedMonth.split("-")[1], 10);
       const monthName = monthNames[monthNumber - 1];
@@ -142,12 +163,12 @@ const TargetIncentive = () => {
         targetForMonth = Number(monthData[monthName] || 0);
       }
 
-      
       const [yearPart, monthPart] = selectedMonth.split("-");
       const firstDay = `${yearPart}-${monthPart}-01`;
-      const lastDay = new Date(yearPart, monthPart, 0).toISOString().split("T")[0];
+      const lastDay = new Date(yearPart, monthPart, 0)
+        .toISOString()
+        .split("T")[0];
 
-      
       const { data: comm } = await api.get(
         "/enroll/get-detailed-commission-per-month",
         {
@@ -168,10 +189,11 @@ const TargetIncentive = () => {
       const remaining = Math.max(targetForMonth - achieved, 0);
       const difference = targetForMonth - achieved;
 
-     
-      const incentiveAmount = calculateIncentiveCommission(achieved, targetForMonth);
+      const incentiveAmount = calculateIncentiveCommission(
+        achieved,
+        targetForMonth
+      );
 
-     
       const startDateDisplay = firstDay;
       const endDateDisplay = lastDay;
 
@@ -182,8 +204,7 @@ const TargetIncentive = () => {
         difference,
         startDate: startDateDisplay,
         endDate: endDateDisplay,
-        incentiveAmount, 
-        
+        incentiveAmount,
       });
     } catch (err) {
       if (err.name !== "AbortError") {
@@ -200,10 +221,10 @@ const TargetIncentive = () => {
       }
     }
   };
-  
+
   const fetchAllCommissionReport = async () => {
     if (!selectedMonth) return;
-    
+
     const abortController = new AbortController();
     setLoading(true);
     try {
@@ -211,13 +232,13 @@ const TargetIncentive = () => {
       const [year, month] = selectedMonth.split("-");
       const firstDay = `${year}-${month}-01`;
       const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
-      
+
       const res = await api.get("enroll/get-detailed-commission-all", {
-        params: { 
-          from_date: firstDay, 
-          to_date: lastDay 
+        params: {
+          from_date: firstDay,
+          to_date: lastDay,
         },
-        signal: abortController.signal
+        signal: abortController.signal,
       });
       setEmployeeCustomerData(res.data?.commission_data);
       setCommissionTotalDetails(res.data?.summary);
@@ -236,7 +257,7 @@ const TargetIncentive = () => {
 
   const handleEmployeeChange = async (value) => {
     setSelectedEmployeeId(value);
-    setAgentLoading(true); 
+    setAgentLoading(true);
 
     if (value === "ALL") {
       setSelectedEmployeeDetails(null);
@@ -256,7 +277,7 @@ const TargetIncentive = () => {
       await fetchTargetData(value);
     }
 
-    setAgentLoading(false); 
+    setAgentLoading(false);
   };
 
   useEffect(() => {
@@ -307,7 +328,6 @@ const TargetIncentive = () => {
     }
   };
 
-
   const processedTableData = employeeCustomerData.map((item, index) => ({
     ...item,
   }));
@@ -329,7 +349,6 @@ const TargetIncentive = () => {
     { key: "commission_released", header: "Commission Released" },
   ];
 
- 
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${String(
     today.getMonth() + 1
@@ -397,14 +416,72 @@ const TargetIncentive = () => {
             </div>
           ) : (
             <>
-              {/* Employee Info */}
+              <div className="my-6">
+                <Collapse
+                  items={[
+                    {
+                      key: "1",
+                      label: (
+                        <span className="font-semibold text-gray-800 text-base">
+                          Shortcut Keys
+                        </span>
+                      ),
+                      children: (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                          <Link
+                            to="/target-commission"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <DollarOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
+                            Commission Report
+                          </Link>
+
+                          <Link
+                            to="/target-incentive"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <FileTextOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
+                            Incentive Report
+                          </Link>
+
+                          <Link
+                            to="/target-commission-incentive"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <MdPayments className="text-blue-500" size={30} />
+                            Commission or Incentive Payout
+                          </Link>
+
+                          <Link
+                            to="/target-payout-salary"
+                            className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <FaMoneyBill className="text-blue-500" size={30} />
+                            Salary Payout
+                          </Link>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  defaultActiveKey={["1"]}
+                  className="rounded-lg border border-gray-200 bg-white shadow-sm"
+                />
+              </div>
               {(selectedEmployeeId === "ALL" || selectedEmployeeDetails) && (
                 <div className="mb-8 bg-gray-50 rounded-md shadow-md p-6 space-y-4">
                   {selectedEmployeeId !== "ALL" && selectedEmployeeDetails && (
                     <>
                       <div className="flex gap-4">
                         <div className="flex flex-col flex-1">
-                          <label className="text-sm font-medium mb-1">Name</label>
+                          <label className="text-sm font-medium mb-1">
+                            Name
+                          </label>
                           <input
                             value={selectedEmployeeDetails.name || "-"}
                             readOnly
@@ -412,7 +489,9 @@ const TargetIncentive = () => {
                           />
                         </div>
                         <div className="flex flex-col flex-1">
-                          <label className="text-sm font-medium mb-1">Email</label>
+                          <label className="text-sm font-medium mb-1">
+                            Email
+                          </label>
                           <input
                             value={selectedEmployeeDetails.email || "-"}
                             readOnly
@@ -465,7 +544,9 @@ const TargetIncentive = () => {
                       </div>
 
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium mb-1">Address</label>
+                        <label className="text-sm font-medium mb-1">
+                          Address
+                        </label>
                         <input
                           value={selectedEmployeeDetails.address || "-"}
                           readOnly
@@ -475,7 +556,6 @@ const TargetIncentive = () => {
                     </>
                   )}
 
-                  {/* Summary always shown */}
                   <div className="flex gap-4">
                     <div className="flex flex-col flex-1">
                       <label className="text-sm font-medium mb-1">
@@ -487,61 +567,16 @@ const TargetIncentive = () => {
                         className="border border-gray-300 rounded px-4 py-2 bg-white text-green-700 font-bold"
                       />
                     </div>
-
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Actual Commission
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.total_actual || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white  text-green-700 font-bold"
-                      />
-                    </div>
-
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Gross Business
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.expected_business || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
                   </div>
-
-                  <div className="flex gap-4">
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Gross Commission
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.total_estimated || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Total Customers
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.total_customers || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <label className="text-sm font-medium mb-1">
-                        Total Groups
-                      </label>
-                      <input
-                        value={commissionTotalDetails?.total_groups || "-"}
-                        readOnly
-                        className="border border-gray-300 rounded px-4 py-2 bg-white"
-                      />
-                    </div>
+                  <div className="flex flex-col flex-1">
+                    <label className="text-sm font-medium mb-1">
+                      Incentive (1% each)
+                    </label>
+                    <input
+                      value={commissionTotalDetails?.total_actual || "-"}
+                      readOnly
+                      className="border border-gray-300 rounded px-4 py-2 bg-white  text-green-700 font-bold"
+                    />
                   </div>
                 </div>
               )}
@@ -555,8 +590,18 @@ const TargetIncentive = () => {
                     </h2>
 
                     {targetData.achieved >= targetData.target && (
-                      <div className="text-green-800 font-semibold mb-3">
-                        🎉 Target Achieved
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-100 border border-green-400 my-4">
+                        <GiPartyPopper size={30} color="green" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+
+                        <span className="text-green-800 font-semibold">
+                          Target Achieved
+                        </span>
                       </div>
                     )}
 
@@ -564,7 +609,9 @@ const TargetIncentive = () => {
                       <div>
                         <label className="block font-medium">Target Set</label>
                         <input
-                          value={`₹${targetData.target?.toLocaleString("en-IN")}`}
+                          value={`₹${targetData.target?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="border px-3 py-2 rounded w-full bg-gray-50 font-semibold"
                         />
@@ -572,7 +619,9 @@ const TargetIncentive = () => {
                       <div>
                         <label className="block font-medium">Achieved</label>
                         <input
-                          value={`₹${targetData.achieved?.toLocaleString("en-IN")}`}
+                          value={`₹${targetData.achieved?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="border px-3 py-2 rounded w-full bg-gray-50 font-semibold"
                         />
@@ -580,7 +629,9 @@ const TargetIncentive = () => {
                       <div>
                         <label className="block font-medium">Difference</label>
                         <input
-                          value={`₹${targetData.difference?.toLocaleString("en-IN")}`}
+                          value={`₹${targetData.difference?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="border px-3 py-2 rounded w-full bg-gray-50 font-semibold"
                         />
@@ -588,17 +639,22 @@ const TargetIncentive = () => {
 
                       {/* MODIFIED: Total Payable now shows incentive amount */}
                       <div>
-                        <label className="block font-medium">Total Payable</label>
+                        <label className="block font-medium">
+                          Total Payable
+                        </label>
                         <input
                           readOnly
                           value={`₹${targetData.incentiveAmount.toLocaleString(
                             "en-IN",
-                            { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
                           )}`}
                           className="border px-3 py-2 rounded w-full bg-gray-50 text-green-700 font-bold"
                         />
                       </div>
-                      
+
                       {/* ADDED: Incentive breakdown for clarity */}
                       <div className="col-span-3">
                         <div className="bg-blue-50 p-3 rounded">
@@ -606,13 +662,17 @@ const TargetIncentive = () => {
                             Incentive Breakdown:
                           </p>
                           <ul className="list-disc pl-5 text-sm text-gray-700 mt-1">
-                            <li>
-                              Up to target (0%): ₹0.00
-                            </li>
+                            <li>Up to target (0%): ₹0.00</li>
                             {targetData.achieved > targetData.target && (
                               <li>
-                                Beyond target (1%): ₹{((targetData.achieved - targetData.target) * 0.01)
-                                  .toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                Beyond target (1%): ₹
+                                {(
+                                  (targetData.achieved - targetData.target) *
+                                  0.01
+                                ).toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </li>
                             )}
                           </ul>
@@ -770,40 +830,54 @@ const TargetIncentive = () => {
                         ? "-"
                         : selectedEmployeeDetails?.phone_number || "-",
                       selectedMonth
-                        ? new Date(
-                            `${selectedMonth}-01`
-                          ).toLocaleString("default", {
-                            month: "long",
-                            year: "numeric",
-                          })
+                        ? new Date(`${selectedMonth}-01`).toLocaleString(
+                            "default",
+                            {
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )
                         : "-",
                       `₹${targetData?.target?.toLocaleString("en-IN") || "0"}`,
-                      `₹${targetData?.achieved?.toLocaleString("en-IN") || "0"}`,
-                      `₹${targetData?.remaining?.toLocaleString("en-IN") || "0"}`,
+                      `₹${
+                        targetData?.achieved?.toLocaleString("en-IN") || "0"
+                      }`,
+                      `₹${
+                        targetData?.remaining?.toLocaleString("en-IN") || "0"
+                      }`,
                       // MODIFIED: Using incentive amount
-                      `₹${targetData?.incentiveAmount?.toLocaleString("en-IN", 
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}`,
-                      `₹${commissionTotalDetails?.actual_business?.toLocaleString(
-                        "en-IN"
-                      ) || "0"
+                      `₹${
+                        targetData?.incentiveAmount?.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }) || "0.00"
                       }`,
-                      `₹${commissionTotalDetails?.total_actual?.toLocaleString(
-                        "en-IN"
-                      ) || "0"
+                      `₹${
+                        commissionTotalDetails?.actual_business?.toLocaleString(
+                          "en-IN"
+                        ) || "0"
                       }`,
-                      `₹${commissionTotalDetails?.expected_business?.toLocaleString(
-                        "en-IN"
-                      ) || "0"
+                      `₹${
+                        commissionTotalDetails?.total_actual?.toLocaleString(
+                          "en-IN"
+                        ) || "0"
                       }`,
-                      `₹${commissionTotalDetails?.total_estimated?.toLocaleString(
-                        "en-IN"
-                      ) || "0"
+                      `₹${
+                        commissionTotalDetails?.expected_business?.toLocaleString(
+                          "en-IN"
+                        ) || "0"
+                      }`,
+                      `₹${
+                        commissionTotalDetails?.total_estimated?.toLocaleString(
+                          "en-IN"
+                        ) || "0"
                       }`,
                       commissionTotalDetails?.total_customers || "0",
                       commissionTotalDetails?.total_groups || "0",
                     ]}
-                    exportedFileName={`CommissionReport-${selectedEmployeeDetails?.name || "all"
-                      }-${selectedMonth}.csv`}
+                    exportedFileName={`CommissionReport-${
+                      selectedEmployeeDetails?.name || "all"
+                    }-${selectedMonth}.csv`}
                   />
                 </>
               ) : (
