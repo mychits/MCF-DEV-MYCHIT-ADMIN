@@ -139,7 +139,7 @@ const TargetCommission = () => {
 
       const [year] = selectedMonth.split("-");
 
-      // Fetch target details for the selected agent
+     
       const targetRes = await api.get(`/target/agent/${employeeId}`, {
         params: { year },
         signal: abortController.signal,

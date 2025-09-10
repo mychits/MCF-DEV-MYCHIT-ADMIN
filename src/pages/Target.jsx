@@ -529,7 +529,10 @@ const Target = () => {
                             to="/target-commission"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
-                            <DollarOutlined className="text-blue-500" size={30} />
+                            <DollarOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
                             Commission Report
                           </Link>
 
@@ -537,7 +540,10 @@ const Target = () => {
                             to="/target-incentive"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
-                            <FileTextOutlined className="text-blue-500" size={30}/>
+                            <FileTextOutlined
+                              className="text-blue-500"
+                              size={30}
+                            />
                             Incentive Report
                           </Link>
 
@@ -545,7 +551,7 @@ const Target = () => {
                             to="/target-commission-incentive"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
-                            <MdPayments className="text-blue-500" size={30}/>
+                            <MdPayments className="text-blue-500" size={30} />
                             Commission or Incentive Payout
                           </Link>
 
