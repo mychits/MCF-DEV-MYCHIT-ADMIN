@@ -8,8 +8,9 @@ import CustomAlert from "../components/alerts/CustomAlert";
 import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
 import { Select, Tooltip, notification } from "antd";
+import SettingSidebar from "../components/layouts/SettingSidebar";
 
-const PayOutSalary = () => {
+const PayoutSalary = () => {
   const paymentFor = "salary";
   const [api, contextHolder] = notification.useNotification();
   const [showSalaryModal, setShowSalaryModal] = useState(false);
@@ -63,7 +64,6 @@ const PayOutSalary = () => {
   const [alreadyPaid, setAlreadyPaid] = useState("0.00");
   const [remainingSalary, setRemainingSalary] = useState("0.00");
 
-  // Always format to YYYY-MM-DD for backend
   const formatDate = (date) => {
     if (!date) return "";
     if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -77,7 +77,12 @@ const PayOutSalary = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const calculateProRatedSalary = async (fromDateStr, toDateStr, monthlySalary, empId) => {
+  const calculateProRatedSalary = async (
+    fromDateStr,
+    toDateStr,
+    monthlySalary,
+    empId
+  ) => {
     if (!fromDateStr || !toDateStr || !monthlySalary || !empId) {
       setCalculatedSalary("");
       setAlreadyPaid("0.00");
@@ -124,7 +129,7 @@ const PayOutSalary = () => {
     }
 
     const proRatedSalary = totalSalary;
-    const totalPayableWithIncentive = proRatedSalary; // Add incentive later if needed
+    const totalPayableWithIncentive = proRatedSalary;
 
     setCalculatedSalary(totalPayableWithIncentive.toFixed(2));
     setTotalWithIncentive(totalPayableWithIncentive.toFixed(2));
@@ -132,7 +137,9 @@ const PayOutSalary = () => {
     try {
       const res = await API.get("/payment-out/get-salary-payments");
       const paidToAgent = res?.data?.filter((p) => {
-        const pAgentId = p.agent_id?._id ? String(p.agent_id._id) : String(p.agent_id);
+        const pAgentId = p.agent_id?._id
+          ? String(p.agent_id._id)
+          : String(p.agent_id);
         const matchesAgent = pAgentId === String(empId);
         const payDate = new Date(formatDate(p.pay_date));
         return matchesAgent && payDate >= fromDate && payDate <= toDate;
@@ -165,7 +172,6 @@ const PayOutSalary = () => {
         const baseSalary = emp.salary || "";
         setEmployeeDetails({ joining_date: joining, salary: baseSalary });
 
-        // 👇 If dates already selected, trigger target + salary calculation
         if (salaryForm.from_date && salaryForm.to_date) {
           const fd = formatDate(salaryForm.from_date);
           const td = formatDate(salaryForm.to_date);
@@ -216,38 +222,38 @@ const PayOutSalary = () => {
     }
   };
 
-const fetchTargetDetails = async (agentId, fromDate, toDate) => {
-  if (!agentId || !fromDate || !toDate) {
-    resetTargetData();
-    return;
-  }
-
-  try {
-    const res = await API.get(`/target/employee/${agentId}`, {
-      params: { from_date: fromDate, to_date: toDate },
-    });
-
-    if (res.data?.success && res.data?.summary) {
-      const empSummary = res.data.summary;
-
-      setTargetData({
-        target: empSummary.agent?.target?.value || "Not Set",
-        achieved: empSummary.metrics?.actual_business || "₹0.00",
-        difference: empSummary.metrics?.target_difference || "₹0.00",
-        remaining: empSummary.metrics?.target_remaining || "₹0.00",
-        incentiveAmount: empSummary.metrics?.total_estimated || "₹0.00",
-        incentivePercent:
-          (empSummary.agent?.target?.achievement_percent || "0") + "%",
-      });
+  const fetchTargetDetails = async (agentId, fromDate, toDate) => {
+    if (!agentId || !fromDate || !toDate) {
+      resetTargetData();
       return;
     }
 
-    resetTargetData();
-  } catch (error) {
-    console.error("Error fetching target details", error);
-    resetTargetData();
-  }
-};
+    try {
+      const res = await API.get(`/target/employee/${agentId}`, {
+        params: { from_date: fromDate, to_date: toDate },
+      });
+
+      if (res.data?.success && res.data?.summary) {
+        const empSummary = res.data.summary;
+
+        setTargetData({
+          target: empSummary.agent?.target?.value || "Not Set",
+          achieved: empSummary.metrics?.actual_business || "₹0.00",
+          difference: empSummary.metrics?.target_difference || "₹0.00",
+          remaining: empSummary.metrics?.target_remaining || "₹0.00",
+          incentiveAmount: empSummary.metrics?.total_estimated || "₹0.00",
+          incentivePercent:
+            (empSummary.agent?.target?.achievement_percent || "0") + "%",
+        });
+        return;
+      }
+
+      resetTargetData();
+    } catch (error) {
+      console.error("Error fetching target details", error);
+      resetTargetData();
+    }
+  };
 
   const resetTargetData = () => {
     setTargetData({
@@ -259,7 +265,6 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
       incentivePercent: "0%",
     });
   };
-
 
   // Load user info on mount
   useEffect(() => {
@@ -448,7 +453,9 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                     showSearch
                     optionFilterProp="children"
                     filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
                     }
                     value={salaryForm.agent_id || undefined}
                     onChange={(value) => {
@@ -475,7 +482,9 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                     ))}
                   </Select>
                   {errors.agent_id && (
-                    <p className="text-red-500 text-xs mt-1">{errors.agent_id}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.agent_id}
+                    </p>
                   )}
                 </div>
 
@@ -551,30 +560,41 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                     {/* ✅ TARGET DATA DISPLAY */}
                     <div className="grid grid-cols-2 gap-4 mt-6 p-3 rounded-lg bg-gray-50">
                       <div>
-                        <label className="block text-sm font-medium">Target</label>
+                        <label className="block text-sm font-medium">
+                          Target
+                        </label>
                         <input
-                          value={`${targetData.target?.toLocaleString("en-IN")}`}
+                          value={`${targetData.target?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="w-full border rounded px-3 py-2 bg-white font-semibold"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium">Achieved</label>
+                        <label className="block text-sm font-medium">
+                          Achieved
+                        </label>
                         <input
-                          value={`${targetData.achieved?.toLocaleString("en-IN")}`}
+                          value={`${targetData.achieved?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="w-full border rounded px-3 py-2 bg-white font-semibold"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium">Difference</label>
+                        <label className="block text-sm font-medium">
+                          Difference
+                        </label>
                         <input
-                          value={`${targetData.difference?.toLocaleString("en-IN")}`}
+                          value={`${targetData.difference?.toLocaleString(
+                            "en-IN"
+                          )}`}
                           readOnly
                           className="w-full border rounded px-3 py-2 bg-white font-semibold"
                         />
                       </div>
-                    
                     </div>
 
                     <div>
@@ -620,7 +640,8 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                 {calculatedSalary && (
                   <div className="mt-2">
                     <label className="block mb-2 text-sm font-medium text-gray-900">
-                      Enter Payable Amount (₹) <span className="text-red-500">*</span>
+                      Enter Payable Amount (₹){" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -647,7 +668,9 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
                       placeholder="Enter amount to pay"
                     />
                     {errors.amount && (
-                      <p className="text-red-500 text-xs mt-1">{errors.amount}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.amount}
+                      </p>
                     )}
 
                     <div className="grid grid-cols-2 gap-4 mt-3">
@@ -759,4 +782,4 @@ const fetchTargetDetails = async (agentId, fromDate, toDate) => {
   );
 };
 
-export default PayOutSalary;
+export default PayoutSalary;
