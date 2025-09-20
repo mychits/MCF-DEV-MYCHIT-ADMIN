@@ -37,7 +37,7 @@
 //           <div className="w-[300px] bg-gray-50 h-full  p-4">
 //             {subMenus.map(({ title, link, Icon, red }) => (
 //               <NavLink
-            
+
 //                 className={({ isActive }) =>
 //                   `my-2 flex items-center gap-2 font-medium rounded-md hover:bg-gray-300  p-3 ${
 //                     red ? "text-red-800" : "text-blue-950"
@@ -74,6 +74,7 @@ import {
   FaUserCheck,
   FaUserTie,
 } from "react-icons/fa6";
+import { TbUserCancel } from "react-icons/tb";
 import {
   MdOutlineEmojiPeople,
   MdOutlineReceiptLong,
@@ -105,6 +106,11 @@ const subMenus = [
     Icon: MdOutlineEmojiPeople,
   },
   {
+    title: "Holded Customers",
+    link: "/reports/holded-customer-report",
+    Icon: TbUserCancel,
+  },
+  {
     title: "Employee Report",
     link: "/reports/employee-report",
     Icon: FaUserTie,
@@ -122,12 +128,12 @@ const subMenus = [
   {
     title: "PayOut Report",
     link: "/reports/payout",
-    Icon: MdOutlinePayment ,
+    Icon: MdOutlinePayment,
   },
   {
     title: "Due Report",
     link: "/reports/due-report",
-    Icon: MdOutlinePending  ,
+    Icon: MdOutlinePending,
   },
   {
     title: "Auction Report",
@@ -142,17 +148,24 @@ const subMenus = [
   },
   { title: "Loan Report", link: "/reports/loan-report", Icon: GiMoneyStack },
   { title: "Sales Report", link: "/reports/sales-report", Icon: FaUserCheck },
-   { title: "Payment Summary", link: "/reports/payment-summary", Icon: TbReportSearch },
-   {title: "Monthly Installment Turnover", link: "/reports/monthly-install-turnover", Icon: SlCalender },
+  {
+    title: "Payment Summary",
+    link: "/reports/payment-summary",
+    Icon: TbReportSearch,
+  },
+
+  {
+    title: "Monthly Installment Turnover",
+    link: "/reports/monthly-install-turnover",
+    Icon: SlCalender,
+  },
 ];
 
 const Reports = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const bgColors = [
-"bg-gray-200"
-  ];
+  const bgColors = ["bg-gray-200"];
 
   return (
     <div>
@@ -215,4 +228,3 @@ const Reports = () => {
 };
 
 export default Reports;
-

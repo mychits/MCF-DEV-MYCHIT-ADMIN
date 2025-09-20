@@ -90,11 +90,11 @@ import TargetPayOutCommissionIncentive from "../pages/TargetPayOutCommissionInce
 import TargetCommission from "../pages/TargetCommission";
 import TargetPayOutMenu from "../pages/TargetPayOutMenu";
 import MonthlyInstallmentTurnoverReport from "../pages/MonthlyInstallmentTurnoverReport";
+import HoldedCustomerReport from "../pages/HoldedCustomerReport"
 import Insurance from "../pages/Insurance";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
-
     element: <Login />,
   },
   {
@@ -535,6 +535,7 @@ const mainRoutes = createBrowserRouter([
       { path: "commission-report", element: <CommissionReport /> },
       { path: "enrollment-report", element: <EnrollmentReport /> },
       { path: "payment-summary", element: <PaymentSummary /> },
+       { path: "holded-customer-report", element: <HoldedCustomerReport /> },
       {path: "monthly-install-turnover", element:<MonthlyInstallmentTurnoverReport/>},
       {
         path: "due-report",
