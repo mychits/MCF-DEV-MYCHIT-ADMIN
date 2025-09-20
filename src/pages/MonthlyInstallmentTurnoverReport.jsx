@@ -6,16 +6,16 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import { Select } from "antd";
 
 const MonthlyInstallmentTurnoverReport = () => {
-  const [monthlyInstallments, setMonthlyInstallments] = useState([]);
+
   const [isLoading, setIsLoading] = useState(false);
-  const [groupId, setGroupId] = useState([]);
+
   const [monthlyInstallmentTable, setMonthlyInstallmentTable] = useState([]);
   const [year, setYear] = useState([]);
   const [isDataTableLoading, setIsDataTableLoading] = useState(false);
   const [month, setMonth] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [agents, setAgents] = useState([]);
-  const [agent, setAgent] = useState([]);
+  const [agent, setAgent] = useState("");
   const [summaryData, setSummaryData]= useState({});
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -161,9 +161,9 @@ const MonthlyInstallmentTurnoverReport = () => {
             </div>
             </div>
             <div className="w-1/4 min-w-[500px] p-6">
-            {/* 🎯 Agent Summary */}
-            {summaryData && (
-              <div className="bg-white p-6 rounded shadow">
+           
+            {!!agent && summaryData && (
+              <div className="bg-white p-6 rounded  shadow">
                 <h2 className="text-xl font-semibold text-center mb-4">Summary</h2>
                 <div className="space-y-3 text-base">
                   <div className="flex justify-between">

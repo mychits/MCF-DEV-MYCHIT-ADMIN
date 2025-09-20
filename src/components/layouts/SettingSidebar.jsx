@@ -60,6 +60,12 @@ const MenuSidebar = [
       },
     ],
   },
+  {
+    title: "Insurance",
+    icon: <IoPeopleOutline />,
+    link : "/insurance"
+
+  },
 
   {
     title: "Designations",
@@ -76,6 +82,7 @@ const MenuSidebar = [
     icon: <BsPersonCheck />,
     link: "/admin-access-rights",
   },
+
 
   {
     title: "Target Management",
