@@ -327,6 +327,51 @@ const DueReport = () => {
                     </div>
                   </div>
 
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mt-8 mb-8">
+                  <div className="flex flex-col border p-4 rounded shadow">
+                    <span className="text-xl font-bold text-gray-700">
+                      Total Customers
+                    </span>
+                    <span className="text-lg font-bold  text-blue-600">
+                      {totals.totalCustomers}
+                    </span>
+                  </div>
+                  <div className="flex flex-col border p-4 rounded shadow">
+                    <span className="text-xl font-bold text-gray-700">
+                      Total Groups
+                    </span>
+                    <span className="text-lg font-bold  text-green-600">
+                      {totals.totalGroups}
+                    </span>
+                  </div>
+                  <div className="flex flex-col border p-4 rounded shadow">
+                    <span className="text-xl font-bold text-gray-700">
+                      Amount to be Paid
+                    </span>
+                    <span className="text-lg font-bold text-blue-600">
+                      ₹{totals.totalToBePaid}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col border p-4 rounded shadow">
+                    <span className="text-xl font-semibold text-gray-700">
+                      Total Amount Paid
+                    </span>
+                    <span className="text-lg font-bold text-indigo-600">
+                      ₹{totals.totalPaid}
+                    </span>
+                  </div>
+                  <div className="flex flex-col border p-4 rounded shadow">
+                    <span className="text-xl font-bold text-gray-700">
+                      Total Balance
+                    </span>
+                    <span className="text-lg font-bold text-red-600">
+                      ₹{totals.totalBalance}
+                    </span>
+                  </div>
+                </div>
+
                   <DataTable
                     data={filteredTableData}
                     columns={Auctioncolumns}
@@ -362,56 +407,7 @@ const DueReport = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Customers
-                    </span>
-                    <span className="text-lg font-bold  text-blue-600">
-                      {totals.totalCustomers}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Groups
-                    </span>
-                    <span className="text-lg font-bold  text-green-600">
-                      {totals.totalGroups}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Amount to be Paid
-                    </span>
-                    <span className="text-lg font-bold text-blue-600">
-                      ₹{totals.totalToBePaid}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Profit
-                    </span>
-                    <span className="text-lg font-bold text-green-600">
-                      ₹{totals.totalProfit}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-semibold text-gray-700">
-                      Total Amount Paid
-                    </span>
-                    <span className="text-lg font-bold text-indigo-600">
-                      ₹{totals.totalPaid}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Balance
-                    </span>
-                    <span className="text-lg font-bold text-red-600">
-                      ₹{totals.totalBalance}
-                    </span>
-                  </div>
-                </div>
+                
               </div>
             </div>
           </div>
