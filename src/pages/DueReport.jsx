@@ -65,7 +65,7 @@ const DueReport = () => {
                 const auctionCount = parseInt(data?.auction?.auctionCount);
                 const totalPayable = data.payable.totalPayable;
                 const totalProfit = data.profit.totalProfit;
-                const firstDividentHead = data.firstAuction.firstDividentHead;  
+                const firstDividentHead = data.firstAuction.firstDividentHead;
                 const id = data?.enrollment?._id;
                 const userPhone = usrData.phone_number;
                 const paymentsTicket = data.payments.ticket;
@@ -327,52 +327,51 @@ const DueReport = () => {
                     </div>
                   </div>
 
-
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mt-8 mb-8">
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Customers
-                    </span>
-                    <span className="text-lg font-bold  text-blue-600">
-                      {totals.totalCustomers}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Groups
-                    </span>
-                    <span className="text-lg font-bold  text-green-600">
-                      {totals.totalGroups}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Amount to be Paid
-                    </span>
-                    <span className="text-lg font-bold text-blue-600">
-                      ₹{totals.totalToBePaid}
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-semibold text-gray-700">
-                      Total Amount Paid
-                    </span>
-                    <span className="text-lg font-bold text-indigo-600">
-                      ₹{totals.totalPaid}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border p-4 rounded shadow">
-                    <span className="text-xl font-bold text-gray-700">
-                      Total Balance
-                    </span>
-                    <span className="text-lg font-bold text-red-600">
-                      ₹{totals.totalBalance}
-                    </span>
-                  </div>
-                </div>
+                    <div className="flex flex-col border p-4 rounded shadow">
+                      <span className="text-xl font-bold text-gray-700">
+                        Total Customers
+                      </span>
+                      <span className="text-lg font-bold  text-blue-600">
+                        {totals.totalCustomers}
+                      </span>
+                    </div>
+                    <div className="flex flex-col border p-4 rounded shadow">
+                      <span className="text-xl font-bold text-gray-700">
+                        Total Groups
+                      </span>
+                      <span className="text-lg font-bold  text-green-600">
+                        {totals.totalGroups}
+                      </span>
+                    </div>
+                    <div className="flex flex-col border p-4 rounded shadow">
+                      <span className="text-xl font-bold text-gray-700">
+                        Amount to be Paid
+                      </span>
+                      <span className="text-lg font-bold text-blue-600">
+                        ₹{totals.totalToBePaid}
+                      </span>
+                    </div>
 
-                  <DataTable
+                    <div className="flex flex-col border p-4 rounded shadow">
+                      <span className="text-xl font-semibold text-gray-700">
+                        Total Amount Paid
+                      </span>
+                      <span className="text-lg font-bold text-indigo-600">
+                        ₹{totals.totalPaid}
+                      </span>
+                    </div>
+                    <div className="flex flex-col border p-4 rounded shadow">
+                      <span className="text-xl font-bold text-gray-700">
+                        Total Balance
+                      </span>
+                      <span className="text-lg font-bold text-red-600">
+                        ₹{totals.totalBalance}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* <DataTable
                     data={filteredTableData}
                     columns={Auctioncolumns}
                     exportCols={ExcelColumns}
@@ -404,10 +403,40 @@ const DueReport = () => {
                       `₹${total.totalBalance.toLocaleString("en-IN")}`,
                     ]}
                     exportedFileName={`CustomerReport.csv`}
+                  /> */}
+
+                  <DataTable
+                    data={filteredTableData}
+                    columns={Auctioncolumns}
+                    exportCols={ExcelColumns}
+                    exportedPdfName="Due Report"
+                    printHeaderKeys={[
+                      "From Date",
+                      "To Date",
+                      "Group Name",
+                      "Total Customers",
+                      "Total Groups",
+                      "Amount to be Paid",
+                      "Total Amount Paid",
+                      "Total Balance",
+                    ]}
+                    printHeaderValues={[
+                      fromDate
+                        ? new Date(fromDate).toLocaleDateString("en-GB")
+                        : "—",
+                      toDate
+                        ? new Date(toDate).toLocaleDateString("en-GB")
+                        : "—",
+                      groupFilter || "All Groups",
+                      totals.totalCustomers,
+                      totals.totalGroups,
+                      `₹${totals.totalToBePaid.toLocaleString("en-IN")}`,
+                      `₹${totals.totalPaid.toLocaleString("en-IN")}`,
+                      `₹${totals.totalBalance.toLocaleString("en-IN")}`,
+                    ]}
+                    exportedFileName="DueReport.csv"
                   />
                 </div>
-
-                
               </div>
             </div>
           </div>

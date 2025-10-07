@@ -26,6 +26,7 @@ const UserReport = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [groupPaid, setGroupPaid] = useState("");
   const [groupToBePaid, setGroupToBePaid] = useState("");
+  const [customerTransactions, setCustomerTransactions] = useState(null);
   const [fromDate, setFromDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -469,6 +470,22 @@ const UserReport = () => {
       setEnrollGroupId({ groupId: "", ticket: "" });
     }
   };
+
+useEffect(() => {
+  const fetchCustomerTransaction = async () => {
+    try {
+      if (!selectedAuctionGroupId) return;
+
+      const response = await api.get(`/payment/users/${selectedAuctionGroupId}`);
+      console.info(response.data.payments, "Fetched user transactions");
+      setCustomerTransactions(response.data.payments); // <-- store in state
+    } catch (error) {
+      console.error("Unable to fetch customer transaction details", error);
+    }
+  };
+  fetchCustomerTransaction();
+}, [selectedAuctionGroupId]);
+
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -936,7 +953,8 @@ const UserReport = () => {
                               NetTotalprofit,
                               Totalpaid,
                             },
-                            TableEnrolls
+                            TableEnrolls,
+                            customerTransactions 
                           )
                         }
                         className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded shadow"
