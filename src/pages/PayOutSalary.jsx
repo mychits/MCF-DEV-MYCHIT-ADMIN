@@ -127,13 +127,13 @@ const PayoutSalary = () => {
 
       const fromDay =
         current.getFullYear() === fromDate.getFullYear() &&
-        current.getMonth() === fromDate.getMonth()
+          current.getMonth() === fromDate.getMonth()
           ? fromDate.getDate()
           : 1;
 
       const toDay =
         current.getFullYear() === toDate.getFullYear() &&
-        current.getMonth() === toDate.getMonth()
+          current.getMonth() === toDate.getMonth()
           ? toDate.getDate()
           : daysInMonth;
 
@@ -193,7 +193,7 @@ const PayoutSalary = () => {
         if (salaryForm.from_date && salaryForm.to_date) {
           const fd = formatDate(salaryForm.from_date);
           const td = formatDate(salaryForm.to_date);
-          fetchTargetDetails(empId, fd, td);
+          // fetchTargetDetails(empId, fd, td);
           calculateProRatedSalary(fd, td, baseSalary, empId);
         }
       }
@@ -234,7 +234,7 @@ const PayoutSalary = () => {
           <div className="flex justify-center gap-2">
             <Dropdown
               trigger={["click"]}
-             
+
               menu={{
                 items: [
                   {
@@ -267,38 +267,38 @@ const PayoutSalary = () => {
     }
   };
 
-  const fetchTargetDetails = async (agentId, fromDate, toDate) => {
-    if (!agentId || !fromDate || !toDate) {
-      resetTargetData();
-      return;
-    }
+  // const fetchTargetDetails = async (agentId, fromDate, toDate) => {
+  //   if (!agentId || !fromDate || !toDate) {
+  //     resetTargetData();
+  //     return;
+  //   }
 
-    try {
-      const res = await API.get(`/target/employee/${agentId}`, {
-        params: { from_date: fromDate, to_date: toDate },
-      });
+  //   try {
+  //     const res = await API.get(`/target/employee/${agentId}`, {
+  //       params: { from_date: fromDate, to_date: toDate },
+  //     });
 
-      if (res.data?.success && res.data?.summary) {
-        const empSummary = res.data.summary;
+  //     if (res.data?.success && res.data?.summary) {
+  //       const empSummary = res.data.summary;
 
-        setTargetData({
-          target: empSummary.agent?.target?.value || "Not Set",
-          achieved: empSummary.metrics?.actual_business || "₹0.00",
-          difference: empSummary.metrics?.target_difference || "₹0.00",
-          remaining: empSummary.metrics?.target_remaining || "₹0.00",
-          incentiveAmount: empSummary.metrics?.total_estimated || "₹0.00",
-          incentivePercent:
-            (empSummary.agent?.target?.achievement_percent || "0") + "%",
-        });
-        return;
-      }
+  //       setTargetData({
+  //         target: empSummary.agent?.target?.value || "Not Set",
+  //         achieved: empSummary.metrics?.actual_business || "₹0.00",
+  //         difference: empSummary.metrics?.target_difference || "₹0.00",
+  //         remaining: empSummary.metrics?.target_remaining || "₹0.00",
+  //         incentiveAmount: empSummary.metrics?.total_estimated || "₹0.00",
+  //         incentivePercent:
+  //           (empSummary.agent?.target?.achievement_percent || "0") + "%",
+  //       });
+  //       return;
+  //     }
 
-      resetTargetData();
-    } catch (error) {
-      console.error("Error fetching target details", error);
-      resetTargetData();
-    }
-  };
+  //     resetTargetData();
+  //   } catch (error) {
+  //     console.error("Error fetching target details", error);
+  //     resetTargetData();
+  //   }
+  // };
 
   const resetTargetData = () => {
     setTargetData({
@@ -331,9 +331,57 @@ const PayoutSalary = () => {
     fetchSalaryPayments();
   }, [reRender]);
 
+  // const handleSalaryChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setSalaryForm((prev) => ({ ...prev, [name]: value }));
+  //   setErrors((prev) => ({ ...prev, [name]: "" }));
+  // };
+
   const handleSalaryChange = (e) => {
     const { name, value } = e.target;
-    setSalaryForm((prev) => ({ ...prev, [name]: value }));
+    const todayStr = new Date().toISOString().split("T")[0];
+
+
+    setSalaryForm((prev) => {
+      const updated = { ...prev, [name]: value };
+
+
+      let errorMsg = "";
+      const from = updated.from_date ? new Date(updated.from_date) : null;
+      const to = updated.to_date ? new Date(updated.to_date) : null;
+      const today = new Date(todayStr);
+
+
+      if (from && from > today) {
+        errorMsg = "From Date cannot be in the future.";
+        updated.from_date = "";
+      }
+      if (to && to > today) {
+        errorMsg = "To Date cannot be in the future.";
+        updated.to_date = "";
+      }
+
+
+      if (from && to && from > to) {
+        errorMsg = "From Date cannot be greater than To Date.";
+        updated.from_date = "";
+        updated.to_date = "";
+      }
+
+
+      if (errorMsg) {
+        api.open({
+          message: "Invalid Date Selection",
+          description: errorMsg,
+          className: "bg-red-500 rounded-lg font-semibold text-white",
+          showProgress: true,
+          pauseOnHover: false,
+        });
+      }
+
+      return updated;
+    });
+
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
@@ -481,7 +529,7 @@ const PayoutSalary = () => {
     setCalculatedSalary("");
     setAlreadyPaid("0.00");
     setRemainingSalary("0.00");
-    resetTargetData();
+    // resetTargetData();
   };
 
   const salaryColumns = [
@@ -627,46 +675,7 @@ const PayoutSalary = () => {
 
                     {/* <div className="grid grid-cols-2 gap-4">
                       
-                      <div>
-                        <label className="block mb-2 text-sm font-medium text-gray-900">
-                          From Date <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          name="from_date"
-                          value={salaryForm.from_date}
-                          onChange={handleSalaryChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block mb-2 text-sm font-medium text-gray-900">
-                          To Date <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          name="to_date"
-                          value={salaryForm.to_date}
-                          onChange={handleSalaryChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block mb-2 text-sm font-medium text-gray-900">
-                          The number of absent days{" "}
-                          <span className="text-red-500"></span>
-                        </label>
-                        <input
-                          type="number"
-                          name="absent"
-                          value={absent}
-                          onChange={(e) => setAbsent(e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-
+                      
                       <div className="col-span-2">
                         <button
                           type="button"
@@ -695,9 +704,9 @@ const PayoutSalary = () => {
                       </div>
                     </div> */}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div >
                       {/* Select Month - Left Column */}
-                      <div>
+                      {/* <div>
                         <label className="block text-sm font-medium text-gray-900 mb-2">
                           Select Month
                         </label>
@@ -724,10 +733,10 @@ const PayoutSalary = () => {
                           }}
                           className="w-full p-3 border border-gray-300 rounded-lg"
                         />
-                      </div>
+                      </div> */}
 
-                      {/* Absent Days - Right Column */}
-                      <div>
+
+                      {/* <div>
                         <label className="block text-sm font-medium text-gray-900 mb-2">
                           Number of Absent Days
                         </label>
@@ -738,7 +747,54 @@ const PayoutSalary = () => {
                           onChange={(e) => setAbsent(e.target.value)}
                           className="w-full p-3 border border-gray-300 rounded-lg"
                         />
+                      </div> */}
+
+                      <div className="w-full flex gap-4">
+                        <div className="w-1/2">
+                          <label className="block mb-2 text-sm font-medium text-gray-900">
+                            From Date
+                          </label>
+                          <input
+                            type="date"
+                            name="from_date"
+                            value={salaryForm.from_date}
+                            max={new Date().toISOString().split("T")[0]}
+                            onChange={handleSalaryChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-200"
+                          />
+                        </div>
+
+                        <div className="w-1/2">
+                          <label className="block mb-2 text-sm font-medium text-gray-900">
+                            To Date
+                          </label>
+                          <input
+                            type="date"
+                            name="to_date"
+                            value={salaryForm.to_date}
+                            max={new Date().toISOString().split("T")[0]}
+                            onChange={handleSalaryChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-200"
+                          />
+                        </div>
                       </div>
+
+
+
+                      {/* <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-900">
+                          The number of absent days{" "}
+                          <span className="text-red-500"></span>
+                        </label>
+                        <input
+                          type="number"
+                          name="absent"
+                          value={absent}
+                          onChange={(e) => setAbsent(e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg"
+                        />
+                      </div> */}
+
 
                       {/* Calculate Button - Full Width */}
                       <div className="col-span-2">
@@ -754,7 +810,7 @@ const PayoutSalary = () => {
                             ) {
                               const fd = formatDate(salaryForm.from_date);
                               const td = formatDate(salaryForm.to_date);
-                              fetchTargetDetails(salaryForm.agent_id, fd, td);
+                              // fetchTargetDetails(salaryForm.agent_id, fd, td);
                               calculateProRatedSalary(
                                 fd,
                                 td,
@@ -769,8 +825,8 @@ const PayoutSalary = () => {
                       </div>
                     </div>
 
-                    {/* ✅ TARGET DATA DISPLAY */}
-                    <div className="grid grid-cols-2 gap-4 mt-6 p-3 rounded-lg bg-gray-50">
+
+                    {/* <div className="grid grid-cols-2 gap-4 mt-6 p-3 rounded-lg bg-gray-50">
                       <div>
                         <label className="block text-sm font-medium">
                           Target
@@ -807,7 +863,7 @@ const PayoutSalary = () => {
                           className="w-full border rounded px-3 py-2 bg-white font-semibold"
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     <div>
                       <label className="block mb-2 text-sm font-medium text-gray-900">
@@ -821,17 +877,20 @@ const PayoutSalary = () => {
                       />
                     </div>
 
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-900">
-                        Total Payable Salary (₹)
-                      </label>
-                      <input
-                        type="text"
-                        value={calculatedSalary}
-                        readOnly
-                        className="border border-gray-300 font-semibold text-sm rounded-lg w-full p-2.5"
-                      />
-                    </div>
+                    {calculatedSalary && (
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-900">
+                          Total Payable Salary (₹)
+                        </label>
+                        <input
+                          type="text"
+                          value={calculatedSalary}
+                          readOnly
+                          className="border border-gray-300 font-semibold text-sm rounded-lg w-full p-2.5 bg-gray-100 "
+                        />
+                      </div>
+                    )}
+
                   </>
                 )}
 

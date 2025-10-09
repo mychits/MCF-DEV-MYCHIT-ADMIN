@@ -171,6 +171,7 @@ const Employee = () => {
     };
     fetchManagers();
   }, [reloadTrigger]);
+
   const handleAntDSelectManager = (managerId) => {
     setSelectedManagerId(managerId);
     const selected = managers.find((mgr) => mgr._id === managerId);
@@ -187,6 +188,7 @@ const Employee = () => {
       managerTitle: "",
     }));
   };
+
   const handleAntDSelect = (field, value) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -288,9 +290,7 @@ const Employee = () => {
     } else if (!regex.aadhaar.test(data.adhaar_no)) {
       newErrors.adhaar_no = "Invalid Aadhaar number (12 digits required)";
     }
-    if (!selectedManagerId) {
-      newErrors.reporting_manager = "Reporting Manager is required";
-    }
+  
     if (!data.pan_no) {
       newErrors.pan_no = "PAN number is required";
     } else if (!regex.pan.test(data.pan_no.toUpperCase())) {
@@ -306,6 +306,18 @@ const Employee = () => {
     }
     if (!data.total_allocated_leaves) {
       newErrors.total_allocated_leaves = "Please Provide Total Allocated Leaves";
+    }
+    if(!selectedManagerId){
+      newErrors.designation_id = "Please Enter Designation";  
+    }
+
+    if (data.deductions && data.deductions.length > 0) {
+      for (let i = 0; i < data.deductions.length; i++) {
+        const amount = parseFloat(data.deductions[i].deduction_amount);
+        if (isNaN(amount) || amount <= 0) {
+          newErrors[`deduction_amount_${i}`] = "Deduction amount must be greater than 0";
+        }
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -877,23 +889,9 @@ const Employee = () => {
                   >
                     Designation <span className="text-red-500 ">*</span>
                   </label>
-                  {/* <select
-                  value={selectedManagerId}
-                  onChange={handleManager}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-                >
-                  <option value="" hidden>
-                    Select Designation
-                  </option>
-                  {managers.map((group) => (
-                    <option key={group._id} value={group._id}>
-                      {group.title}
-                    </option>
-                  ))}
-                </select> */}
                   <Select
-                    id="manager-select"
-                    name="managerId"
+                    id="designation_id"
+                    name="designation_id"
                     value={selectedManagerId || undefined}
                     onChange={handleAntDSelectManager}
                     placeholder="Select Designation"
@@ -912,6 +910,9 @@ const Employee = () => {
                       </Select.Option>
                     ))}
                   </Select>
+                  { errors.designation_id && (
+                    <p className="mt-2 text-sm text-red-600">{errors.designation_id}</p>
+                  )}
                 </div>
                 <div className="w-1/2">
                   <label
@@ -1164,7 +1165,7 @@ const Employee = () => {
                     htmlFor="emergency"
                   >
                     Emergency Phone Number{" "}
-                   
+                    
                   </label>
                   <div className="flex items-center mb-2 gap-2">
                     <Input
@@ -1242,12 +1243,18 @@ const Employee = () => {
                             type="number"
                             name={`deduction_amount_${index}`}
                             value={deduction.deduction_amount}
-                            onChange={(e) =>
-                              handleDeductionChange(index, "deduction_amount", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+
+                              if (val < 0) return;
+                              handleDeductionChange(index, "deduction_amount", val);
+                            }}
                             placeholder="e.g., 2500"
                             className="bg-gray-50 border border-gray-300 h-12 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
                           />
+                          {errors[`deduction_amount_${index}`] && (
+                            <p className="mt-1 text-sm text-red-600">{errors[`deduction_amount_${index}`]}</p>
+                          )}
                         </div>
 
                         <div>
@@ -1517,23 +1524,10 @@ const Employee = () => {
                   >
                     Designation <span className="text-red-500 ">*</span>
                   </label>
-                  {/* <select
-                  value={selectedManagerId}
-                  onChange={handleManager}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-                >
-                  <option value="" hidden>
-                    Select Designation
-                  </option>
-                  {managers.map((group) => (
-                    <option key={group._id} value={group._id}>
-                      {group.title}
-                    </option>
-                  ))}
-                </select> */}
+                 
                   <Select
-                    id="selectedManagerId"
-                    name="selectedManagerId"
+                    id="designation_id"
+                    name="designation_id"
                     value={selectedManagerId || undefined}
                     onChange={handleAntDSelectManager}
                     placeholder="Select Designation"
@@ -1795,7 +1789,7 @@ const Employee = () => {
                     htmlFor="cp"
                   >
                     Emergency Contact Person{" "}
-                    
+                    <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
@@ -1911,12 +1905,17 @@ const Employee = () => {
                             type="number"
                             name={`deduction_amount_${index}`}
                             value={deduction.deduction_amount}
-                            onChange={(e) =>
-                              handleDeductionChange(index, "deduction_amount", e.target.value, true)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val < 0) return;
+                              handleDeductionChange(index, "deduction_amount", val, true);
+                            }}
                             placeholder="e.g., 2500"
                             className="bg-gray-50 border border-gray-300 h-12 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
                           />
+                          {errors[`deduction_amount_${index}`] && (
+                            <p className="mt-1 text-sm text-red-600">{errors[`deduction_amount_${index}`]}</p>
+                          )}
                         </div>
 
                         <div>
