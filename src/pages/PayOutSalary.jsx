@@ -182,7 +182,7 @@ const PayoutSalary = () => {
   //  };
 
   const calculateProRatedSalary = async (fromDateStr, toDateStr, monthlySalary, empId) => {
-    // We don't actually need monthlySalary here — backend calculates it
+
     if (!empId || !fromDateStr || !toDateStr) {
       setCalculatedSalary("");
       setAlreadyPaid("0.00");
@@ -206,6 +206,8 @@ const PayoutSalary = () => {
         to_date: formatDate(toDateStr),
       });
 
+      console.log(res, "hello")
+
       const { totalSalary } = res.data;
       setSalaryCalculationDetails(res.data);
       const payable = parseFloat(totalSalary).toFixed(2);
@@ -225,16 +227,16 @@ const PayoutSalary = () => {
       //   .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
 
       const salaryArray = Array.isArray(paymentsRes.data)
-  ? paymentsRes.data
-  : paymentsRes.data.data || [];
+        ? paymentsRes.data
+        : paymentsRes.data.data || [];
 
-const paidInPeriod = salaryArray
-  .filter((p) => {
-    const pAgentId = p.employee_id?._id ? String(p.employee_id._id) : String(p.employee_id);
-    const payDate = new Date(formatDate(p.payout_metadata?.date_range?.from));
-    return pAgentId === String(empId) && payDate >= fromDate && payDate <= toDate;
-  })
-  .reduce((sum, p) => sum + parseFloat(p.payout_metadata?.total_salary || 0), 0);
+      const paidInPeriod = salaryArray
+        .filter((p) => {
+          const pAgentId = p.employee_id?._id ? String(p.employee_id._id) : String(p.employee_id);
+          const payDate = new Date(formatDate(p.payout_metadata?.date_range?.from));
+          return pAgentId === String(empId) && payDate >= fromDate && payDate <= toDate;
+        })
+        .reduce((sum, p) => sum + parseFloat(p.payout_metadata?.total_salary || 0), 0);
 
 
       const alreadyPaidAmt = paidInPeriod.toFixed(2);
@@ -315,64 +317,64 @@ const paidInPeriod = salaryArray
     }
   };
 
-//   const fetchSalaryPayments = async () => {
-//     setIsLoading(true);
-//     try {
-//       const response = await API.get("/salary/get-salary-payments");
-//     const salaryArray = Array.isArray(response.data)
-//   ? response.data
-//   : response.data.data || [];
+  //   const fetchSalaryPayments = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const response = await API.get("/salary/get-salary-payments");
+  //     const salaryArray = Array.isArray(response.data)
+  //   ? response.data
+  //   : response.data.data || [];
 
-// const responseData = salaryArray.map((payment, index) => ({
+  // const responseData = salaryArray.map((payment, index) => ({
 
-//         id: index + 1,
-//         _id: payment._id,
-//         agent_id: payment.agent_id,
-//         agent_name: payment.agent_id?.name,
-//         pay_date: payment.pay_date,
-//         amount: payment.amount,
-//         pay_type: payment.pay_type,
-//         transaction_id: payment.transaction_id,
-//         note: payment.note,
-//         pay_for: payment.pay_for,
-//         disbursed_by: payment.admin_type?.name,
-//         receipt_no: payment.receipt_no,
-//         action: (
-//           <div className="flex justify-center gap-2">
-//             <Dropdown
-//               trigger={["click"]}
+  //         id: index + 1,
+  //         _id: payment._id,
+  //         agent_id: payment.agent_id,
+  //         agent_name: payment.agent_id?.name,
+  //         pay_date: payment.pay_date,
+  //         amount: payment.amount,
+  //         pay_type: payment.pay_type,
+  //         transaction_id: payment.transaction_id,
+  //         note: payment.note,
+  //         pay_for: payment.pay_for,
+  //         disbursed_by: payment.admin_type?.name,
+  //         receipt_no: payment.receipt_no,
+  //         action: (
+  //           <div className="flex justify-center gap-2">
+  //             <Dropdown
+  //               trigger={["click"]}
 
-//               menu={{
-//                 items: [
-//                   {
-//                     key: "1",
-//                     label: (
-//                       <div
-//                         className="text-green-600"
-//                         onClick={(e) => {
-//                           e.stopPropagation();
-//                         }}
-//                       >
-//                         <SalarySlipPrint payment={payment} />
-//                       </div>
-//                     ),
-//                   },
-//                 ],
-//               }}
-//             >
-//               <IoMdMore className="text-bold" />
-//             </Dropdown>
-//           </div>
-//         ),
-//       }));
-//       setSalaryPayments(responseData);
-//     } catch (error) {
-//       console.error("Failed to fetch Salary payments", error);
-//       setSalaryPayments([]);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
+  //               menu={{
+  //                 items: [
+  //                   {
+  //                     key: "1",
+  //                     label: (
+  //                       <div
+  //                         className="text-green-600"
+  //                         onClick={(e) => {
+  //                           e.stopPropagation();
+  //                         }}
+  //                       >
+  //                         <SalarySlipPrint payment={payment} />
+  //                       </div>
+  //                     ),
+  //                   },
+  //                 ],
+  //               }}
+  //             >
+  //               <IoMdMore className="text-bold" />
+  //             </Dropdown>
+  //           </div>
+  //         ),
+  //       }));
+  //       setSalaryPayments(responseData);
+  //     } catch (error) {
+  //       console.error("Failed to fetch Salary payments", error);
+  //       setSalaryPayments([]);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
 
 
@@ -421,88 +423,88 @@ const paidInPeriod = salaryArray
   // };
 
   // Load user info on mount
-  
- // 🟢 Fetch Salary Payments
+
+  // 🟢 Fetch Salary Payments
 
 
-const fetchSalaryPayments = async () => {
-  setIsLoading(true);
-  try {
-    const response = await API.get("/salary/get-salary-payments");
+  const fetchSalaryPayments = async () => {
+    setIsLoading(true);
+    try {
+      const response = await API.get("/salary/get-salary-payments");
 
-    const salaryArray = Array.isArray(response.data)
-      ? response.data
-      : response.data.data || [];
+      const salaryArray = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || [];
 
-    console.log("Fetched Salary Payments:", salaryArray);
+      console.log("Fetched Salary Payments:", salaryArray);
 
-    const responseData = salaryArray.map((payment, index) => ({
-      id: index + 1,
-      _id: payment._id,
-      pay_date:
-        payment.payout_metadata?.date_range?.from?.split("T")[0] ||
-        payment.pay_date?.split("T")[0] ||
-        "-",
-      agent_id: payment.employee_id?._id || "-",
-      agent_name:
-        payment.employee_id?.name ||
-        payment.employee_id?.full_name ||
-        payment.agent_name ||
-        "N/A",
-      amount: payment.payout_metadata?.total_salary || payment.amount || 0,
-      pay_type:
-        payment.payout_metadata?.pay_type ||
-        payment.pay_type ||
-        "N/A",
-      receipt_no:
-        payment.payout_metadata?.receipt_no ||
-        payment.receipt_no ||
-        "-",
-      note:
-        payment.payout_metadata?.note ||
-        payment.note ||
-        "-",
-      disbursed_by:
-        payment.payout_metadata?.disbursed_by ||
-        payment.disbursed_by ||
-        "Admin",
-      action: (
-        <div className="flex justify-center gap-2">
-          <Dropdown
-            trigger={["click"]}
-            menu={{
-              items: [
-                {
-                  key: "1",
-                  label: (
-                    <div
-                      className="text-green-600"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <SalarySlipPrint payment={payment} />
-                    </div>
-                  ),
-                },
-              ],
-            }}
-          >
-            <IoMdMore className="text-bold" />
-          </Dropdown>
-        </div>
-      ),
-    }));
+      const responseData = salaryArray.map((payment, index) => ({
+        id: index + 1,
+        _id: payment._id,
+        pay_date:
+          payment.payout_metadata?.date_range?.from?.split("T")[0] ||
+          payment.pay_date?.split("T")[0] ||
+          "-",
+        agent_id: payment.employee_id?._id || "-",
+        agent_name:
+          payment.employee_id?.name ||
+          payment.employee_id?.full_name ||
+          payment.agent_name ||
+          "N/A",
+        amount: payment.payout_metadata?.total_salary || payment.amount || 0,
+        pay_type:
+          payment.payout_metadata?.pay_type ||
+          payment.pay_type ||
+          "N/A",
+        receipt_no:
+          payment.payout_metadata?.receipt_no ||
+          payment.receipt_no ||
+          "-",
+        note:
+          payment.payout_metadata?.note ||
+          payment.note ||
+          "-",
+        disbursed_by:
+          payment.payout_metadata?.disbursed_by ||
+          payment.disbursed_by ||
+          "Admin",
+        action: (
+          <div className="flex justify-center gap-2">
+            <Dropdown
+              trigger={["click"]}
+              menu={{
+                items: [
+                  {
+                    key: "1",
+                    label: (
+                      <div
+                        className="text-green-600"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SalarySlipPrint payment={payment} />
+                      </div>
+                    ),
+                  },
+                ],
+              }}
+            >
+              <IoMdMore className="text-bold" />
+            </Dropdown>
+          </div>
+        ),
+      }));
 
-    setSalaryPayments(responseData);
-  } catch (error) {
-    console.error("Failed to fetch Salary payments", error);
-    setSalaryPayments([]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setSalaryPayments(responseData);
+    } catch (error) {
+      console.error("Failed to fetch Salary payments", error);
+      setSalaryPayments([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
-  
+
   useEffect(() => {
     const user = localStorage.getItem("user");
     const userObj = JSON.parse(user);
@@ -851,7 +853,7 @@ const fetchSalaryPayments = async () => {
             </div>
           </div>
 
-<Modal
+          <Modal
             isVisible={showSalaryModal}
             onClose={() => {
               setShowSalaryModal(false);
@@ -1033,22 +1035,10 @@ const fetchSalaryPayments = async () => {
                             </div>
                           </div>
 
-                          {/* Deductions */}
-                          {salaryCalculationDetails.deductions_info.details.length > 0 && (
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700 mb-3">Deductions</p>
-                              <div className="space-y-2 bg-red-50 p-4 rounded-lg border border-red-200">
-                                {salaryCalculationDetails.deductions_info.details.map((d, i) => (
-                                  <div key={i} className="flex justify-between items-center py-2 border-b border-red-100 last:border-0">
-                                    <span className="text-sm text-gray-700">{d.justification}{d.note && ` (${d.note})`}</span>
-                                    <span className="font-semibold text-red-700">-₹{parseFloat(d.amount).toFixed(2)}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Monthly Breakdown Table */}
+
+
+
                           <div>
                             <p className="text-sm font-semibold text-gray-700 mb-3">Monthly Details</p>
                             <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -1076,55 +1066,36 @@ const fetchSalaryPayments = async () => {
                               </table>
                             </div>
                           </div>
+
+                          {salaryCalculationDetails.deductions_info.details.length > 0 && (
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 mb-3">Deductions</p>
+                              <div className="space-y-2 bg-red-50 p-4 rounded-lg border border-red-200">
+                                {salaryCalculationDetails.deductions_info.details.map((d, i) => (
+                                  <div key={i} className="flex justify-between items-center py-2 border-b border-red-100 last:border-0">
+                                    <span className="text-sm text-gray-700">{d.justification}{d.note && ` (${d.note})`}</span>
+                                    <span className="font-semibold text-red-700">-₹{parseFloat(d.amount).toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                         </div>
                       </div>
                     )}
 
-                    {/* Payment Amount Section */}
-                    {calculatedSalary && (
-                      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                        <label className="block mb-3 text-sm font-semibold text-gray-800">
-                          Payable Amount <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          name="amount"
-                          min={1}
-                          value={salaryForm.amount}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value || 0);
-                            const rem = parseFloat(remainingSalary);
-                            if (val > rem) {
-                              setErrors((prev) => ({
-                                ...prev,
-                                amount: `Cannot pay more than ₹${rem.toFixed(2)}`,
-                              }));
-                            } else {
-                              setSalaryForm((prev) => ({ ...prev, amount: e.target.value }));
-                              setErrors((prev) => ({ ...prev, amount: "" }));
-                            }
-                          }}
-                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-semibold text-gray-900"
-                          placeholder="Enter amount to pay"
-                        />
-                        {errors.amount && (
-                          <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
-                            <span>⚠</span> {errors.amount}
-                          </p>
-                        )}
 
-                        <div className="grid grid-cols-2 gap-4 mt-4">
-                          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                            <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Already Paid</p>
-                            <p className="text-2xl font-bold text-green-900">₹{alreadyPaid}</p>
-                          </div>
-                          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                            <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider mb-1">Remaining</p>
-                            <p className="text-2xl font-bold text-orange-900">₹{remainingSalary}</p>
-                          </div>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Already Paid</p>
+                        <p className="text-2xl font-bold text-green-900">₹{alreadyPaid}</p>
                       </div>
-                    )}
+                      <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                        <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider mb-1">Remaining</p>
+                        <p className="text-2xl font-bold text-orange-900">₹{remainingSalary}</p>
+                      </div>
+                    </div>
 
                     {/* Payment Details Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
