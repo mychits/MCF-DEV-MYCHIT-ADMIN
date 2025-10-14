@@ -606,6 +606,7 @@ useEffect(() => {
                 referrer_name: group?.enrollment?.referrer_name || "N/A",
                 customer_status: group?.enrollment?.customer_status || "N/A",
                 removal_reason: group?.enrollment?.removal_reason || "N/A",
+                isPrized: group?.enrollment?.isPrized===true ? "Prized" :"Un Prized" || "N/A",
               };
             })
             .filter((item) => item !== null);
@@ -663,6 +664,7 @@ useEffect(() => {
     { key: "ticket", header: "Ticket" },
     { key: "referred_type", header: "Referrer Type" },
     { key: "referrer_name", header: "Referred By" },
+    {key:"isPrized",header:"Is Prized"},
     { key: "totalBePaid", header: "Amount to be Paid" },
     { key: "profit", header: "Profit" },
     { key: "toBePaidAmount", header: "Net To be Paid" },
