@@ -1,50 +1,24 @@
 import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
-
-import { MdAddLink } from "react-icons/md";
+import { HiCurrencyRupee } from "react-icons/hi2";
+import { Banknote, Briefcase, TicketCheck,ChevronRight, MoreHorizontal, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { PiLinkSimpleBreakFill } from "react-icons/pi";
-import { FaWpforms } from "react-icons/fa6";
-import { Banknote, Briefcase, TicketCheck, MoreHorizontal, ChevronRight,Zap } from "lucide-react";
-const PaymentLinkMenu = () => {
-  const paymentInLinkMenuCategories = [
+// import { Users, Briefcase, ChevronRight,Zap  } from "lucide-react";
+
+const PaymentMenu = () => {
+  const paymentCategories = [
     {
       id: "#1",
-      title: "Chit Payment Link",
-      description: "Manage customer chit payment link transaction information.",
-      subtitle: "Individual Mode",
-      icon: <MdAddLink size={28} className="text-green-600" />,
-       color: "from-blue-600 to-blue-700",
-          lightColor: "bg-blue-50",
-          borderColor: "border-blue-200",
-      href: "/payment-menu/payment-in-out-menu/pay-in-menu/payment-link-menu/chit-payment",
-      stats: "Chit Payment Link Information"
+      title: "Payments",
+       description: "Manage customer payment-in, payment-out records.",
+      icon: <TicketCheck size={28} className="text-blue-600" />,
+       color: "from-green-600 to-green-700",
+      lightColor: "bg-green-50",
+      borderColor: "border-green-200",
+      href:"/payment-menu/payment-in-out-menu",
+      stats: "Payment Information",
     },
-    {
-      id: "#2",
-      title: "Bulk Chit Payment Link",
-      description: "Manage customer Bulk chit payment link transaction information.",
-      subtitle: "Bulk Mode",
-      icon: <PiLinkSimpleBreakFill size={28} className="text-green-600" />,
-       color: "from-blue-600 to-blue-700",
-          lightColor: "bg-blue-50",
-          borderColor: "border-blue-200",
-      href: "/payment-menu/payment-in-out-menu/pay-in-menu/payment-link-menu/chit-bulk-payment",
-      stats: "Bulk Chit Payment Link Information"
-    },
-    {
-      id: "#3",
-      title: "Chit Registration Payment Link",
-      subtitle: "Individual Mode",
-      description: "Manage customer chit Registration payment link transaction information.",
-      icon: <FaWpforms size={28} className="text-green-600" />,
-       color: "from-blue-600 to-blue-700",
-          lightColor: "bg-blue-50",
-          borderColor: "border-blue-200",
-      href: "/payment-menu/payment-in-out-menu/pay-in-menu/payment-link-menu/registration-chit-payment",
-      stats: "Chit Registration Payment Link Information"
-    },
-    
+   
   ];
 
   return (
@@ -56,15 +30,15 @@ const PaymentLinkMenu = () => {
           <div className="p-8">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-900">
-                Payment Link Management
+                Payment Management
               </h2>
               <p className="text-gray-600 mt-2">
-                Manage and view payment link information 
+                Manage and view payment information 
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {paymentInLinkMenuCategories.map((category) => (
+              {paymentCategories.map((category) => (
                 <Link key={category.id} to={category.href} className="group">
                   <div
                     className={`relative h-full overflow-hidden rounded-xl bg-white border ${category.borderColor} shadow-md hover:shadow-lg transition-all duration-300`}
@@ -115,10 +89,7 @@ const PaymentLinkMenu = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Quick Tips</h3>
-                <p className="text-slate-700">Use the Chit Payment Link directory to manage Chit Payment Link transaction details and view payment information all in one place.</p>
-                <p className="text-slate-700">Use the Bulk Chit Payment directory to manage Bulk Chit Payment transaction details and view payment information all in one place.</p>
-                 <p className="text-slate-700">Use the Chit Registration Payment Link directory to manage Registration Payment Link transaction details and view payment information all in one place.</p>
-                
+                <p className="text-slate-700">Use the Payment directory to manage payment-in, payment-out transaction details and update payment information all in one place.</p>
               </div>
             </div>
           </div>
@@ -129,4 +100,4 @@ const PaymentLinkMenu = () => {
   );
 };
 
-export default PaymentLinkMenu;
+export default PaymentMenu;

@@ -27,9 +27,17 @@ import { RiReceiptLine } from "react-icons/ri";
 import { useState } from "react";
 import { BiGrid } from "react-icons/bi";
 import { TbList } from "react-icons/tb";
+import { BsCalendarDate } from "react-icons/bs";
 
 const subMenus = [
   { title: "Daybook", link: "/reports/daybook", Icon: FaCalendarDays, category: "Reports", color: "from-blue-500 to-blue-600" },
+    {
+    title: "Receipt Report",
+    link: "/reports/receipt",
+    Icon: MdOutlineReceiptLong,
+    category: "Finance",
+    color: "from-green-500 to-green-600"
+  },
   { title: "Group Report", link: "/reports/group-report", Icon: FaPeopleGroup, category: "Reports", color: "from-purple-500 to-purple-600" },
   {
     title: "Enrollment Report",
@@ -49,6 +57,13 @@ const subMenus = [
     title: "Customer Report",
     link: "/reports/user-report",
     Icon: MdOutlineEmojiPeople,
+    category: "Customer",
+    color: "from-cyan-500 to-cyan-600"
+  },
+   {
+    title: "Customer Loan Report",
+    link: "/reports/customer-loan-report",
+    Icon: GiMoneyStack,
     category: "Customer",
     color: "from-cyan-500 to-cyan-600"
   },
@@ -142,7 +157,9 @@ const subMenus = [
   {
     title: "Monthly Attendance Report",
     link: "/reports/employee-monthly-report",
-    Icon: SlCalender,
+    category: "Employee",
+    Icon: BsCalendarDate ,
+    color: "from-indigo-500 to-indigo-600"
   },
  
 ];

@@ -226,9 +226,9 @@ const Home = () => {
           icon: <MdOutlinePayments size={24} />,
           text: "Payments",
           count: totalAmount,
-          bgGradient: "from-red-500 to-red-600",
-          iconBg: "bg-red-700",
-          hoverBg: "hover:from-red-600 hover:to-red-700",
+          bgGradient: "from-yellow-500 to-yellow-600",
+          iconBg: "bg-yellow-700",
+          hoverBg: "hover:from-yellow-600 hover:to-yellow-700",
           redirect: "/payment-in-out-menu/pay-in-menu/payment",
         },
         {

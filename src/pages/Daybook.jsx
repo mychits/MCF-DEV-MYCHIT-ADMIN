@@ -608,6 +608,8 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
                       <Select.Option value="">All</Select.Option>
                       <Select.Option value="cash">Cash</Select.Option>
                       <Select.Option value="online">Online</Select.Option>
+                      <Select.Option value="Payment Link">Payment Link</Select.Option>
+                      <Select.Option value="Transfer">Transfer</Select.Option>
                       </Select>
                   </div>
                   {showAllPaymentModes && (
@@ -808,6 +810,8 @@ const [showAllPaymentModes,setShowAllPaymentModes] = useState(false);
                     >
                       <option value="cash">Cash</option>
                       <option value="online">Online</option>
+                      <option value="Payment Link">Payment Link</option>
+                      <option value="Transfer">Transfer</option>
                     </select>
                   </div>
                 </div>

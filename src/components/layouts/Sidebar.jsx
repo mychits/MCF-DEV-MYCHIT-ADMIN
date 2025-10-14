@@ -212,13 +212,14 @@ const MenuSidebar = [
     id: "$#S",
     title: "Accounts",
     icon: <TbCoinRupeeFilled />,
-    submenu: true,
-    submenuItems: [
-      {
-        id: "&^$1",
-        title: "Payments ",
-        icon: <BsCash size={20} />,
-        link: "/payment-in-out-menu"
+    link: "/payment-menu/"
+   // submenu: true,
+   // submenuItems: [
+     // {
+        // id: "&^$1",
+        // title: "Payments ",
+        // icon: <BsCash size={20} />,
+        // link: "/payment-in-out-menu"
         // submenu: true,
         // submenuItems: [
         //   {
@@ -234,8 +235,8 @@ const MenuSidebar = [
         //     link: "/pay-out-menu",
         //   },
         // ],
-      },
-    ],
+     // },
+  //  ],
   },
 
   {
