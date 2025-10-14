@@ -231,6 +231,8 @@ const PayoutSalary = () => {
           payment.employee_id?.full_name ||
           payment.agent_name ||
           "N/A",
+          from_date: payment.payout_metadata?.date_range?.from?.split("T")[0],
+          to_date: payment.payout_metadata?.date_range?.to?.split("T")[0],
         amount: payment.payout_metadata?.total_salary || payment.amount || 0,
         pay_type: payment.payout_metadata?.pay_type || payment.pay_type || "N/A",
         receipt_no: payment.payout_metadata?.receipt_no || payment.receipt_no || "-",
@@ -411,6 +413,8 @@ const PayoutSalary = () => {
     { key: "amount", header: "Amount (₹)" },
     { key: "pay_type", header: "Payment Mode" },
     { key: "receipt_no", header: "Receipt No" },
+    { key: "from_date", header: "From Date" },
+    { key: "to_date", header: "To Date" },
     { key: "note", header: "Note" },
     { key: "disbursed_by", header: "Disbursed by" },
     { key: "action", header: "Action" },
