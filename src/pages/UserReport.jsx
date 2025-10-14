@@ -138,6 +138,7 @@ const UserReport = () => {
     { key: "id", header: "SL. NO" },
     { key: "pay_date", header: "Disbursed Date" },
     { key: "transaction_date", header: "Transaction Date" },
+    { key: "group_name", header: "Group Name" },
     { key: "ticket", header: "Ticket" },
     { key: "amount", header: "Amount" },
     { key: "receipt_no", header: "Receipt No" },
@@ -425,6 +426,7 @@ const UserReport = () => {
               _id: payment._id,
               id: index + 1,
               disbursement_type: payment.disbursement_type,
+              group_name:payment?.group_id?.group_name,
               pay_date: formatPayDate(payment?.pay_date),
               ticket: payment.ticket,
               transaction_date: formatPayDate(payment.createdAt),
@@ -606,6 +608,7 @@ useEffect(() => {
                 referrer_name: group?.enrollment?.referrer_name || "N/A",
                 customer_status: group?.enrollment?.customer_status || "N/A",
                 removal_reason: group?.enrollment?.removal_reason || "N/A",
+                isPrized: group?.enrollment?.isPrized===true ? "Prized" :"Un Prized" || "N/A",
               };
             })
             .filter((item) => item !== null);
@@ -663,6 +666,7 @@ useEffect(() => {
     { key: "ticket", header: "Ticket" },
     { key: "referred_type", header: "Referrer Type" },
     { key: "referrer_name", header: "Referred By" },
+    {key:"isPrized",header:"Is Prized"},
     { key: "totalBePaid", header: "Amount to be Paid" },
     { key: "profit", header: "Profit" },
     { key: "toBePaidAmount", header: "Net To be Paid" },
