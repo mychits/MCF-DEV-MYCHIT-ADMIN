@@ -10,6 +10,8 @@ import { Select, Tooltip, notification, Dropdown } from "antd";
 import SettingSidebar from "../components/layouts/SettingSidebar";
 import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
 import { IoMdMore } from "react-icons/io";
+import EditSalaryModal from "../components/modals/EditSalaryModal";
+
 const PayoutSalary = () => {
   const paymentFor = "salary";
   const [api, contextHolder] = notification.useNotification();
@@ -40,8 +42,13 @@ const PayoutSalary = () => {
   const [errors, setErrors] = useState({});
   const [reRender, setReRender] = useState(0);
   const [salaryCalculationDetails, setSalaryCalculationDetails] = useState(null);
+  const [manualPaidAmount, setManualPaidAmount] = useState(""); // NEW: Manual amount field
+  const [isEditing, setIsEditing] = useState(false); // For edit mode
+  const [editingSalary, setEditingSalary] = useState(null);
+  
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  
   const [salaryForm, setSalaryForm] = useState({
     agent_id: "",
     pay_date: today.toISOString().split("T")[0],
@@ -54,14 +61,17 @@ const PayoutSalary = () => {
     pay_for: paymentFor,
     admin_type: "",
   });
+  
   const [employeeDetails, setEmployeeDetails] = useState({
     joining_date: "",
     salary: "",
   });
+  
   const [totalWithIncentive, setTotalWithIncentive] = useState("0.00");
   const [calculatedSalary, setCalculatedSalary] = useState("");
   const [alreadyPaid, setAlreadyPaid] = useState("0.00");
   const [remainingSalary, setRemainingSalary] = useState("0.00");
+  
   const formatDate = (date) => {
     if (!date) return "";
     if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -74,6 +84,7 @@ const PayoutSalary = () => {
     const day = String(d.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
+  
   // Initialize selectedMonth
   useEffect(() => {
     setSelectedMonth(currentMonth);
@@ -132,7 +143,7 @@ const PayoutSalary = () => {
           const payDate = new Date(formatDate(p.payout_metadata?.date_range?.from));
           return pAgentId === String(empId) && payDate >= fromDate && payDate <= toDate;
         })
-        .reduce((sum, p) => sum + parseFloat(p.payout_metadata?.total_salary || 0), 0);
+        .reduce((sum, p) => sum + parseFloat(p.payout_metadata?.total_paid_amount || 0), 0);
       const alreadyPaidAmt = paidInPeriod.toFixed(2);
       const remaining = Math.max(0, parseFloat(payable) - paidInPeriod).toFixed(2);
       setAlreadyPaid(alreadyPaidAmt);
@@ -222,9 +233,9 @@ const PayoutSalary = () => {
           payment.employee_id?.full_name ||
           payment.agent_name ||
           "N/A",
-          from_date: payment.payout_metadata?.date_range?.from?.split("T")[0],
-          to_date: payment.payout_metadata?.date_range?.to?.split("T")[0],
-        amount: payment.payout_metadata?.total_salary || payment.amount || 0,
+        from_date: payment.payout_metadata?.date_range?.from?.split("T")[0],
+        to_date: payment.payout_metadata?.date_range?.to?.split("T")[0],
+        amount: payment.payout_metadata?.total_paid_amount || payment.amount || 0,
         pay_type: payment.payout_metadata?.pay_type || payment.pay_type || "N/A",
         receipt_no: payment.payout_metadata?.receipt_no || payment.receipt_no || "-",
         note: payment.payout_metadata?.note || payment.note || "-",
@@ -240,6 +251,20 @@ const PayoutSalary = () => {
                     label: (
                       <div className="text-green-600" onClick={(e) => e.stopPropagation()}>
                         <SalarySlipPrint payment={payment} />
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "2",
+                    label: (
+                      <div 
+                        className="text-blue-600 cursor-pointer"
+                        onClick={() => {
+                          setEditingSalary(payment);
+                          setIsEditing(true);
+                        }}
+                      >
+                        Edit Payment
                       </div>
                     ),
                   },
@@ -333,13 +358,16 @@ const PayoutSalary = () => {
     e.preventDefault();
     const isValid = validateForm();
     if (!isValid) return;
+    
     const payload = {
       empId: salaryForm.agent_id,
       from_date: salaryForm.from_date,
       to_date: salaryForm.to_date,
       note: salaryForm.note,
       pay_type: salaryForm.pay_type,
+      total_paid_amount: manualPaidAmount ? parseFloat(manualPaidAmount) : null,
     };
+    
     try {
       setIsLoading(true);
       const res = await API.post("/salary/save", payload);
@@ -391,6 +419,7 @@ const PayoutSalary = () => {
     });
     setEmployeeDetails({ joining_date: "", salary: "" });
     setCalculatedSalary("");
+    setManualPaidAmount("");
     setAlreadyPaid("0.00");
     setRemainingSalary("0.00");
     setSalaryCalculationDetails(null);
@@ -400,7 +429,7 @@ const PayoutSalary = () => {
     { key: "id", header: "SL. NO" },
     { key: "pay_date", header: "Pay Date" },
     { key: "agent_name", header: "Agent" },
-    { key: "amount", header: "Amount (₹)" },
+    { key: "amount", header: "Paid Amount (₹)" }, // Updated header
     { key: "pay_type", header: "Payment Mode" },
     { key: "receipt_no", header: "Receipt No" },
     { key: "from_date", header: "From Date" },
@@ -504,6 +533,7 @@ const PayoutSalary = () => {
                       }));
                       setEmployeeDetails({ joining_date: "", salary: "" });
                       setCalculatedSalary("");
+                      setManualPaidAmount("");
                       setAlreadyPaid("0.00");
                       setRemainingSalary("0.00");
                       fetchEmployeeDetails(value);
@@ -556,7 +586,6 @@ const PayoutSalary = () => {
                           <span className="ml-2 text-sm font-medium text-gray-700">Custom Date Range</span>
                         </label>
                       </div>
-                      
                       {/* Single Month Input */}
                       {dateMode === "month" && (
                         <div>
@@ -569,7 +598,6 @@ const PayoutSalary = () => {
                           />
                         </div>
                       )}
-                      
                       {/* Custom Date Inputs */}
                       {dateMode === "custom" && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -636,6 +664,26 @@ const PayoutSalary = () => {
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-300 shadow-sm">
                         <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-2">Total Payable Amount</p>
                         <p className="text-3xl font-bold text-blue-900">₹{calculatedSalary}</p>
+                      </div>
+                    )}
+                    {/* Manual Paid Amount Input */}
+                    {calculatedSalary && (
+                      <div className="mt-4 bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">
+                          Actual Paid Amount (₹)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={manualPaidAmount}
+                          onChange={(e) => setManualPaidAmount(e.target.value)}
+                          className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          placeholder="Enter the actual amount paid"
+                        />
+                        <p className="text-xs text-gray-500 mt-2">
+                          Leave blank to use calculated amount ({calculatedSalary}₹)
+                        </p>
                       </div>
                     )}
                     {/* Salary Breakdown Section */}
@@ -828,9 +876,25 @@ const PayoutSalary = () => {
               </form>
             </div>
           </Modal>
+          {/* Edit Salary Modal */}
+          <EditSalaryModal
+            isVisible={isEditing}
+            onClose={() => {
+              setIsEditing(false);
+              setEditingSalary(null);
+            }}
+            salary={editingSalary}
+            onEditSuccess={() => {
+              setIsEditing(false);
+              setEditingSalary(null);
+              setReRender(prev => prev + 1);
+              fetchSalaryPayments();
+            }}
+          />
         </div>
       </div>
     </>
   );
 };
+
 export default PayoutSalary;
