@@ -588,6 +588,102 @@ const fileName = `${reportType}_${date}`;
         )}
       </div>
 
+      {/* <div className="border rounded-lg overflow-hidden whitespace-normal">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {safeColumns.map((column) => (
+                <th
+                  key={column.key}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort(column.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.header}
+                    {sortConfig.key === column.key && (
+                      <span>{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            <tr className="bg-gray-50">
+              {safeColumns.map((column) => (
+                <td key={`filter-${column.key}`} className="px-6 py-2">
+                  {column.key.toLowerCase() !== "action" && (
+                    <Select
+                      className="w-full max-w-xs "
+                      popupMatchSelectWidth={false}
+                      showSearch
+                      value={filters[column.key] || ""}
+                      onChange={(value) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          [column.key]: value,
+                        }))
+                      }
+                      // filterOption={(input, option) =>
+                      //   option.children
+                      //     .toString()
+                      //     .toLowerCase()
+                      //     .includes(input.toLowerCase())
+                      // }
+                      filterOption={(input, option) => {
+                        const label =
+                          option?.children?.toString().toLowerCase() || "";
+                        return label.includes(input.toLowerCase());
+                      }}
+                    >
+                      <Select.Option value="">All</Select.Option>
+                      {[
+                        ...new Set(safeData.map((item) => item[column.key])),
+                      ].map((value) => {
+                        return (
+                          <Select.Option
+                            key={String(value)}
+                            value={String(value)}
+                          >
+                            {value}
+                          </Select.Option>
+                        );
+                      })}
+                    </Select>
+                  )}
+                </td>
+              ))}
+            </tr>
+            {paginatedData.map((row, index) => (
+              <tr
+                key={index}
+                onClick={() => onSelectRow(row._id)}
+                className={`${
+                  active[row._id]
+                    ? "bg-blue-200"
+                    : changeColor(index)
+                    ? "hover:bg-gray-200 bg-gray-100"
+                    : " hover:bg-gray-200 bg-white" //
+                } cursor-pointer `}
+              >
+                {safeColumns.map((column) => (
+                  <td
+                    key={`${index}-${column.key}`}
+                    className="px-6 py-4"
+                    onDoubleClick={() => {
+                      console.log("row", row);
+                      updateHandler(row[catcher]);
+                    }}
+                  >
+                    {row[column.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div> */}
+
       <div className="border rounded-lg overflow-hidden whitespace-normal">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

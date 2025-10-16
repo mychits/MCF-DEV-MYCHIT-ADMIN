@@ -39,7 +39,7 @@ import { SiQuicklook } from "react-icons/si";
 import { BiTransfer } from "react-icons/bi";
 import { FaMobileAlt } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
-
+import { MdAccountBalanceWallet } from "react-icons/md";
 
 
 const MenuSidebar = [
@@ -211,7 +211,7 @@ const MenuSidebar = [
   {
     id: "$#S",
     title: "Accounts",
-    icon: <TbCoinRupeeFilled />,
+    icon: <MdAccountBalanceWallet />,
     link: "/payment-menu/"
    // submenu: true,
    // submenuItems: [

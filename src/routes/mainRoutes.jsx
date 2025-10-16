@@ -88,7 +88,7 @@ import TargetIncentiveReport from "../pages/TargetIncentive";
 import TargetPayOutSalary from "../pages/TargetPayoutSalary";
 import TargetPayOutCommissionIncentive from "../pages/TargetPayOutCommissionIncentive";
 import TargetCommission from "../pages/TargetCommission";
-import TargetPayOutMenu from "../pages/TargetPayOutMenu";
+// import TargetPayOutMenu from "../pages/TargetPayOutMenu";
 import MonthlyInstallmentTurnoverReport from "../pages/MonthlyInstallmentTurnoverReport";
 import HoldedCustomerReport from "../pages/HoldedCustomerReport"
 import AuctionBidStatus from "../pages/AuctionBidStatus"
@@ -110,6 +110,7 @@ import EmployeeMonthlyReport from "../pages/EmployeeMonthlyReport";
 import EmployeeMenu from "../pages/EmployeeMenu";
 import PaymentMenu from "../pages/PaymentMenu";
 import CustomerLoanReport from "../pages/CustomerLoanReport";
+import CollectionAreaReport from "../pages/CollectionAreaReport";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -571,6 +572,7 @@ const mainRoutes = createBrowserRouter([
       { path: "sales-report", element: <SalesReport /> },
       { path: "receipt", element: <Receipt /> },
       { path: "collection-executive", element: <CollectionExecutiveReport /> },
+      {path: "collection-area-report", element: <CollectionAreaReport />},
       { path: "registration-fee-receipt", element: <RegistrationFeeReport /> },
       { path: "group-report", element: <GroupReport /> },
       { path: "all-group-report", element: <AllGroupReport /> },
@@ -603,10 +605,10 @@ const mainRoutes = createBrowserRouter([
     path: "/target-commission-incentive",
     element: <TargetPayOutCommissionIncentive />,
   },
-  {
-    path: "/target-payout-menu",
-    element: <TargetPayOutMenu />,
-  },
+  // {
+  //   path: "/target-payout-menu",
+  //   element: <TargetPayOutMenu />,
+  // },
   {
     path: "/target-payout-salary",
     element: <TargetPayOutSalary />,

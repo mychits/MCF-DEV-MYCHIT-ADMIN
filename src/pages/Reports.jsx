@@ -81,6 +81,13 @@ const subMenus = [
     category: "Finance",
     color: "from-green-500 to-green-600"
   },
+   {
+    title: "Collection Area Report",
+    link: "/reports/collection-area-report",
+    Icon: TbMoneybag,
+    category: "Customer",
+    color: "from-green-500 to-green-600"
+  },
   {
     title: "Employee Report",
     link: "/reports/employee-report",
@@ -170,8 +177,7 @@ const Reports = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [viewType, setViewType] = useState("grid"); // "grid" or "list"
-
+  const [viewType, setViewType] = useState("grid"); 
   const filteredMenus =
     activeCategory === "All"
       ? subMenus
@@ -183,13 +189,13 @@ const Reports = () => {
         {<Navbar />}
         <Sidebar />
 
-        <div className="w-[300px] bg-gray-50 min-h-screen p-4">
+        {/* <div className="w-[300px] bg-gray-50 min-h-screen p-4">
           {filteredMenus.map(({ title, link, Icon, red }) => (
             <NavLink
               key={link}
               to={link}
               className={({ isActive }) =>
-                `whitespace-nowrap my-2 flex items-center gap-2 font-medium rounded-3xl hover:bg-gray-300 p-3 ${
+                `whitespace-nowrap my-2 flex items-center gap-2 font-medium rounded-3xl hover:bg-gray-300 p-3 right-border ${
                   red ? "text-red-800" : "text-gray-900"
                 } ${isActive ? "bg-gray-200 border-l-8 border-blue-300" : ""}`
               }
@@ -204,7 +210,28 @@ const Reports = () => {
               )}
             </NavLink>
           ))}
-        </div>
+        </div> */}
+
+        <div className="w-[300px] bg-gray-50 min-h-screen p-4 border-r border-gray-200">
+  {filteredMenus.map(({ title, link, Icon, red }) => (
+    <NavLink
+      key={link}
+      to={link}
+      className={({ isActive }) =>
+        `whitespace-nowrap my-2 flex items-center gap-2 font-medium rounded-3xl hover:bg-gray-300 p-3 ${
+          red ? "text-red-800" : "text-gray-900"
+        } ${isActive ? "bg-gray-200 border-r-8 border-blue-300" : ""}`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon className={`${isActive ? "animate-bounce" : "text-black"}`} />
+          <span className="text-black">{title}</span>
+        </>
+      )}
+    </NavLink>
+  ))}
+</div>
 
         <div className="flex-grow p-6 bg-gradient-to-br from-gray-50 to-gray-100">
           {location.pathname === "/reports" ? (

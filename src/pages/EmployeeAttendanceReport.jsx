@@ -1240,7 +1240,10 @@ const EmployeeAttendanceReport = () => {
 
             {/* Table Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-4">
-              <DataTable columns={AttendanceColumns} data={filteredAttendance} />
+              <DataTable columns={AttendanceColumns} data={filteredAttendance} 
+               exportedPdfName="Employee Attendence"
+                exportedFileName={`EmployeeAttendence.csv`}
+              />
             </div>
           </div>
         )}

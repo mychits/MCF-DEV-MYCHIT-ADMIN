@@ -118,21 +118,21 @@ const MenuSidebar = [
           },
         ],
       },
-      {
-        title: "Accounts",
-        icon: <MdAccountBalanceWallet />,
-        submenu: true,
-        submenuItems: [
-          {
-            title: "PayOut Menu",
-            icon: <RiMoneyRupeeCircleFill size={20} />,
-            link:"/target-payout-menu"
+      // {
+      //   title: "Accounts",
+      //   icon: <MdAccountBalanceWallet />,
+      //   submenu: true,
+      //   submenuItems: [
+      //     {
+      //       title: "PayOut Menu",
+      //       icon: <RiMoneyRupeeCircleFill size={20} />,
+      //       link:"/target-payout-menu"
           
 
           
-          },
-        ],
-      },
+      //     },
+      //   ],
+      // },
     ],
   },
   {
