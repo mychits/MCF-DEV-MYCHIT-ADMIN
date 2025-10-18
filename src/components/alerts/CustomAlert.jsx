@@ -55,7 +55,7 @@ const CustomAlert = memo(({ isVisible, type = "info", message ,noReload =false})
   if (!isVisible && !isClosing) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 transform">
+    <div className="fixed top-4 left-1/2 z-[100] -translate-x-1/2 transform">
       <div
         className={`${alertConfig[type].bg} ${alertConfig[type].border} ${
           alertConfig[type].text

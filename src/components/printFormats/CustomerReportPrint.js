@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import imageInput from "../../assets/images/myChits.png";
+import imageInput from "../../assets/images/mychits.png";
 
 //const safe = (val) => (val == null || val === "" ? "-" : String(val).trim());
 
