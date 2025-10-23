@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/layouts/Navbar";
 import SettingSidebar from "../components/layouts/SettingSidebar";
+import Sidebar from "../components/layouts/Sidebar";
 import api from "../instance/TokenInstance";
 import DataTable from "../components/layouts/Datatable";
 import { Dropdown, Drawer } from "antd";
@@ -486,7 +487,7 @@ const Target = () => {
     <>
       <div className="flex mt-20">
         <Navbar visibility={true} />
-        <SettingSidebar />
+        <Sidebar/>
         <CustomAlertDialog
           type={alertConfig.type}
           isVisible={alertConfig.visibility}

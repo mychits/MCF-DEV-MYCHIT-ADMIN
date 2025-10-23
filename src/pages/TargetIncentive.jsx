@@ -6,6 +6,7 @@ import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
 import Modal from "../components/modals/Modal";
 import SettingSidebar from "../components/layouts/SettingSidebar";
+import Sidebar from "../components/layouts/Sidebar";
 import { GiPartyPopper } from "react-icons/gi";
 import { Collapse } from "antd";
 import {Link} from "react-router-dom"
@@ -357,7 +358,7 @@ const TargetIncentive = () => {
   return (
     <div className="w-screen min-h-screen">
       <div className="flex mt-30">
-        <SettingSidebar />
+        
         <Navbar visibility={true} />
         <div className="flex-grow p-7">
           <h1 className="text-2xl font-bold text-center ">

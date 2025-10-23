@@ -90,51 +90,51 @@ const MenuSidebar = [
   },
 
 
-  {
-    title: "Target Management",
-    icon: <LuTarget />,
-    submenu: true,
+  // {
+  //   title: "Target Management",
+  //   icon: <LuTarget />,
+  //   submenu: true,
 
-    submenuItems: [
-      {
-        title: "Target",
-        icon: <TbTargetArrow />,
-        link: "/target",
-      },
-      {
-        title: "Reports",
-        icon: <BsFileBarGraph />,
-        submenu: true,
-        submenuItems: [
-          {
-            title: "Commission Report",
-            icon: <TbGraph size={20} />,
-            link: "/target-commission",
-          },
-          {
-            title: "Incentive Report",
-            icon: <TbGraphFilled size={20} />,
-            link: "/target-incentive",
-          },
-        ],
-      },
-      // {
-      //   title: "Accounts",
-      //   icon: <MdAccountBalanceWallet />,
-      //   submenu: true,
-      //   submenuItems: [
-      //     {
-      //       title: "PayOut Menu",
-      //       icon: <RiMoneyRupeeCircleFill size={20} />,
-      //       link:"/target-payout-menu"
+  //   submenuItems: [
+  //     {
+  //       title: "Target",
+  //       icon: <TbTargetArrow />,
+  //       link: "/target",
+  //     },
+  //     {
+  //       title: "Reports",
+  //       icon: <BsFileBarGraph />,
+  //       submenu: true,
+  //       submenuItems: [
+  //         {
+  //           title: "Commission Report",
+  //           icon: <TbGraph size={20} />,
+  //           link: "/target-commission",
+  //         },
+  //         {
+  //           title: "Incentive Report",
+  //           icon: <TbGraphFilled size={20} />,
+  //           link: "/target-incentive",
+  //         },
+  //       ],
+  //     },
+  //     // {
+  //     //   title: "Accounts",
+  //     //   icon: <MdAccountBalanceWallet />,
+  //     //   submenu: true,
+  //     //   submenuItems: [
+  //     //     {
+  //     //       title: "PayOut Menu",
+  //     //       icon: <RiMoneyRupeeCircleFill size={20} />,
+  //     //       link:"/target-payout-menu"
           
 
           
-      //     },
-      //   ],
-      // },
-    ],
-  },
+  //     //     },
+  //     //   ],
+  //     // },
+  //   ],
+  // },
   {
     title: "Profile",
     spacing: true,

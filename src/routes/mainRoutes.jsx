@@ -597,12 +597,18 @@ const mainRoutes = createBrowserRouter([
         element: <DueReport />,
       },
       {path: "payout-salary-report", element: <PayoutSalaryReport/>},
-    ],
+        {
+    path: "target-incentive",
+    element: <TargetIncentiveReport />,
   },
-  {
-    path: "/target-commission",
+    {
+    path: "target-commission",
     element: <TargetCommission />,
   },
+
+    ],
+  },
+
   {
     path: "/target-commission-incentive",
     element: <TargetPayOutCommissionIncentive />,
@@ -615,10 +621,7 @@ const mainRoutes = createBrowserRouter([
     path: "/target-payout-salary",
     element: <TargetPayOutSalary />,
   },
-  {
-    path: "/target-incentive",
-    element: <TargetIncentiveReport />,
-  },
+ 
   
   {
     path: "/insurance",

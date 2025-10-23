@@ -40,7 +40,8 @@ import { BiTransfer } from "react-icons/bi";
 import { FaMobileAlt } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
 import { MdAccountBalanceWallet } from "react-icons/md";
-
+import { LuTarget } from "react-icons/lu";
+import { TbTargetArrow } from "react-icons/tb";
 
 const MenuSidebar = [
   {
@@ -174,6 +175,19 @@ const MenuSidebar = [
     //   },
     // ],
   },
+   {
+      title: "Target Management",
+      icon: <LuTarget />,
+      submenu: true,
+  
+      submenuItems: [
+        {
+          title: "Target",
+          icon: <TbTargetArrow />,
+          link: "/target",
+        },
+      ],
+    },
 
   {
     id: "$7",

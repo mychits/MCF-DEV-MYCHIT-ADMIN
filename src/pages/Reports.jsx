@@ -3,6 +3,7 @@ import Navbar from "../components/layouts/Navbar";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { MdOutlinePending } from "react-icons/md";
 import { TbMoneybag } from "react-icons/tb";
+import { HiOutlineBanknotes } from "react-icons/hi2";
 import {
   FaCalendarDays,
   FaPeopleGroup,
@@ -28,6 +29,8 @@ import { useState } from "react";
 import { BiGrid } from "react-icons/bi";
 import { TbList } from "react-icons/tb";
 import { BsCalendarDate } from "react-icons/bs";
+import { TbGraph } from "react-icons/tb";
+import { TbGraphFilled } from "react-icons/tb";
 
 const subMenus = [
   {
@@ -219,12 +222,30 @@ const subMenus = [
     title: "Payout Salary Report",
     link: "/reports/payout-salary-report",
     category: "Employee",
-    Icon: BsCalendarDate,
+    Icon: HiOutlineBanknotes,
     color: "from-indigo-500 to-indigo-600",
   },
+  {
+    id:"25",
+    title: "Commission Report",
+    link: "/reports/target-commission",
+    category: "Agent",
+   Icon: TbGraph,
+   color: "from-yellow-500 to-yellow-600",
+  },
+   {
+    id:"26",
+    title: "Incentive Report",
+    link: "/reports/target-incentive",
+    category: "Employee",
+   Icon: TbGraphFilled,
+   color: "from-indigo-500 to-indigo-600",
+  }
 ];
 
-const categories = ["All", "Reports", "Customer", "Employee", "Finance"];
+
+
+const categories = ["All", "Reports", "Customer", "Agent" ,"Employee",  "Finance",];
 
 const Reports = () => {
   const location = useLocation();
