@@ -430,7 +430,7 @@ const TargetIncentive = () => {
                       children: (
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                           <Link
-                            to="/target-commission"
+                            to="/reports/target-commission"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
                             <DollarOutlined
@@ -441,7 +441,7 @@ const TargetIncentive = () => {
                           </Link>
 
                           <Link
-                            to="/target-incentive"
+                            to="/reports/target-incentive"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
                             <FileTextOutlined
