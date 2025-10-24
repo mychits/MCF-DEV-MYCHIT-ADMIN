@@ -57,6 +57,7 @@ const Group = () => {
     weekly_installment: "",
     daily_installment: "",
     relationship_manager: "",
+    app_display_vacany_seat: "",
   });
   const [errors, setErrors] = useState({});
   const [employees, setEmployees] = useState([]);
@@ -79,6 +80,7 @@ const Group = () => {
     weekly_installment: "",
     daily_installment: "",
     relationship_manager: "",
+    app_display_vacany_seat: "",
   });
   useEffect(() => {
     async function getEmployees() {
@@ -115,6 +117,7 @@ const Group = () => {
           installment: group.group_install,
           incentives: group.incentives,
           members: group?.group_members,
+          app_display_vacany_seat: group?.app_display_vacany_seat,
           date: group?.createdAt,
           action: (
             <div className="flex justify-center gap-2">
@@ -274,6 +277,9 @@ const Group = () => {
     if (!data.start_date) {
       newErrors.start_date = "Start Date is required";
     }
+    if(!data.app_display_vacany_seat){
+      newErrors.app_display_vacany_seat = "Please Enter Vacant Seat" 
+    }
 
     if (formData.end_date && !data.end_date) {
       newErrors.end_date = "End Date is required";
@@ -349,6 +355,7 @@ const Group = () => {
           incentives: "",
           relationship_manager: "",
           monthly_installment: "",
+          app_display_vacany_seat: "",
         });
       } else {
         console.log(errors);
@@ -398,6 +405,7 @@ const Group = () => {
         monthly_installment: response?.data?.monthly_installment,
         weekly_installment: response?.data?.weekly_installment,
         daily_installment: response?.data?.daily_installment,
+        app_display_vacany_seat: response?.data?.app_display_vacany_seat,
       });
       setShowModalUpdate(true);
       setErrors({});
@@ -488,6 +496,7 @@ const Group = () => {
     { key: "members", header: "Group Members" },
     { key: "installment", header: "Group Installment" },
     { key: "daily_installment", header: "Daily Installment" },
+    {key: "app_display_vacany_seat", header: "Vacant Seat"},
     { key: "weekly_installment", header: "Weekly Installment" },
     { key: "monthly_installment", header: "Monthly Installment" },
     { key: "relationship_manager", header: "Relationship Manager" },
@@ -607,7 +616,8 @@ const Group = () => {
                   </p>
                 )}
               </div>
-              <div className="w-full">
+              <div className="flex flex-row justify-between space-x-4">
+              <div className="w-1/2">
                 <label
                   className="block mb-2 text-sm font-medium text-gray-900"
                   htmlFor="category"
@@ -642,6 +652,30 @@ const Group = () => {
                     {errors.relationship_manager}
                   </p>
                 )}
+              </div>
+              <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="date"
+                  >
+                    Vacant Seat <span className="text-red-500 ">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="app_display_vacany_seat"
+                    value={formData.app_display_vacany_seat}
+                    onChange={handleChange}
+                    id="text"
+                    placeholder="Enter Vacant Seat"
+                    required
+                    className={`no-spinner bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.app_display_vacany_seat && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.app_display_vacany_seat}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
                 <div className="w-1/2">
@@ -1054,7 +1088,8 @@ const Group = () => {
                   </p>
                 )}
               </div>
-              <div className="w-full">
+              <div className="flex flex-row justify-between space-x-4">
+              <div className="w-1/2">
                 <label
                   className="block mb-2 text-sm font-medium text-gray-900"
                   htmlFor="category"
@@ -1089,6 +1124,30 @@ const Group = () => {
                     {errors.relationship_manager}
                   </p>
                 )}
+              </div>
+              <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="date"
+                  >
+                    Vacant Seat <span className="text-red-500 ">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="app_display_vacany_seat"
+                    value={updateFormData.app_display_vacany_seat}
+                    onChange={handleInputChange}
+                    id="text"
+                    placeholder="Enter vacant seat"
+                    required
+                    className={`no-spinner bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.app_display_vacany_seat && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.app_display_vacany_seat}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
                 <div className="w-1/2">

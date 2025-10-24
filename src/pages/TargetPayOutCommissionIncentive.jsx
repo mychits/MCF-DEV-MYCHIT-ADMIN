@@ -490,7 +490,7 @@ const TargetPayOutCommissionIncentive = () => {
         {contextHolder}
         <div className="flex mt-20">
           <Navbar visibility={true} />
-          <SettingSidebar />
+          <Sidebar />
           <CustomAlert
             type={alertConfig.type}
             isVisible={alertConfig.visibility}

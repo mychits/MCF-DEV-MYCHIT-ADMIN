@@ -102,22 +102,22 @@ const MenuSidebar = [
     id: "$4",
     title: "Enrollments ",
     icon: <FaPeopleArrows />,
-   // link: "/enrollment",
-     submenu: true,
-    submenuItems: [
-      {
-        id: "$101#%",
-        title: "Enrollments",
-        icon: <FaPeopleArrows size={20} />,
-        link: "/enrollment",
-      },
-      {
-        id: "$83",
-        title: "Mobile Enrollments",
-        icon: <FaMobileAlt size={25} />,
-        link: "/mobile-app-enroll",
-      },
-    ],
+   link: "/enroll-menu",
+    //  submenu: true,
+    // submenuItems: [
+    //   {
+    //     id: "$101#%",
+    //     title: "Enrollments",
+    //     icon: <FaPeopleArrows size={20} />,
+    //     link: "/enrollment",
+    //   },
+    //   {
+    //     id: "$83",
+    //     title: "Mobile Enrollments",
+    //     icon: <FaMobileAlt size={25} />,
+    //     link: "/mobile-app-enroll",
+    //   },
+    // ],
   },
   
   // {
@@ -178,15 +178,15 @@ const MenuSidebar = [
    {
       title: "Target Management",
       icon: <LuTarget />,
-      submenu: true,
-  
-      submenuItems: [
-        {
-          title: "Target",
-          icon: <TbTargetArrow />,
-          link: "/target",
-        },
-      ],
+     // submenu: true,
+      link: "/target-menu"
+      // submenuItems: [
+      //   {
+      //     title: "Target",
+      //     icon: <TbTargetArrow />,
+      //     link: "/target",
+      //   },
+      // ],
     },
 
   {

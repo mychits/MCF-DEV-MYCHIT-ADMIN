@@ -46,7 +46,7 @@ import PaymentSummary from "../pages/PaymentSummary";
 import WhatsappAdd from "../pages/WhatsappAdd";
 import WhatsappFailed from "../pages/WhatsappFailed";
 import DueMessage from "../pages/DueMessage";
-import DueReport from "../pages/DueReport";
+import OutstandingReport from "../pages/OutstandingReport";
 import Reports from "../pages/Reports";
 import LeadSettings from "../pages/LeadSettings";
 import Designation from "../pages/Designation";
@@ -112,6 +112,8 @@ import PaymentMenu from "../pages/PaymentMenu";
 import CustomerLoanReport from "../pages/CustomerLoanReport";
 import CollectionAreaReport from "../pages/CollectionAreaReport";
 import PayoutSalaryReport from "../pages/PayoutSalaryReport";
+import TargetMenu from "../pages/TargetMenu";
+import EnrollmentMenu from "../pages/EnrollmentView";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -230,7 +232,7 @@ const mainRoutes = createBrowserRouter([
     ),
   },
   {
-    path: "/mobile-app-enroll",
+    path: "/enroll-menu/mobile-app-enroll",
     element: (
       <ProtectedRoute>
         <MobileAppEnroll />
@@ -265,7 +267,7 @@ const mainRoutes = createBrowserRouter([
   },
 
   {
-    path: "/target",
+    path: "/target-menu/target",
     element: (
       <ProtectedRoute>
         <Target />
@@ -303,6 +305,20 @@ const mainRoutes = createBrowserRouter([
         <StaffMenu />
       </ProtectedRoute>
     ),
+  },
+  {
+   path: "/target-menu",
+   element: (
+   <ProtectedRoute>
+    <TargetMenu/>
+   </ProtectedRoute>
+   ),
+  },
+  {
+    path: "/enroll-menu",
+    element: (<ProtectedRoute>
+        <EnrollmentMenu/>
+      </ProtectedRoute>),
   },
     {
     path: "/staff-menu/employee-menu",
@@ -345,7 +361,7 @@ const mainRoutes = createBrowserRouter([
     ),
   },
   {
-    path: "/enrollment",
+    path: "/enroll-menu/enrollment",
     element: (
       <ProtectedRoute>
         <Enroll />
@@ -593,8 +609,8 @@ const mainRoutes = createBrowserRouter([
       {path: "employee-monthly-report", element: <EmployeeMonthlyReport/>},
       {path: "customer-loan-report", element: <CustomerLoanReport/>},
       {
-        path: "due-report",
-        element: <DueReport />,
+        path: "outstanding-report",
+        element: <OutstandingReport />,
       },
       {path: "payout-salary-report", element: <PayoutSalaryReport/>},
         {

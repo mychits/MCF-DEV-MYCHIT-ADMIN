@@ -362,7 +362,7 @@ const TargetIncentive = () => {
         <Navbar visibility={true} />
         <div className="flex-grow p-7">
           <h1 className="text-2xl font-bold text-center ">
-            Reports - Commission
+            Reports - Incentive
           </h1>
 
           <div className="mt-11 mb-8">

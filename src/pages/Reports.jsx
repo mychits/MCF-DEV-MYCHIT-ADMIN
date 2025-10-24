@@ -140,8 +140,8 @@ const subMenus = [
   },
   {
     id:"15",
-    title: "Due Report",
-    link: "/reports/due-report",
+    title: "Outstanding Report",
+    link: "/reports/outstanding-report",
     Icon: MdOutlinePending,
     category: "Finance",
     color: "from-orange-500 to-orange-600",

@@ -8,7 +8,7 @@ import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
 import { useMemo } from "react";
 
-const DueReport = () => {
+const OutstandingReport = () => {
   const [searchText, setSearchText] = useState("");
   const [screenLoading, setScreenLoading] = useState(true);
   const [auctionTableData, setAuctionTableData] = useState([]);
@@ -276,7 +276,7 @@ const DueReport = () => {
           </div>
         ) : (
           <div className="flex-grow p-7">
-            <h1 className="text-2xl font-bold text-center">Reports - Due</h1>
+            <h1 className="text-2xl font-bold text-center">Reports - Outstanding</h1>
 
             <div className="mt-6 mb-8">
               <div className="mt-6 mb-8">
@@ -446,4 +446,4 @@ const DueReport = () => {
   );
 };
 
-export default DueReport;
+export default OutstandingReport;
