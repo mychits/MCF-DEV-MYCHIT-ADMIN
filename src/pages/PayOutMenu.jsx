@@ -25,7 +25,7 @@ const PayOutMenu = () => {
        color: "from-blue-600 to-blue-700",
           lightColor: "bg-blue-50",
           borderColor: "border-blue-200",
-       href:"/payment-menu/payment-in-out-menu/payment-out/commission",
+       href:"/target-commission-incentive",
        stats: "Commission / Incentive Information"
     },
     {

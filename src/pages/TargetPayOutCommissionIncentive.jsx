@@ -18,6 +18,10 @@ const TargetPayOutCommissionIncentive = () => {
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [modifyPayment, setModifyPayment] = useState(false);
   const [adminId, setAdminId] = useState("");
+
+  const [filterMode, setFilterMode] = useState("month");
+
+
   const [alertConfig, setAlertConfig] = useState({
     visibility: false,
     message: "Something went wrong!",
@@ -48,14 +52,21 @@ const TargetPayOutCommissionIncentive = () => {
     targetCommission: 0,
     isTargetSet: false,
     targetDisplay: "Not Set",
-    calculationType: "commission", // "commission" for agents, "incentive" for employees
+    calculationType: "commission",
   });
 
-  // Get current month for max attribute
+
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${String(
     today.getMonth() + 1
   ).padStart(2, "0")}`;
+  const initFirstDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+  const initLastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split("T")[0];
+  const [customDateRange, setCustomDateRange] = useState({
+    from_date: initFirstDay,
+    to_date: initLastDay,
+  });
+
 
   const [commissionForm, setCommissionForm] = useState({
     agent_id: "",
@@ -68,6 +79,8 @@ const TargetPayOutCommissionIncentive = () => {
     pay_for: paymentFor,
     admin_type: "",
   });
+
+
 
   const [commissionBreakdown, setCommissionBreakdown] = useState([]);
   const [isTargetLoading, setIsTargetLoading] = useState(false);
@@ -102,8 +115,295 @@ const TargetPayOutCommissionIncentive = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const fetchTargetDetails = async (agentId, month, type) => {
-    if (!agentId || !month) {
+  // const fetchTargetDetails = async (agentId, month, type) => {
+  //   if (!agentId || !month) {
+  //     setTargetData({
+  //       target: 0,
+  //       achieved: 0,
+  //       remaining: 0,
+  //       difference: 0,
+  //       upToTarget: 0,
+  //       beyondTarget: 0,
+  //       targetCommission: 0,
+  //       isTargetSet: false,
+  //       targetDisplay: "Not Set",
+  //       calculationType: type === "employee" ? "incentive" : "commission",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsTargetLoading(true);
+  //   try {
+  //     // Calculate first and last day of selected month
+  //     const [year, monthStr] = month.split("-");
+  //     const firstDay = `${year}-${monthStr}-01`;
+  //     const lastDay = new Date(year, parseInt(monthStr), 0)
+  //       .toISOString()
+  //       .split("T")[0];
+
+  //     // Fetch target details for the selected agent
+  //     const targetRes = await API.get(`/target/agent/${agentId}`, {
+  //       params: { year },
+  //     });
+
+  //     // Map month number to month name
+  //     const monthNames = [
+  //       "January",
+  //       "February",
+  //       "March",
+  //       "April",
+  //       "May",
+  //       "June",
+  //       "July",
+  //       "August",
+  //       "September",
+  //       "October",
+  //       "November",
+  //       "December",
+  //     ];
+  //     const monthNumber = parseInt(monthStr, 10);
+  //     const monthName = monthNames[monthNumber - 1];
+
+  //     let targetForMonth = 0;
+  //     if (targetRes.data && targetRes.data.length > 0) {
+  //       const monthData = targetRes.data[0].monthData || {};
+  //       targetForMonth = Number(monthData[monthName] || 0);
+  //     }
+
+  //     // Fetch commission data to get achieved - CORRECTED: Removed extra /api prefix
+  //     const comm = await API.get("/enroll/get-detailed-commission-per-month", {
+  //       params: {
+  //         agent_id: agentId,
+  //         from_date: formatDate(firstDay),
+  //         to_date: formatDate(lastDay),
+  //       },
+  //     });
+
+  //     let achieved = comm?.data?.summary?.actual_business || 0;
+  //     if (typeof achieved === "string") {
+  //       achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
+  //     }
+
+  //     const remaining = Math.max(targetForMonth - achieved, 0);
+  //     const difference = targetForMonth - achieved;
+
+  //     // Calculate commission/incentive based on agent type
+  //     let upToTarget = 0;
+  //     let beyondTarget = 0;
+  //     let totalCommission = 0;
+
+  //     if (type === "agent") {
+  //       // For agents: 0.5% up to target, 1% beyond target
+  //       if (achieved <= targetForMonth) {
+  //         upToTarget = achieved * 0.005; // 0.5%
+  //       } else {
+  //         upToTarget = targetForMonth * 0.005;
+  //         beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+  //       }
+  //       totalCommission = upToTarget + beyondTarget;
+  //     } else {
+  //       // For employees: 1% only on amount beyond target
+  //       if (achieved > targetForMonth) {
+  //         beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+  //       }
+  //       totalCommission = beyondTarget;
+  //     }
+
+  //     // Format target value for display
+  //     const targetDisplay =
+  //       targetForMonth > 0
+  //         ? `₹${targetForMonth.toLocaleString("en-IN")}`
+  //         : "Not Set";
+
+  //     setTargetData({
+  //       target: targetForMonth,
+  //       achieved,
+  //       remaining,
+  //       difference,
+  //       upToTarget,
+  //       beyondTarget,
+  //       targetCommission: totalCommission,
+  //       isTargetSet: targetForMonth >= 0,
+  //       targetDisplay: targetDisplay,
+  //       calculationType: type === "employee" ? "incentive" : "commission",
+  //     });
+
+  //     if (type === "agent") {
+  //       setCalculatedAmount(totalCommission.toFixed(2));
+  //       setCommissionForm((prev) => ({
+  //         ...prev,
+  //         amount: totalCommission.toFixed(2),
+  //       }));
+  //     } else {
+  //       setCalculatedAmount(totalCommission.toFixed(2));
+  //       setCommissionForm((prev) => ({
+  //         ...prev,
+  //         amount: totalCommission.toFixed(2),
+  //       }));
+  //     }
+
+  //     // Store commission breakdown for display
+  //     setCommissionBreakdown(comm?.data?.commission_data || []);
+  //   } catch (error) {
+  //     console.error("Failed to fetch target details", error);
+  //     setTargetData({
+  //       target: 0,
+  //       achieved: 0,
+  //       remaining: 0,
+  //       difference: 0,
+  //       upToTarget: 0,
+  //       beyondTarget: 0,
+  //       targetCommission: 0,
+  //       isTargetSet: false,
+  //       targetDisplay: "Not Set",
+  //       calculationType: agentType === "employee" ? "incentive" : "commission",
+  //     });
+  //     setCommissionBreakdown([]);
+  //   } finally {
+  //     setIsTargetLoading(false);
+  //   }
+  // };
+
+  // const fetchTargetDetails = async (agentId, month, type) => {
+  //   if (!agentId || !month) {
+  //     setTargetData({
+  //       target: 0,
+  //       achieved: 0,
+  //       remaining: 0,
+  //       difference: 0,
+  //       upToTarget: 0,
+  //       beyondTarget: 0,
+  //       targetCommission: 0,
+  //       isTargetSet: false,
+  //       targetDisplay: "Not Set",
+  //       calculationType: type === "employee" ? "incentive" : "commission",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsTargetLoading(true);
+  //   try {
+  //     // Calculate first and last day of selected month
+  //     const [year, monthStr] = month.split("-");
+  //     const firstDay = `${year}-${monthStr}-01`;
+  //     const lastDay = new Date(year, parseInt(monthStr), 0).toISOString().split("T")[0];
+
+  //     // === STEP 1: Fetch TARGET (monthly structure) ===
+  //     const targetRes = await API.get(`/target/agent/${agentId}`, {
+  //       params: { year },
+  //     });
+
+  //     const monthNames = [
+  //       "January", "February", "March", "April", "May", "June",
+  //       "July", "August", "September", "October", "November", "December"
+  //     ];
+  //     const monthName = monthNames[parseInt(monthStr, 10) - 1];
+  //     let targetForMonth = 0;
+  //     if (targetRes.data && targetRes.data.length > 0) {
+  //       const monthData = targetRes.data[0].monthData || {};
+  //       targetForMonth = Number(monthData[monthName] || 0);
+  //     }
+
+  //     // === STEP 2: Fetch ACHIEVED BUSINESS & BREAKDOWN using correct routes ===
+  //     let comm;
+  //     if (type === "employee") {
+  //       comm = await API.get(`/enroll/employee/${agentId}/incentive`, {
+  //         params: { start_date: firstDay, end_date: lastDay },
+  //       });
+  //     } else {
+  //       comm = await API.get(`/enroll/agent/${agentId}/commission`, {
+  //         params: { start_date: firstDay, end_date: lastDay },
+  //       });
+  //     }
+
+  //     // Extract achieved amount
+  //     let achieved = 0;
+  //     if (type === "employee") {
+  //       achieved = comm?.data?.incentiveSummary?.total_group_value || 0;
+  //     } else {
+  //       achieved = comm?.data?.commissionSummary?.total_group_value || 0;
+  //     }
+  //     if (typeof achieved === "string") {
+  //       achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
+  //     }
+
+  //     // Calculate commission/incentive
+  //     const remaining = Math.max(targetForMonth - achieved, 0);
+  //     const difference = achieved - targetForMonth;
+
+  //     let upToTarget = 0;
+  //     let beyondTarget = 0;
+  //     let totalCommission = 0;
+
+  //     if (type === "agent") {
+  //       if (achieved <= targetForMonth) {
+  //         upToTarget = achieved * 0.005; // 0.5%
+  //       } else {
+  //         upToTarget = targetForMonth * 0.005;
+  //         beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+  //       }
+  //       totalCommission = upToTarget + beyondTarget;
+  //     } else {
+  //       if (achieved > targetForMonth) {
+  //         beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+  //       }
+  //       totalCommission = beyondTarget;
+  //     }
+
+  //     // Format target value for display
+  //     const targetDisplay =
+  //       targetForMonth > 0
+  //         ? `₹${targetForMonth.toLocaleString("en-IN")}`
+  //         : "Not Set";
+
+  //     setTargetData({
+  //       target: targetForMonth,
+  //       achieved,
+  //       remaining,
+  //       difference,
+  //       upToTarget,
+  //       beyondTarget,
+  //       targetCommission: totalCommission,
+  //       isTargetSet: targetForMonth > 0,
+  //       targetDisplay,
+  //       calculationType: type === "employee" ? "incentive" : "commission",
+  //     });
+
+  //     setCalculatedAmount(totalCommission.toFixed(2));
+  //     setCommissionForm((prev) => ({
+  //       ...prev,
+  //       amount: totalCommission.toFixed(2),
+  //     }));
+
+  //     // === STEP 3: Set BREAKDOWN DATA ===
+  //     const breakdownData = type === "employee"
+  //       ? comm?.data?.incentiveData || []
+  //       : comm?.data?.commissionData || [];
+
+  //     setCommissionBreakdown(breakdownData);
+
+  //   } catch (error) {
+  //     console.error("Failed to fetch target details", error);
+  //     setTargetData({
+  //       target: 0,
+  //       achieved: 0,
+  //       remaining: 0,
+  //       difference: 0,
+  //       upToTarget: 0,
+  //       beyondTarget: 0,
+  //       targetCommission: 0,
+  //       isTargetSet: false,
+  //       targetDisplay: "Not Set",
+  //       calculationType: type === "employee" ? "incentive" : "commission",
+  //     });
+  //     setCommissionBreakdown([]);
+  //   } finally {
+  //     setIsTargetLoading(false);
+  //   }
+  // };
+
+  const fetchTargetDetails = async (agentId, period, type, mode = "month") => {
+    if (!agentId || (mode === "custom" && (!period.from || !period.to))) {
       setTargetData({
         target: 0,
         achieved: 0,
@@ -116,121 +416,111 @@ const TargetPayOutCommissionIncentive = () => {
         targetDisplay: "Not Set",
         calculationType: type === "employee" ? "incentive" : "commission",
       });
+      setCommissionBreakdown([]);
       return;
     }
 
     setIsTargetLoading(true);
     try {
-      // Calculate first and last day of selected month
-      const [year, monthStr] = month.split("-");
-      const firstDay = `${year}-${monthStr}-01`;
-      const lastDay = new Date(year, parseInt(monthStr), 0)
-        .toISOString()
-        .split("T")[0];
-
-      // Fetch target details for the selected agent
-      const targetRes = await API.get(`/target/agent/${agentId}`, {
-        params: { year },
-      });
-
-      // Map month number to month name
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-      const monthNumber = parseInt(monthStr, 10);
-      const monthName = monthNames[monthNumber - 1];
-
-      let targetForMonth = 0;
-      if (targetRes.data && targetRes.data.length > 0) {
-        const monthData = targetRes.data[0].monthData || {};
-        targetForMonth = Number(monthData[monthName] || 0);
+      let firstDay, lastDay;
+      if (mode === "month") {
+        const [year, monthStr] = period.split("-");
+        firstDay = `${year}-${monthStr}-01`;
+        lastDay = new Date(year, parseInt(monthStr), 0)
+          .toISOString()
+          .split("T")[0];
+      } else {
+        firstDay = formatDate(period.from);
+        lastDay = formatDate(period.to);
       }
 
-      // Fetch commission data to get achieved - CORRECTED: Removed extra /api prefix
-      const comm = await API.get("/enroll/get-detailed-commission-per-month", {
-        params: {
-          agent_id: agentId,
-          from_date: formatDate(firstDay),
-          to_date: formatDate(lastDay),
-        },
-      });
 
-      let achieved = comm?.data?.summary?.actual_business || 0;
+      let targetRes;
+      if (type === "employee") {
+        targetRes = await API.get(`/target/employees/${agentId}`, {
+          params: { start_date: firstDay, end_date: lastDay },
+        });
+      } else {
+        targetRes = await API.get(`/target/agents/${agentId}`, {
+          params: { start_date: firstDay, end_date: lastDay },
+        });
+      }
+
+      const targetForPeriod =
+        targetRes?.data?.status && targetRes?.data?.total_target
+          ? Number(targetRes.data.total_target)
+          : 0;
+
+
+      let comm;
+      if (type === "employee") {
+        comm = await API.get(`/enroll/employee/${agentId}/incentive`, {
+          params: { start_date: firstDay, end_date: lastDay },
+        });
+      } else {
+        comm = await API.get(`/enroll/agent/${agentId}/commission`, {
+          params: { start_date: firstDay, end_date: lastDay },
+        });
+      }
+
+      let achieved =
+        type === "employee"
+          ? comm?.data?.incentiveSummary?.total_group_value || 0
+          : comm?.data?.commissionSummary?.total_group_value || 0;
       if (typeof achieved === "string") {
         achieved = Number(achieved.replace(/[^0-9.-]+/g, ""));
       }
 
-      const remaining = Math.max(targetForMonth - achieved, 0);
-      const difference = targetForMonth - achieved;
 
-      // Calculate commission/incentive based on agent type
       let upToTarget = 0;
       let beyondTarget = 0;
       let totalCommission = 0;
+      const remaining = Math.max(targetForPeriod - achieved, 0);
+      const difference = achieved - targetForPeriod;
 
       if (type === "agent") {
-        // For agents: 0.5% up to target, 1% beyond target
-        if (achieved <= targetForMonth) {
-          upToTarget = achieved * 0.005; // 0.5%
+        if (achieved <= targetForPeriod) {
+          upToTarget = achieved * 0.005;
         } else {
-          upToTarget = targetForMonth * 0.005;
-          beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+          upToTarget = targetForPeriod * 0.005;
+          beyondTarget = (achieved - targetForPeriod) * 0.01;
         }
         totalCommission = upToTarget + beyondTarget;
       } else {
-        // For employees: 1% only on amount beyond target
-        if (achieved > targetForMonth) {
-          beyondTarget = (achieved - targetForMonth) * 0.01; // 1%
+        if (achieved > targetForPeriod) {
+          beyondTarget = (achieved - targetForPeriod) * 0.01;
         }
         totalCommission = beyondTarget;
       }
 
-      // Format target value for display
-      const targetDisplay =
-        targetForMonth > 0
-          ? `₹${targetForMonth.toLocaleString("en-IN")}`
-          : "Not Set";
 
       setTargetData({
-        target: targetForMonth,
+        target: targetForPeriod,
         achieved,
         remaining,
         difference,
         upToTarget,
         beyondTarget,
         targetCommission: totalCommission,
-        isTargetSet: targetForMonth >= 0,
-        targetDisplay: targetDisplay,
+        isTargetSet: targetForPeriod > 0,
+        targetDisplay:
+          targetForPeriod > 0
+            ? `₹${targetForPeriod.toLocaleString("en-IN")}`
+            : "Not Set",
         calculationType: type === "employee" ? "incentive" : "commission",
       });
 
-      if (type === "agent") {
-        setCalculatedAmount(totalCommission.toFixed(2));
-        setCommissionForm((prev) => ({
-          ...prev,
-          amount: totalCommission.toFixed(2),
-        }));
-      } else {
-        setCalculatedAmount(totalCommission.toFixed(2));
-        setCommissionForm((prev) => ({
-          ...prev,
-          amount: totalCommission.toFixed(2),
-        }));
-      }
+      setCalculatedAmount(totalCommission.toFixed(2));
+      setCommissionForm((prev) => ({
+        ...prev,
+        amount: totalCommission.toFixed(2),
+      }));
 
-      // Store commission breakdown for display
-      setCommissionBreakdown(comm?.data?.commission_data || []);
+      const breakdownData =
+        type === "employee"
+          ? comm?.data?.incentiveData || []
+          : comm?.data?.commissionData || [];
+      setCommissionBreakdown(breakdownData);
     } catch (error) {
       console.error("Failed to fetch target details", error);
       setTargetData({
@@ -243,13 +533,15 @@ const TargetPayOutCommissionIncentive = () => {
         targetCommission: 0,
         isTargetSet: false,
         targetDisplay: "Not Set",
-        calculationType: agentType === "employee" ? "incentive" : "commission",
+        calculationType: type === "employee" ? "incentive" : "commission",
       });
       setCommissionBreakdown([]);
     } finally {
       setIsTargetLoading(false);
     }
   };
+
+
   const fetchCommissionPayments = async () => {
     setIsLoading(true);
     try {
@@ -295,7 +587,7 @@ const TargetPayOutCommissionIncentive = () => {
     fetchCommissionPayments();
   }, [reRender]);
 
-  // Helper function to get first and last day from selected month
+
   const getMonthRange = (selectedMonth) => {
     if (!selectedMonth) return { firstDay: "", lastDay: "" };
     const [year, month] = selectedMonth.split("-");
@@ -304,18 +596,72 @@ const TargetPayOutCommissionIncentive = () => {
     return { firstDay, lastDay };
   };
 
-  const calculateTotalPayableCommission = async (agentId, month, type) => {
-    if (!agentId || !month) {
+  // const calculateTotalPayableCommission = async (agentId, month, type) => {
+  //   if (!agentId || !month) {
+  //     setCommissionForm((prev) => ({ ...prev, amount: "" }));
+  //     return;
+  //   }
+
+  //   setIsLoadingCommissionCalculation(true);
+  //   try {
+  //     await fetchTargetDetails(agentId, month, type);
+  //   } catch (error) {
+  //     console.error("Failed to calculate agent commission:", error);
+  //     setCommissionForm((prev) => ({ ...prev, amount: "" }));
+  //   } finally {
+  //     setIsLoadingCommissionCalculation(false);
+  //   }
+  // };
+
+  // const handleCommissionChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setCommissionForm((prev) => ({ ...prev, [name]: value }));
+  //   setErrors((prev) => ({ ...prev, [name]: "" }));
+
+  //   if (name === "agent_id" || name === "selectedMonth") {
+  //     const updatedAgentId =
+  //       name === "agent_id" ? value : commissionForm.agent_id;
+  //     const updatedMonth =
+  //       name === "selectedMonth" ? value : commissionForm.selectedMonth;
+  //     if (updatedAgentId && updatedMonth && agentType) {
+  //       calculateTotalPayableCommission(
+  //         updatedAgentId,
+  //         updatedMonth,
+  //         agentType
+  //       );
+  //     } else {
+  //       setCalculatedAmount("0.00");
+  //       setTargetData({
+  //         target: 0,
+  //         achieved: 0,
+  //         remaining: 0,
+  //         difference: 0,
+  //         upToTarget: 0,
+  //         beyondTarget: 0,
+  //         targetCommission: 0,
+  //         isTargetSet: false,
+  //         targetDisplay: "Not Set",
+  //         calculationType:
+  //           agentType === "employee" ? "incentive" : "commission",
+  //       });
+  //       setCommissionBreakdown([]);
+  //     }
+  //   }
+  // };
+
+  const calculateTotalPayableCommission = async (agentId, period, type, mode = "month") => {
+    if (!agentId || (!period && mode === "month") || (mode === "custom" && (!period.from || !period.to))) {
       setCommissionForm((prev) => ({ ...prev, amount: "" }));
+      setCalculatedAmount("0.00");
       return;
     }
-
     setIsLoadingCommissionCalculation(true);
     try {
-      await fetchTargetDetails(agentId, month, type);
+      await fetchTargetDetails(agentId, period, type, mode);
     } catch (error) {
-      console.error("Failed to calculate agent commission:", error);
+      console.error("Failed to calculate commission:", error);
       setCommissionForm((prev) => ({ ...prev, amount: "" }));
+      setCalculatedAmount("0.00");
     } finally {
       setIsLoadingCommissionCalculation(false);
     }
@@ -323,37 +669,55 @@ const TargetPayOutCommissionIncentive = () => {
 
   const handleCommissionChange = (e) => {
     const { name, value } = e.target;
+
+    
+    if (name === "from_date" || name === "to_date") {
+      setCustomDateRange((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+
+ 
+      setCalculatedAmount("0.00");
+      setTargetData({
+        target: 0,
+        achieved: 0,
+        remaining: 0,
+        difference: 0,
+        upToTarget: 0,
+        beyondTarget: 0,
+        targetCommission: 0,
+        isTargetSet: false,
+        targetDisplay: "Not Set",
+        calculationType:
+          agentType === "employee" ? "incentive" : "commission",
+      });
+      setCommissionBreakdown([]);
+      return;
+    }
+
+
     setCommissionForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
 
-    if (name === "agent_id" || name === "selectedMonth") {
-      const updatedAgentId =
-        name === "agent_id" ? value : commissionForm.agent_id;
-      const updatedMonth =
-        name === "selectedMonth" ? value : commissionForm.selectedMonth;
-      if (updatedAgentId && updatedMonth && agentType) {
-        calculateTotalPayableCommission(
-          updatedAgentId,
-          updatedMonth,
-          agentType
-        );
-      } else {
-        setCalculatedAmount("0.00");
-        setTargetData({
-          target: 0,
-          achieved: 0,
-          remaining: 0,
-          difference: 0,
-          upToTarget: 0,
-          beyondTarget: 0,
-          targetCommission: 0,
-          isTargetSet: false,
-          targetDisplay: "Not Set",
-          calculationType:
-            agentType === "employee" ? "incentive" : "commission",
-        });
-        setCommissionBreakdown([]);
-      }
+    
+    if (["agent_id", "selectedMonth"].includes(name)) {
+      setCalculatedAmount("0.00");
+      setTargetData({
+        target: 0,
+        achieved: 0,
+        remaining: 0,
+        difference: 0,
+        upToTarget: 0,
+        beyondTarget: 0,
+        targetCommission: 0,
+        isTargetSet: false,
+        targetDisplay: "Not Set",
+        calculationType:
+          agentType === "employee" ? "incentive" : "commission",
+      });
+      setCommissionBreakdown([]);
     }
   };
 
@@ -369,15 +733,18 @@ const TargetPayOutCommissionIncentive = () => {
     ) {
       newErrors.amount = "Please enter a valid amount";
     }
-    if (!commissionForm.selectedMonth) {
+    if (filterMode === "month" && !commissionForm.selectedMonth) {
       newErrors.selectedMonth = "Please select a month";
+    }
+    if (filterMode === "custom") {
+      if (!customDateRange.from_date) newErrors.from_date = "From date is required";
+      if (!customDateRange.to_date) newErrors.to_date = "To date is required";
     }
     if (
       commissionForm.pay_type === "online" &&
       !commissionForm.transaction_id
     ) {
-      newErrors.transaction_id =
-        "Transaction ID is required for online payments";
+      newErrors.transaction_id = "Transaction ID is required for online payments";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -390,16 +757,21 @@ const TargetPayOutCommissionIncentive = () => {
       try {
         setIsLoading(true);
 
-        // Calculate first and last day for payload
-        const { firstDay, lastDay } = getMonthRange(
-          commissionForm.selectedMonth
-        );
+        let commissionCalculationFromDate, commissionCalculationToDate;
+        if (filterMode === "month") {
+          const { firstDay, lastDay } = getMonthRange(commissionForm.selectedMonth);
+          commissionCalculationFromDate = firstDay;
+          commissionCalculationToDate = lastDay;
+        } else {
+          commissionCalculationFromDate = customDateRange.from_date;
+          commissionCalculationToDate = customDateRange.to_date;
+        }
 
         const payload = {
           ...commissionForm,
           admin_type: adminId,
-          commissionCalculationFromDate: firstDay,
-          commissionCalculationToDate: lastDay,
+          commissionCalculationFromDate,
+          commissionCalculationToDate,
         };
 
         await API.post("/payment-out/add-commission-payment", payload);
@@ -411,17 +783,7 @@ const TargetPayOutCommissionIncentive = () => {
           pauseOnHover: false,
         });
         setShowCommissionModal(false);
-        setCommissionForm({
-          agent_id: "",
-          pay_date: new Date().toISOString().split("T")[0],
-          selectedMonth: currentMonth,
-          amount: "",
-          pay_type: "cash",
-          transaction_id: "",
-          note: "",
-          admin_type: adminId,
-          pay_for: paymentFor,
-        });
+        resetCommissionForm();
         setReRender((val) => val + 1);
         fetchCommissionPayments();
       } catch (error) {
@@ -607,6 +969,7 @@ const TargetPayOutCommissionIncentive = () => {
                       Select {agentType === "agent" ? "Agent" : "Employee"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
+
                     <Select
                       className="w-full h-12"
                       placeholder={`Select ${agentType}`}
@@ -619,26 +982,38 @@ const TargetPayOutCommissionIncentive = () => {
                       }
                       value={commissionForm.agent_id || undefined}
                       onChange={(value) => {
+                   
                         setErrors((prev) => ({ ...prev, agent_id: "" }));
                         setCommissionForm((prev) => ({
                           ...prev,
                           agent_id: value,
                         }));
-                        calculateTotalPayableCommission(
-                          value,
-                          commissionForm.selectedMonth,
-                          agentType
-                        );
+
+
+                        setCalculatedAmount("0.00");
+                        setTargetData({
+                          target: 0,
+                          achieved: 0,
+                          remaining: 0,
+                          difference: 0,
+                          upToTarget: 0,
+                          beyondTarget: 0,
+                          targetCommission: 0,
+                          isTargetSet: false,
+                          targetDisplay: "Not Set",
+                          calculationType:
+                            agentType === "employee" ? "incentive" : "commission",
+                        });
+                        setCommissionBreakdown([]);
                       }}
                     >
-                      {(agentType === "agent" ? agents : employees).map(
-                        (person) => (
-                          <Select.Option key={person._id} value={person._id}>
-                            {person.name} | {person.phone_number}
-                          </Select.Option>
-                        )
-                      )}
+                      {(agentType === "agent" ? agents : employees).map((person) => (
+                        <Select.Option key={person._id} value={person._id}>
+                          {person.name} | {person.phone_number}
+                        </Select.Option>
+                      ))}
                     </Select>
+
                     {errors.agent_id && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors.agent_id}
@@ -647,57 +1022,132 @@ const TargetPayOutCommissionIncentive = () => {
                   </div>
                 )}
 
-                {/* Single Month Picker */}
+
                 <div className="w-full mb-4">
                   <label className="block mb-2 text-sm font-medium text-gray-900">
-                    Month <span className="text-red-500">*</span>
+                    Filter By <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="month"
-                    name="selectedMonth"
-                    value={commissionForm.selectedMonth}
-                    max={currentMonth}
-                    onChange={handleCommissionChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg"
-                  />
-                  {errors.selectedMonth && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.selectedMonth}
-                    </p>
-                  )}
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setFilterMode("month")}
+                      className={`px-4 py-2 rounded-lg ${filterMode === "month"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700"
+                        }`}
+                    >
+                      Month
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilterMode("custom")}
+                      className={`px-4 py-2 rounded-lg ${filterMode === "custom"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700"
+                        }`}
+                    >
+                      Custom Range
+                    </button>
+                  </div>
                 </div>
+
+                {filterMode === "month" ? (
+                  <div className="w-full mb-4">
+                    <label className="block mb-2 text-sm font-medium text-gray-900">
+                      Month <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="month"
+                      name="selectedMonth"
+                      value={commissionForm.selectedMonth}
+                      max={currentMonth}
+                      onChange={handleCommissionChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg"
+                    />
+                    {errors.selectedMonth && (
+                      <p className="text-red-500 text-xs mt-1">{errors.selectedMonth}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-900">
+                        From Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="from_date"
+                        value={customDateRange.from_date}
+                        max={customDateRange.to_date || currentMonth}
+                        onChange={handleCommissionChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                      />
+                      {errors.from_date && (
+                        <p className="text-red-500 text-xs mt-1">{errors.from_date}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-900">
+                        To Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="to_date"
+                        value={customDateRange.to_date}
+                        min={customDateRange.from_date}
+                        max={new Date().toISOString().split("T")[0]}
+                        onChange={handleCommissionChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                      />
+                      {errors.to_date && (
+                        <p className="text-red-500 text-xs mt-1">{errors.to_date}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-end pt-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      calculateTotalPayableCommission(
-                        commissionForm.agent_id,
-                        commissionForm.selectedMonth,
-                        agentType
-                      )
-                    }
+                    onClick={() => {
+                      if (filterMode === "month") {
+                        calculateTotalPayableCommission(
+                          commissionForm.agent_id,
+                          commissionForm.selectedMonth,
+                          agentType,
+                          "month"
+                        );
+                      } else {
+                        calculateTotalPayableCommission(
+                          commissionForm.agent_id,
+                          { from: customDateRange.from_date, to: customDateRange.to_date },
+                          agentType,
+                          "custom"
+                        );
+                      }
+                    }}
                     disabled={
                       !commissionForm.agent_id ||
-                      !commissionForm.selectedMonth ||
+                      (filterMode === "month" && !commissionForm.selectedMonth) ||
+                      (filterMode === "custom" &&
+                        (!customDateRange.from_date || !customDateRange.to_date)) ||
                       isLoadingCommissionCalculation
                     }
-                    className="px-2 py-2 bg-green-700 text-white rounded-lg shadow-md hover:bg-green-800 transition duration-200"
+                    className="px-3 py-2 bg-green-700 text-white rounded-lg shadow-md hover:bg-green-800 transition duration-200"
                   >
-                    {isLoadingCommissionCalculation
-                      ? "Calculating..."
-                      : "Calculate Amount"}
+                    {isLoadingCommissionCalculation ? "Calculating..." : "Calculate Amount"}
                   </button>
                 </div>
 
-                {/* Loading indicator for target data */}
+
+
                 {isTargetLoading && (
                   <div className="mt-4 flex justify-center">
                     <CircularLoader isLoading={true} data="Target Details" />
                   </div>
                 )}
 
-                {/* Target details for both agents and employees */}
+
                 {agentType && targetData && !isTargetLoading && (
                   <div className="mt-6">
                     {targetData.isTargetSet ? (
@@ -783,7 +1233,7 @@ const TargetPayOutCommissionIncentive = () => {
                   </div>
                 )}
 
-                {/* Commission/Incentive breakdown table */}
+
                 {agentType && targetData.isTargetSet && !isTargetLoading && (
                   <div className="mt-4 bg-white p-4 rounded-lg shadow border">
                     <h3 className="font-semibold text-gray-800 mb-3 text-lg">
@@ -909,7 +1359,7 @@ const TargetPayOutCommissionIncentive = () => {
                   )}
                 </div>
 
-                {agentType === "agent" && commissionBreakdown.length > 0 &&!isLoading && (
+                {agentType === "agent" && commissionBreakdown.length > 0 && !isLoading && (
                   <div className="mt-6 bg-gray-100 p-3 rounded-lg shadow-inner border border-gray-300">
                     <h4 className="font-semibold text-gray-800 mb-3 text-lg">
                       Commission Breakdown (Customer-wise)
@@ -927,8 +1377,14 @@ const TargetPayOutCommissionIncentive = () => {
                             <th className="border px-3 py-2 text-left">
                               Group
                             </th>
+                             <th className="border px-3 py-2 text-right">
+                              Group value (₹)
+                            </th>
+                             <th className="border px-3 py-2 text-right">
+                              commission Percentage (%)
+                            </th>
                             <th className="border px-3 py-2 text-right">
-                              Released Group value (₹)
+                              commission value (₹)
                             </th>
                           </tr>
                         </thead>
@@ -936,18 +1392,23 @@ const TargetPayOutCommissionIncentive = () => {
                           {commissionBreakdown.map((item, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="border px-3 py-2">
-                                {item.user_name || "-"}
+                                {item?.user_id?.full_name || "-"}
                               </td>
                               <td className="border px-3 py-2">
-                                {item.phone_number || "-"}
+                                {item?.user_id?.phone_number || "-"}
                               </td>
                               <td className="border px-3 py-2">
-                                {item.group_name || "-"}
+                                {item?.group_id?.group_name || "-"}
+                              </td>
+                                 <td className="border px-3 py-2">
+                                {item?.group_id?.group_value || "-"}
+                              </td>
+                              <td className="border px-3 py-2">
+                                {item?.group_id?.commission || "-"}
                               </td>
                               <td className="border px-3 py-2 text-right">
-                                {item.commission_released === "Yes"
-                                  ? item.group_value
-                                  : "₹0"}
+                                {item.commission_value || "-"}
+                                
                               </td>
                             </tr>
                           ))}
@@ -956,7 +1417,7 @@ const TargetPayOutCommissionIncentive = () => {
                     </div>
                   </div>
                 )}
-                {agentType === "employee" && commissionBreakdown.length > 0 && !isLoading &&(
+                {agentType === "employee" && commissionBreakdown.length > 0 && !isLoading && (
                   <div className="mt-6 bg-gray-100 p-3 rounded-lg shadow-inner border border-gray-300">
                     <h4 className="font-semibold text-gray-800 mb-3 text-lg">
                       Incentive Breakdown (Customer-wise)
@@ -975,7 +1436,13 @@ const TargetPayOutCommissionIncentive = () => {
                               Group
                             </th>
                             <th className="border px-3 py-2 text-right">
-                              Released Group value (₹)
+                            Group value (₹)
+                            </th>
+                            <th className="border px-3 py-2 text-right">
+                            incentive percentage (%)
+                            </th>
+                            <th className="border px-3 py-2 text-right">
+                            incentive value (₹)
                             </th>
                           </tr>
                         </thead>
@@ -983,18 +1450,22 @@ const TargetPayOutCommissionIncentive = () => {
                           {commissionBreakdown.map((item, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="border px-3 py-2">
-                                {item.user_name || "-"}
+                                {item?.user_id?.full_name || "-"}
                               </td>
                               <td className="border px-3 py-2">
-                                {item.phone_number || "-"}
+                                {item?.user_id?.phone_number || "-"}
                               </td>
                               <td className="border px-3 py-2">
-                                {item.group_name || "-"}
+                                {item?.group_id?.group_name || "-"}
                               </td>
                               <td className="border px-3 py-2 text-right">
-                                {item.commission_released === "Yes"
-                                  ? item.group_value
-                                  : "₹0"}
+                                {item?.group_id?.group_value || "-"}
+                              </td>
+                               <td className="border px-3 py-2 text-right">
+                                {item?.group_id?.incentives || "-"}
+                              </td>
+                               <td className="border px-3 py-2 text-right">
+                                {item?.incentive_value || "-"}
                               </td>
                             </tr>
                           ))}
