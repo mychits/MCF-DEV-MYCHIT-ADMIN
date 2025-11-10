@@ -533,275 +533,283 @@ const Receipt = () => {
             isVisible={alertConfig.visibility}
             message={alertConfig.message}
           />
-          <div className="flex-grow p-7">
-            <h1 className="text-2xl font-bold">Reports - Receipt</h1>
-            <div className="mt-6 mb-8">
-              <div className="mb-2">
-                <div className="flex justify-start items-center w-full gap-4">
-                  <div className="mb-2">
-                    <label>Filter Option</label>
-                
-                    <Select
-                      showSearch
-                      popupMatchSelectWidth={false}
-                      onChange={handleSelectFilter}
-                      value={selectedLabel}
-                      placeholder="Search Or Select Filter"
-                      filterOption={(input, option) =>
-                        option.children
-                          .toString()
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      className="w-full max-w-xs h-11"
-                    >
-                      {groupOptions.map((time) => (
-                        <Select.Option key={time.value} value={time.value}>
-                          {time.label}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                  {showFilterField && (
-                    <div className="flex gap-4">
-                      <div className="mb-2">
-                        <label>From Date</label>
-                        <input
-                          type="date"
-                          value={selectedFromDate}
-                          onChange={(e) => setSelectedFromDate(e.target.value)}
-                          className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full max-w-xs"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <label>To Date</label>
-                        <input
-                          type="date"
-                          value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                          className="border border-gray-300 rounded px-4 py-2 shadow-sm outline-none w-full max-w-xs"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <div className="mb-2">
-                    <label>Group</label>
-                    {/* <select
-                      value={selectedAuctionGroupId}
-                      onChange={handleGroupPayment}
-                      className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                    >
-                      <option value="">All </option>
-                      {groups.map((group) => (
-                        <option key={group._id} value={group._id}>
-                          {group.group_name}
-                        </option>
-                      ))}
-                    </select> */}
-                    <Select
-                      showSearch
-                      popupMatchSelectWidth={false}
-                      value={selectedAuctionGroupId}
-                      onChange={handleGroupPayment}
-                      placeholder="Search Or Select Group"
-                      filterOption={(input, option) =>
-                        option.children
-                          .toString()
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      className="w-full max-w-xs h-11"
-                    >
-                      <Select.Option value={""}>All</Select.Option>
-                      {groups.map((group) => (
-                        <Select.Option key={group._id} value={group._id}>
-                          {group.group_name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="mb-2">
-                    <label>Customer</label>
-                    {/* <select
-                      value={selectedCustomers}
-                      onChange={(e) => setSelectedCustomers(e.target.value)}
-                      className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                    >
-                      <option value="">All</option>
-                      {filteredUsers.map((group) => (
-                        <option key={group?._id} value={group?._id}>
-                          {group?.full_name} - {group.phone_number}
-                        </option>
-                      ))}
-                    </select> */}
-                    <Select
-                      showSearch
-                      popupMatchSelectWidth={false}
-                      value={selectedCustomers}
-                      filterOption={(input, option) =>
-                        option.children
-                          .toString()
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      placeholder="Search Or Select Customer"
-                      onChange={(groupId) => setSelectedCustomers(groupId)}
-                      className="w-full max-w-xs h-11"
-                      // className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                    >
-                      <Select.Option value="">All</Select.Option>
-                      {filteredUsers.map((group) => (
-                        <Select.Option key={group?._id} value={group?._id}>
-                          {group?.full_name} - {group.phone_number}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="mb-2">
-                    <label>Payment Mode</label>
-                    {/* <select
-                      value={selectedPaymentMode}
-                      onChange={(e) => setSelectedPaymentMode(e.target.value)}
-                      className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                    >
-                      <option value="">All</option>
-                      <option value="cash">Cash</option>
-                      <option value="online">Online</option>
-                    </select> */}
-                    <Select
-                      value={selectedPaymentMode}
-                      showSearch
-                      placeholder="Search Or Select Payment"
-                      popupMatchSelectWidth={false}
-                      onChange={(groupId) => setSelectedPaymentMode(groupId)}
-                      filterOption={(input, option) =>
-                        option.children
-                          .toString()
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      className="w-full max-w-xs h-11"
-                      // className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                    >
-                      <Select.Option value="">All</Select.Option>
-                      <Select.Option value="cash">Cash</Select.Option>
-                      <Select.Option value="online">Online</Select.Option>
-                      <Select.Option value="Payment Link">Payment Link</Select.Option>
-                      <Select.Option value="Transfer">Transfer</Select.Option>
-                    </Select>
-                  </div>
-                  {showAllPaymentModes && (
-                    <div className="mb-2">
-                      <label>Account Type</label>
+       <div className="flex-grow p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+  {/* Header Section */}
+  <div className="mb-8">
+    <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+      Reports - Receipt
+    </h1>
+    <p className="text-gray-600 mt-2">Track and manage all receipt transactions</p>
+  </div>
 
-                      <Select
-                        value={selectedAccountType}
-                        showSearch
-                        placeholder="Search Or Select Account Type"
-                        popupMatchSelectWidth={false}
-                        onChange={(groupId) => setSelectedAccountType(groupId)}
-                        filterOption={(input, option) =>
-                          option.children
-                            .toString()
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        className="w-full max-w-xs h-11"
-                      >
-                        <>
-                          <option value="">Select Account Type</option>
-                          <option value="suspense">Suspense</option>
-                          <option value="credit">Credit</option>
-                          <option value="adjustment">Adjustment</option>
-                          <option value="others">Others</option>
-                        </>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="mb-2">
-                    <label>Select Collection Employee</label>
+  <div className="mt-6 mb-8">
+    {/* Filters Section */}
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+      <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+        <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        Filter Options
+      </h2>
 
-                    <Select
-                      showSearch
-                      placeholder="Search Or Select Collection Agent"
-                      popupMatchSelectWidth={false}
-                      onChange={(selection) => {
-                        const [id, type] = selection.split("|") || [];
-                        if (type === "admin_type") {
-                          setCollectionAdmin(id);
-                          setCollectionAgent("");
-                        } else if (type === "agent_type") {
-                          setCollectionAgent(id);
-                          setCollectionAdmin("");
-                        } else {
-                          setCollectionAdmin("");
-                          setCollectionAgent("");
-                        }
-                      }}
-                      filterOption={(input, option) =>
-                        option.children
-                          .toString()
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      className="w-full max-w-xs h-11"
-                    >
-                      <Select.Option value="">All</Select.Option>
-                      {[...new Set(agents), ...new Set(admins)].map((dt) => (
-                        <Select.Option key={dt?._id} value={`${dt._id}|${dt.selected_type}`}>
-                          {dt.selected_type === "admin_type"
-                            ? "Admin | "
-                            : "Agent | "}
-                          {dt.full_name} | {dt.phone_number}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Filter Option */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Filter Option</label>
+          <Select
+            showSearch
+            popupMatchSelectWidth={false}
+            onChange={handleSelectFilter}
+            value={selectedLabel}
+            placeholder="Search Or Select Filter"
+            filterOption={(input, option) =>
+              option.children
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            className="w-full h-11"
+          >
+            {groupOptions.map((time) => (
+              <Select.Option key={time.value} value={time.value}>
+                {time.label}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
 
-                  <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-white-500 to-blue-500 rounded-2xl shadow-lg p-4 transition-all hover:shadow-2xl hover:scale-[1.02] duration-300">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-
-                    <div className="relative z-10">
-                      <p className="text-white/80 text-sm font-medium uppercase tracking-wider mb-2">
-                        Total Amount
-                      </p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-white text-4xl font-bold">
-                          ₹{payments || 0}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12"></div>
-                  </div>
-                </div>
-              </div>
-              {filteredAuction && filteredAuction.length > 0 && !isLoading ? (
-                <div className="mt-10">
-                  <DataTable
-                    data={filterOption(TableDaybook, searchText)}
-                    columns={columns}
-                    exportedPdfName={`Receipt Report`}
-                    exportedFileName={`Reports Receipt.csv`}
-                  />
-                  <div className="flex justify-end mt-4 pr-4">
-                    <span className="text-lg font-semibold">
-                      Total Amount: ₹{payments}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-10 text-center text-gray-500">
-                  <CircularLoader
-                    isLoading={isLoading}
-                    failure={filteredAuction.length <= 0}
-                    data="Receipt Data"
-                  />
-                </div>
-              )}
+        {/* Custom Date Range */}
+        {showFilterField && (
+          <>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">From Date</label>
+              <input
+                type="date"
+                value={selectedFromDate}
+                onChange={(e) => setSelectedFromDate(e.target.value)}
+                className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+              />
             </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">To Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Group Filter */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Group</label>
+          <Select
+            showSearch
+            popupMatchSelectWidth={false}
+            value={selectedAuctionGroupId}
+            onChange={handleGroupPayment}
+            placeholder="Search Or Select Group"
+            filterOption={(input, option) =>
+              option.children
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            className="w-full h-11"
+          >
+            <Select.Option value={""}>All</Select.Option>
+            {groups.map((group) => (
+              <Select.Option key={group._id} value={group._id}>
+                {group.group_name}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Customer Filter */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Customer</label>
+          <Select
+            showSearch
+            popupMatchSelectWidth={false}
+            value={selectedCustomers}
+            filterOption={(input, option) =>
+              option.children
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            placeholder="Search Or Select Customer"
+            onChange={(groupId) => setSelectedCustomers(groupId)}
+            className="w-full h-11"
+          >
+            <Select.Option value="">All</Select.Option>
+            {filteredUsers.map((group) => (
+              <Select.Option key={group?._id} value={group?._id}>
+                {group?.full_name} - {group.phone_number}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Payment Mode Filter */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Payment Mode</label>
+          <Select
+            value={selectedPaymentMode}
+            showSearch
+            placeholder="Search Or Select Payment"
+            popupMatchSelectWidth={false}
+            onChange={(groupId) => setSelectedPaymentMode(groupId)}
+            filterOption={(input, option) =>
+              option.children
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            className="w-full h-11"
+          >
+            <Select.Option value="">All</Select.Option>
+            <Select.Option value="cash">Cash</Select.Option>
+            <Select.Option value="online">Online</Select.Option>
+            <Select.Option value="Payment Link">Payment Link</Select.Option>
+            <Select.Option value="Transfer">Transfer</Select.Option>
+          </Select>
+        </div>
+
+        {/* Account Type Filter */}
+        {showAllPaymentModes && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Account Type</label>
+            <Select
+              value={selectedAccountType}
+              showSearch
+              placeholder="Search Or Select Account Type"
+              popupMatchSelectWidth={false}
+              onChange={(groupId) => setSelectedAccountType(groupId)}
+              filterOption={(input, option) =>
+                option.children
+                  .toString()
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              className="w-full h-11"
+            >
+              <Select.Option value="">Select Account Type</Select.Option>
+              <Select.Option value="suspense">Suspense</Select.Option>
+              <Select.Option value="credit">Credit</Select.Option>
+              <Select.Option value="adjustment">Adjustment</Select.Option>
+              <Select.Option value="others">Others</Select.Option>
+            </Select>
           </div>
+        )}
+
+        {/* Collection Employee Filter */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Collection Employee</label>
+          <Select
+            showSearch
+            placeholder="Search Or Select Collection Agent"
+            popupMatchSelectWidth={false}
+            onChange={(selection) => {
+              const [id, type] = selection.split("|") || [];
+              if (type === "admin_type") {
+                setCollectionAdmin(id);
+                setCollectionAgent("");
+              } else if (type === "agent_type") {
+                setCollectionAgent(id);
+                setCollectionAdmin("");
+              } else {
+                setCollectionAdmin("");
+                setCollectionAgent("");
+              }
+            }}
+            filterOption={(input, option) =>
+              option.children
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+            className="w-full h-11"
+          >
+            <Select.Option value="">All</Select.Option>
+            {[...new Set(agents), ...new Set(admins)].map((dt) => (
+              <Select.Option key={dt?._id} value={`${dt._id}|${dt.selected_type}`}>
+                {dt.selected_type === "admin_type" ? "Admin | " : "Agent | "}
+                {dt.full_name} | {dt.phone_number}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+      </div>
+    </div>
+
+    {/* Total Amount Card */}
+    <div className="mb-8">
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl p-8 transform transition-all hover:scale-[1.02] duration-300">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+         
+            <p className="text-white/90 text-sm font-semibold uppercase tracking-wider">
+              Total Receipt Amount
+            </p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-white text-5xl font-bold tracking-tight">
+              ₹{payments?.toLocaleString() || 0}
+            </span>
+          </div>
+          <p className="text-white/70 text-sm mt-3">
+            Based on current filters
+          </p>
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12"></div>
+      </div>
+    </div>
+
+    {/* Data Table Section */}
+    {filteredAuction && filteredAuction.length > 0 && !isLoading ? (
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div className="flex items-center gap-2 mb-6">
+          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h2 className="text-lg font-semibold text-gray-800">Receipt Details</h2>
+        </div>
+        
+        <DataTable
+          data={filterOption(TableDaybook, searchText)}
+          columns={columns}
+          exportedPdfName={`Receipt Report`}
+          exportedFileName={`Reports Receipt.csv`}
+        />
+        
+        <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-3 rounded-xl">
+            <span className="text-lg font-bold text-gray-800">
+              Total Amount: <span className="text-indigo-600">₹{payments?.toLocaleString()}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-gray-100">
+        <CircularLoader
+          isLoading={isLoading}
+          failure={filteredAuction.length <= 0}
+          data="Receipt Data"
+        />
+      </div>
+    )}
+  </div>
+</div>
           <Modal isVisible={showModal} onClose={() => setShowModal(false)}>
             <div className="py-6 px-5 lg:px-8 text-left">
               <h3 className="mb-4 text-xl font-bold text-gray-900">

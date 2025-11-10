@@ -19,6 +19,7 @@ import {
 } from "react-icons/md";
 import { FaPersonWalkingArrowLoopLeft } from "react-icons/fa6";
 import { RiMoneyRupeeCircleFill, RiAuctionFill } from "react-icons/ri";
+import { MdOutlinePayments } from "react-icons/md";
 import { LiaCalculatorSolid } from "react-icons/lia";
 import { GiMoneyStack } from "react-icons/gi";
 import { TbReportSearch } from "react-icons/tb";
@@ -51,6 +52,14 @@ const subMenus = [
     Icon: MdOutlineReceiptLong,
     category: "Finance",
     color: "from-green-500 to-green-600",
+  },
+    {
+     id:"&&%",
+    title: "Payment Report",
+    link: "/reports/payment-report",
+    Icon: MdOutlinePayments ,
+    category: "Reports",
+    color: "from-yellow-500 to-pink-600",
   },
   {
      id:"3",
@@ -157,6 +166,7 @@ const subMenus = [
     category: "Reports",
     color: "from-pink-500 to-pink-600",
   },
+ 
   {
      id:"17",
     title: "Lead Report",

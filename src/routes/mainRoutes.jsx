@@ -122,6 +122,7 @@ import UserMenu from "../pages/UserMenu"
 import OtherServicesMenu from "../pages/OtherServicesMenu";
 import LegalsMenu from "../pages/LegalsMenu";
 import UnApprovedCustomerReport from "../pages/UnApprovedCustomerReport";
+import PaymentReport from "../pages/PaymentReport";
 
 const mainRoutes = createBrowserRouter([
   {
@@ -657,6 +658,7 @@ const mainRoutes = createBrowserRouter([
       {path: "employee-monthly-report", element: <EmployeeMonthlyReport/>},
       {path: "customer-loan-report", element: <CustomerLoanReport/>},
       {path: "unverified-customer-report", element: <UnApprovedCustomerReport/>},
+      {path: "payment-report", element: <PaymentReport/>},
       {
         path: "outstanding-report",
         element: <OutstandingReport />,
