@@ -80,6 +80,163 @@ import { header } from "framer-motion/client";
 //   );
 // };
 
+// const CustomerLoanReport = () => {
+//   const [loanReportTable, setLoanReportTable] = useState([]);
+//   const [loading, setLoading] = useState(true);
+
+//   const [selectedLoanId, setSelectedLoanId] = useState("");
+//   const [selectedCustomer, setSelectedCustomer] = useState("");
+
+//   useEffect(() => {
+//     const fetchLoanReport = async () => {
+//       try {
+//         const response = await api.get(`/payment/customers/loan-report`);
+
+//         const formattedData = response.data.loanReports.map((loan, index) => ({
+//           id: loan?._id,
+//           slNo: index + 1,
+//           loanIds: loan?.loan_id || "N/A",
+//           customerId: loan?.borrower?.customer_id || "N/A",
+//           customerName: loan?.borrower?.full_name || "N/A",
+//           customerPhone: loan?.borrower?.phone_number || "N/A",
+//           loanStartDate: loan?.start_date
+//             ? new Date(loan.start_date).toLocaleDateString("en-GB")
+//             : "N/A",
+//           loanServiceCharges: loan?.service_charges ?? 0,
+//           loanAmount: loan?.double_loan_amount ?? 0,
+//           totalLoanAmount: loan?.total_paid_amount ?? 0,
+//           loanBalance: loan?.balance ?? 0,
+//         }));
+
+//         setLoanReportTable(formattedData);
+//       } catch (error) {
+//         console.error("Error fetching loan report:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchLoanReport();
+//   }, []);
+
+//   // Get unique loan IDs and customers for filter dropdowns
+//   const uniqueLoanIds = useMemo(
+//     () => [...new Set(loanReportTable.map((loan) => loan.loanIds))],
+//     [loanReportTable]
+//   );
+
+//   const uniqueCustomers = useMemo(
+//     () =>
+//       loanReportTable.map((loan) => ({
+//         id: loan.id,
+//         name: loan.customerName,
+//         phone: loan.customerPhone,
+//         custid: loan.customerId,
+//       })),
+//     [loanReportTable]
+//   );
+
+//   // Filtered data based on selected filters
+//   const filteredLoanReport = useMemo(() => {
+//     return loanReportTable.filter((loan) => {
+//       const matchLoanId = selectedLoanId
+//         ? loan.loanIds === selectedLoanId
+//         : true;
+//       const matchCustomer = selectedCustomer
+//         ? loan.id === selectedCustomer
+//         : true;
+//       return matchLoanId && matchCustomer;
+//     });
+//   }, [loanReportTable, selectedLoanId, selectedCustomer]);
+
+//   const loanReportColumns = [
+//     { key: "slNo", header: "Sl No" },
+//     { key: "loanIds", header: "Loan ID" },
+//     { key: "customerName", header: "Customer Name" },
+//     { key: "customerPhone", header: "Phone Number" },
+//     { key: "loanStartDate", header: "Loan Start Date" },
+//     { key: "loanServiceCharges", header: "Service Charges" },
+//     { key: "loanAmount", header: "Loan Amount" },
+//     { key: "totalLoanAmount", header: "Total Paid Loan Amount" },
+//     { key: "loanBalance", header: "Balance" },
+//   ];
+
+//   return (
+//     <div className="p-4">
+//       <h1 className="font-bold text-2xl mb-5">Customer Loan Report</h1>
+
+//       {/* Filters */}
+//       <div className="flex gap-4 mb-4">
+//         {/* Loan ID Filter */}
+//         <div className="w-full max-w-xs">
+//           <label className="block mb-1">Loan ID</label>
+//           <Select
+//             showSearch
+//             placeholder="Search or Select Loan ID"
+//             value={selectedLoanId}
+//             onChange={setSelectedLoanId}
+//             allowClear
+//             filterOption={(input, option) =>
+//               option.children.toLowerCase().includes(input.toLowerCase())
+//             }
+//             className="w-full"
+//           >
+//             <Select.Option value="">All</Select.Option>
+//             {uniqueLoanIds.map((loanId) => (
+//               <Select.Option key={loanId} value={loanId}>
+//                 {loanId} | 
+//               </Select.Option>
+//             ))}
+//           </Select>
+//         </div>
+
+//         {/* Customer Filter */}
+//         <div className="w-full max-w-xs">
+//   <label className="block mb-1">Customer</label>
+//   <Select
+//     showSearch
+//     placeholder="Search or Select Customer"
+//     value={selectedCustomer}
+//     onChange={setSelectedCustomer}
+//     allowClear
+//     optionLabelProp="label" // important for search
+//     className="w-full"
+//     filterOption={(input, option) =>
+//       option.label.toLowerCase().includes(input.toLowerCase())
+//     }
+//   >
+//     <Select.Option value="" label="All">
+//       All
+//     </Select.Option>
+//     {uniqueCustomers.map((cust) => (
+//       <Select.Option
+//         key={cust.id}
+//         value={cust.id}
+//         label={`${cust.custid}|${cust.name} | ${cust.phone}`} // <-- used for search
+//       >
+//        {cust.custid} | {cust.name} | {cust.phone} 
+//       </Select.Option>
+//     ))}
+//   </Select>
+// </div>
+//       </div>
+
+//       {loading ? (
+//         <div className="flex w-screen justify-center items-center">
+//           <CircularLoader />
+//         </div>
+//       ) : (
+//         <DataTable
+//           columns={loanReportColumns}
+//           data={filteredLoanReport}
+//           exportedPdfName="Customer Loan Report"
+//         />
+//       )}
+//     </div>
+//   );
+// };
+
+
 const CustomerLoanReport = () => {
   const [loanReportTable, setLoanReportTable] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +253,8 @@ const CustomerLoanReport = () => {
           id: loan?._id,
           slNo: index + 1,
           loanIds: loan?.loan_id || "N/A",
+          loanAmountValue: loan?.loan_amount || 0, // added raw amount
+          customerId: loan?.borrower?.customer_id || "N/A",
           customerName: loan?.borrower?.full_name || "N/A",
           customerPhone: loan?.borrower?.phone_number || "N/A",
           loanStartDate: loan?.start_date
@@ -118,11 +277,17 @@ const CustomerLoanReport = () => {
     fetchLoanReport();
   }, []);
 
-  // Get unique loan IDs and customers for filter dropdowns
-  const uniqueLoanIds = useMemo(
-    () => [...new Set(loanReportTable.map((loan) => loan.loanIds))],
-    [loanReportTable]
-  );
+  // 🟢 Combine loan_id + loan_amount for filter display
+  const uniqueLoanCombos = useMemo(() => {
+    const map = new Map();
+    loanReportTable.forEach((loan) => {
+      const key = loan.loanIds;
+      if (!map.has(key)) {
+        map.set(key, { id: key, label: `${key} | ₹${loan.loanAmountValue}` });
+      }
+    });
+    return Array.from(map.values());
+  }, [loanReportTable]);
 
   const uniqueCustomers = useMemo(
     () =>
@@ -130,11 +295,12 @@ const CustomerLoanReport = () => {
         id: loan.id,
         name: loan.customerName,
         phone: loan.customerPhone,
+        custid: loan.customerId,
       })),
     [loanReportTable]
   );
 
-  // Filtered data based on selected filters
+  // 🧮 Filtered data
   const filteredLoanReport = useMemo(() => {
     return loanReportTable.filter((loan) => {
       const matchLoanId = selectedLoanId
@@ -165,24 +331,31 @@ const CustomerLoanReport = () => {
 
       {/* Filters */}
       <div className="flex gap-4 mb-4">
-        {/* Loan ID Filter */}
+        {/* Loan ID + Amount Filter */}
         <div className="w-full max-w-xs">
-          <label className="block mb-1">Loan ID</label>
+          <label className="block mb-1">Loan ID & Amount</label>
           <Select
             showSearch
-            placeholder="Search or Select Loan ID"
+            placeholder="Search or Select Loan"
             value={selectedLoanId}
             onChange={setSelectedLoanId}
             allowClear
             filterOption={(input, option) =>
-              option.children.toLowerCase().includes(input.toLowerCase())
+              option.label.toLowerCase().includes(input.toLowerCase())
             }
+            optionLabelProp="label"
             className="w-full"
           >
-            <Select.Option value="">All</Select.Option>
-            {uniqueLoanIds.map((loanId) => (
-              <Select.Option key={loanId} value={loanId}>
-                {loanId}
+            <Select.Option value="" label="All">
+              All
+            </Select.Option>
+            {uniqueLoanCombos.map((loan) => (
+              <Select.Option
+                key={loan.id}
+                value={loan.id}
+                label={loan.label}
+              >
+                {loan.label}
               </Select.Option>
             ))}
           </Select>
@@ -190,33 +363,33 @@ const CustomerLoanReport = () => {
 
         {/* Customer Filter */}
         <div className="w-full max-w-xs">
-  <label className="block mb-1">Customer</label>
-  <Select
-    showSearch
-    placeholder="Search or Select Customer"
-    value={selectedCustomer}
-    onChange={setSelectedCustomer}
-    allowClear
-    optionLabelProp="label" // important for search
-    className="w-full"
-    filterOption={(input, option) =>
-      option.label.toLowerCase().includes(input.toLowerCase())
-    }
-  >
-    <Select.Option value="" label="All">
-      All
-    </Select.Option>
-    {uniqueCustomers.map((cust) => (
-      <Select.Option
-        key={cust.id}
-        value={cust.id}
-        label={`${cust.name} | ${cust.phone}`} // <-- used for search
-      >
-        {cust.name} | {cust.phone} 
-      </Select.Option>
-    ))}
-  </Select>
-</div>
+          <label className="block mb-1">Customer</label>
+          <Select
+            showSearch
+            placeholder="Search or Select Customer"
+            value={selectedCustomer}
+            onChange={setSelectedCustomer}
+            allowClear
+            optionLabelProp="label"
+            className="w-full"
+            filterOption={(input, option) =>
+              option.label.toLowerCase().includes(input.toLowerCase())
+            }
+          >
+            <Select.Option value="" label="All">
+              All
+            </Select.Option>
+            {uniqueCustomers.map((cust) => (
+              <Select.Option
+                key={cust.id}
+                value={cust.id}
+                label={`${cust.custid} | ${cust.name} | ${cust.phone}`}
+              >
+                {cust.custid} | {cust.name} | {cust.phone}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
       </div>
 
       {loading ? (
@@ -233,5 +406,6 @@ const CustomerLoanReport = () => {
     </div>
   );
 };
+
 
 export default CustomerLoanReport;

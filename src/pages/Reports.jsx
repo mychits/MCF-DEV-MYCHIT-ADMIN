@@ -95,7 +95,7 @@ const subMenus = [
   },
   {
     id:"7",
-    title: "Customer Loan Report",
+    title: "Loan Summary Report",
     link: "/reports/customer-loan-report",
     Icon: GiMoneyStack,
     category: "Customer",
@@ -254,7 +254,15 @@ const subMenus = [
     category: "Customer",
    Icon: MdCancel,
    color: "from-blue-500 to-blue-600",
-  }
+  },
+  //     {
+  //   id:"28",
+  //   title: "Remaining Salary Report",
+  //   link: "/reports/salary-remaining",
+  //   category: "Employee",
+  //  Icon: MdCancel,
+  //  color: "from-blue-500 to-blue-600",
+  // }
 ];
 
 const categories = ["All", "Reports", "Customer", "Agent" ,"Employee",  "Finance",];
