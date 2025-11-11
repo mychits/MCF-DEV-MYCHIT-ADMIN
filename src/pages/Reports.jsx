@@ -35,7 +35,7 @@ import { TbGraphFilled } from "react-icons/tb";
 import { IoSearchOutline } from "react-icons/io5";
 import { IoCloseCircle } from "react-icons/io5";
 import { MdCancel } from "react-icons/md";
-
+import { BsCalculator } from "react-icons/bs";
 const subMenus = [
   {
     id:"1",
@@ -100,6 +100,14 @@ const subMenus = [
     Icon: GiMoneyStack,
     category: "Customer",
     color: "from-cyan-500 to-cyan-600",
+  },
+   {
+    id:"&*DD",
+    title: "Pigmy Summary Report",
+    link: "/reports/pigmy-summary-report",
+    Icon: BsCalculator ,
+    category: "Customer",
+    color: "from-blue-500 to-blue-600",
   },
   {
     id:"8",

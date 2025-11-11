@@ -123,7 +123,7 @@ import OtherServicesMenu from "../pages/OtherServicesMenu";
 import LegalsMenu from "../pages/LegalsMenu";
 import UnApprovedCustomerReport from "../pages/UnApprovedCustomerReport";
 import PaymentReport from "../pages/PaymentReport";
-
+import PigmySummaryReport from "../pages/PigmySummaryReport";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -636,6 +636,7 @@ const mainRoutes = createBrowserRouter([
       { path: "daybook", element: <Daybook /> },
       { path: "payout", element: <PayOutReport /> },
       { path: "sales-report", element: <SalesReport /> },
+      { path: "pigmy-summary-report", element: <PigmySummaryReport /> },
       { path: "receipt", element: <Receipt /> },
       { path: "collection-executive", element: <CollectionExecutiveReport /> },
       {path: "collection-area-report", element: <CollectionAreaReport />},
