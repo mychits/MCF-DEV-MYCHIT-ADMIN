@@ -26,18 +26,12 @@ const HardTransfer = () => {
   const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [amountPaid, setAmountPaid] = useState(0);
-  const [destinationGroup, setDestinationGroup] = useState("");
-  const [destinationCustomer, setDestinationCustomer] = useState("");
-  const [destinationTicket, setDestinationTicket] = useState("");
-  const [sourceGroup, setSourceGroup] = useState("");
-  const [sourceTicket, setSourceTicket] = useState("");
-  const [sourceCustomer, setSourceCustomer] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
-  const [destinationCustomers, setDestinationCustomers] = useState([]);
-  const [sourceCustomers, setSourceCustomers] = useState([]);
+
   const [sourceEnrollment, setSourceEnrollment] = useState([]);
   const [destinationEnrollment, setDestinationEnrollment] = useState([]);
-
+  //known enollments
+  const [deletedEnrollments, setDeletedEnrollments] = useState([]);
   const getGroupNameById = (groupId) => {
     const group = allGroups.find((g) => g._id === groupId);
     return group?.group_name || "Unknown Group";
@@ -47,21 +41,17 @@ const HardTransfer = () => {
     try {
       setIsDataTableLoading(true);
       const res = await api.get("/enroll/transfer/get-all/Hard");
-      console.log(res.data,"response data")
+
       const formattedData = (res.data || []).map((transfer, index) => {
-        const fromGroupName = (
-          transfer?.fromGroup?.group_name || transfer?.fromGroup
-        );
-        const toGroupName = (
-          transfer?.toGroup?.group_name || transfer?.toGroup
-        );
+        const fromGroupName =
+          transfer?.fromGroup?.group_name || transfer?.fromGroup;
+        const toGroupName = transfer?.toGroup?.group_name || transfer?.toGroup;
         const fromUser = transfer?.fromUser || {};
         const toUser = transfer?.toUser || {};
-        
+
         return {
           _id: transfer._id,
           id: index + 1,
-          transfer_id: `TRAN-${index + 1}`,
           from_group: fromGroupName,
           to_group: toGroupName,
           from_customer: fromUser.full_name || "-",
@@ -71,7 +61,6 @@ const HardTransfer = () => {
           to_phone: toUser.phone_number || "-",
           to_ticket: transfer?.toTicket || "-",
           transfer_amount: transfer?.transferAmount ?? 0,
-         
           transfer_type: transfer?.transferType || "-",
           date: transfer?.createdAt?.split("T")[0] || "-",
         };
@@ -84,111 +73,58 @@ const HardTransfer = () => {
     }
   };
 
-  const handleAddTransferClick = async () => {
+  const fetchDeletedEnrollments = async () => {
     try {
-      setLoader(true);
-      const response = await api.get("/group/get-all-group-admin");
-      setAllGroups(response.data);
-      setShowModal(true);
+      const res = await api.get("/enroll/deleted");
+
+      const formattedData = (res.data?.data || []).map((enrollment, index) => {
+        return {
+          enroll_id:enrollment?._id,
+          customer_name: enrollment?.user_id?.full_name,
+          customer_phone: enrollment?.user_id?.phone_number,
+          customer_id: enrollment?.user_id?.customer_id,
+          group_name: enrollment.group_id?.group_name,
+          ticket: enrollment.tickets,
+        };
+      });
+      setDeletedEnrollments(formattedData);
     } catch (err) {
-      setAllGroups([]);
-      console.error("Error loading groups", err);
-      alert("Could not load group data.");
+      console.error("Failed to fetch transfers", err);
+      setDeletedEnrollments([]);
     } finally {
-      setLoader(false);
-    }
-  };
-
-  const handleSourceCustomers = async () => {
-    if (!sourceGroup) return;
-    try {
-      const response = await api.get(`/enroll/get-group-all-enroll/${sourceGroup}`);
-      setSourceCustomers(response.data);
-    } catch (error) {
-      setSourceCustomers([]);
-      console.log("Failed to get Source Customers", error);
-    }
-  };
-
-  const handleDestinationCustomers = async () => {
-    if (!destinationGroup) return;
-    try {
-      const response = await api.get(`/enroll/get-group-all-enroll/${destinationGroup}`);
-      setDestinationCustomers(response.data);
-    } catch (error) {
-      setDestinationCustomers([]);
-      console.log("Failed to get Destination Customers", error);
     }
   };
 
   useEffect(() => {
-    if (sourceGroup) {
-      handleSourceCustomers();
-    }
-  }, [sourceGroup]);
-
-  useEffect(() => {
-    if (destinationGroup) {
-      handleDestinationCustomers();
-    }
-  }, [destinationGroup]);
+    fetchDeletedEnrollments();
+  }, []);
 
   useEffect(() => {
     fetchTransfers();
   }, []);
-
+  const handleAddTransferClick = () => {
+    setShowModal(true);
+  };
   const handleChange = (key, value) => {
     switch (key) {
-      case "sourceGroup":
-        setSourceGroup(value);
-        setSourceCustomer("");
-        setSourceTicket("");
-        setAmountPaid(0);
+      case "sourceEnrollment":
+        setSourceEnrollment(value);
         break;
-        
-      case "sourceCustomer":
-        const enrollFromSplit =value.split("-")
-        const enrollFromId =Array.isArray( enrollFromSplit) ? enrollFromSplit[0] : []
-        const [userId, ticket] = enrollFromSplit.split("|");
-        setSourceCustomer(userId);
-        setSourceTicket(ticket);
-        setSourceEnrollment(enrollFromId);
-        setAmountPaid(0);
-        break;
-      case "destinationGroup":
-        setDestinationGroup(value);
-        setDestinationCustomer("");
-        setDestinationTicket("");
-        break;
-      case "destinationCustomer":
-       const enrollToSplit =value.split("-")
-        const enrollToId =Array.isArray( enrollToSplit) ? enrollToSplit[0] : []
-        const [toUserId, toTicket] = enrollToSplit.split("|");
-        setDestinationCustomer(toUserId);
-        setDestinationTicket(toTicket);
-        setDestinationEnrollment(enrollToId);
-
-        break;
-      case "transfer_amount":
-        if (value === "" || /^\d*\.?\d*$/.test(value)) {
-          setTransferAmount(value);
-        }
-        break;
-      default:
+      case "destinationEnrollment":
+        setDestinationEnrollment(value);
         break;
     }
   };
 
   const fetchAmountPaid = async () => {
-    if (!sourceGroup || !sourceCustomer || !sourceTicket) {
+    if (!sourceEnrollment) {
       alert("Please select Group, Enrolled Customer, and Ticket first.");
       return;
     }
     try {
       const res = await api.get("/enroll/get-exact-amount-paid", {
         params: {
-          group_id: sourceGroup,
-          user_id: sourceCustomer,
+          enroll_id: sourceEnrollment,
           ticket: sourceTicket,
         },
       });
@@ -201,14 +137,9 @@ const HardTransfer = () => {
     }
   };
 
-  const  handleTransfer = async () => {
+  const handleTransfer = async () => {
     if (
-      !sourceGroup ||
-      !sourceCustomer ||
-      !sourceTicket ||
-      !destinationGroup ||
-      !destinationCustomer ||
-      !destinationTicket ||
+      !sourceEnrollment ||
       !transferAmount ||
       parseFloat(transferAmount) <= 0
     ) {
@@ -223,16 +154,10 @@ const HardTransfer = () => {
 
     try {
       const payload = {
-        fromGroup: sourceGroup,
-        fromUserId: sourceCustomer,
-        fromEnrollId:sourceEnrollment,
-        toEnrollId:destinationEnrollment,
-        fromTicket: Number(sourceTicket),
+        fromEnrollId: sourceEnrollment,
+        toEnrollId: destinationEnrollment,
         amountPaid,
         transferAmount: parseFloat(transferAmount),
-        toGroup: destinationGroup,
-        toUser: destinationCustomer,
-        toTicket: Number(destinationTicket),
         transferType: "Hard",
       };
       const res = await api.post("/enroll/hard-transfer-customer", payload);
@@ -242,14 +167,8 @@ const HardTransfer = () => {
           _id: transfer._id,
           id: transferData.length + 1,
           transfer_id: `TRAN-${transferData.length + 1}`,
-          from_group: getGroupNameById(sourceGroup),
-          to_group: getGroupNameById(destinationGroup),
-          from_customer: sourceCustomers.find(c => c.user_id?._id === sourceCustomer)?.user_id?.full_name || "-",
-          from_phone: sourceCustomers.find(c => c.user_id?._id === sourceCustomer)?.user_id?.phone_number || "-",
-          from_ticket: sourceTicket,
-          to_customer: destinationCustomers.find(c => c.user_id?._id === destinationCustomer)?.user_id?.full_name || "-",
-          to_phone: destinationCustomers.find(c => c.user_id?._id === destinationCustomer)?.user_id?.phone_number || "-",
-          to_ticket: destinationTicket,
+          from_enrollment:sourceEnrollment,
+          to_enrollment:destinationEnrollment,
           transfer_amount: parseFloat(transferAmount),
           amount_paid: amountPaid,
           transfer_type: "Hard",
@@ -309,7 +228,11 @@ const HardTransfer = () => {
               className="bg-blue-950 text-white px-5 py-5 rounded shadow-md hover:bg-blue-800 transition duration-200 text-lg"
               disabled={loader}
             >
-              {loader ? <Spin indicator={<LoadingOutlined spin />} /> : "+ Add Transfer"}
+              {loader ? (
+                <Spin indicator={<LoadingOutlined spin />} />
+              ) : (
+                "+ Add Transfer"
+              )}
             </Button>
           </div>
           {transferData?.length > 0 ? (
@@ -352,12 +275,15 @@ const HardTransfer = () => {
         <Form layout="vertical" size="large">
           <Row gutter={[16, 24]} className="px-2">
             <Col span={24}>
-              <Form.Item label={<span className="font-medium">From Group</span>}>
+              <Form.Item
+                label={
+                  <span className="font-medium">From Customer | Group </span>
+                }
+              >
                 <Select
                   size="large"
-                  placeholder="Select Group"
-                  onChange={(value) => handleChange("sourceGroup", value)}
-                  value={sourceGroup || undefined}
+                  placeholder="Select Customer | Group | Ticket"
+                  onChange={(value) => handleChange("sourceEnrollment", value)}
                   showSearch
                   optionFilterProp="children"
                   filterOption={(input, option) =>
@@ -365,11 +291,17 @@ const HardTransfer = () => {
                   }
                   style={{ fontSize: "16px", height: "52px" }}
                 >
-                  {allGroups
-                    .filter((g) => g.group_name)
-                    .map((group) => (
-                      <Select.Option key={group._id} value={group._id}>
-                        {group.group_name}
+                  {deletedEnrollments
+                    .filter((e) => e.customer_phone && e.group_name)
+                    .map((e) => (
+                      <Select.Option
+                        className={`${
+                          e.deleted ? "text-red-500" : "text-black"
+                        }`}
+                        key={e?.enroll_id}
+                        value={`${e?.enroll_id}`}
+                      >
+                        {`${e.customer_name} | ${e.customer_phone} | ${e.customer_id} | ${e.group_name} | Ticket: ${e.ticket}`}
                       </Select.Option>
                     ))}
                 </Select>
@@ -377,12 +309,19 @@ const HardTransfer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item label={<span className="font-medium">From Customer</span>}>
+              <Form.Item
+                label={
+                  <span className="font-medium">
+                    To Customer | Group | Ticket
+                  </span>
+                }
+              >
                 <Select
                   size="large"
-                  placeholder="Select Customer"
-                  onChange={(value) => handleChange("sourceCustomer", value)}
-                  value={sourceCustomer && sourceTicket ? `${sourceCustomer}|${sourceTicket}` : undefined}
+                  placeholder="Select Customer | Group | Ticket"
+                  onChange={(value) =>
+                    handleChange("destinationEnrollment", value)
+                  }
                   showSearch
                   optionFilterProp="children"
                   filterOption={(input, option) =>
@@ -390,15 +329,17 @@ const HardTransfer = () => {
                   }
                   style={{ fontSize: "16px", height: "52px" }}
                 >
-                  {sourceCustomers
-                    .filter((e) => e.user_id?._id && e.tickets)
+                  {deletedEnrollments
+                    .filter((e) => e.customer_phone && e.group_name)
                     .map((e) => (
                       <Select.Option
-                      className={`${e.deleted ? "text-red-500" :"text-black"}`}
-                        key={e._id}
-                        value={`${e._id}-${e.user_id._id}|${e.tickets}`}
+                        className={`${
+                          e.deleted ? "text-red-500" : "text-black"
+                        }`}
+                        key={e?.enroll_id}
+                        value={`${e?.enroll_id}`}
                       >
-                        {`${e.user_id.full_name} | ${e.user_id.phone_number} | Ticket: ${e.tickets}`}
+                        {`${e.customer_name} | ${e.customer_phone} | ${e.customer_id} | ${e.group_name} | Ticket: ${e.ticket}`}
                       </Select.Option>
                     ))}
                 </Select>
@@ -423,7 +364,9 @@ const HardTransfer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item label={<span className="font-medium">Amount Paid</span>}>
+              <Form.Item
+                label={<span className="font-medium">Amount Paid</span>}
+              >
                 <Input
                   disabled
                   size="large"
@@ -438,72 +381,19 @@ const HardTransfer = () => {
             </Col>
 
             <Col span={24}>
-              <Form.Item label={<span className="font-medium">Transfer Amount</span>}>
+              <Form.Item
+                label={<span className="font-medium">Transfer Amount</span>}
+              >
                 <Input
                   size="large"
                   placeholder="Transfer Amount"
                   value={transferAmount || 0}
-                  onChange={(e) => handleChange("transfer_amount", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("transfer_amount", e.target.value)
+                  }
                   style={{ fontSize: "16px", height: "52px" }}
                   disabled
                 />
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item label={<span className="font-medium">To Group</span>}>
-                <Select
-                  size="large"
-                  placeholder="Select Destination Group"
-                  onChange={(value) => handleChange("destinationGroup", value)}
-                  value={destinationGroup || undefined}
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  style={{ fontSize: "16px", height: "52px" }}
-                >
-                  {allGroups
-                    .filter((g) => g.group_name)
-                    .map((group) => (
-                      <Select.Option key={group._id} value={group._id}>
-                        {group.group_name}
-                      </Select.Option>
-                    ))}
-                </Select>
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item label={<span className="font-medium">To Customer</span>}>
-                <Select
-                  size="large"
-                  placeholder="Select Destination Customer"
-                  onChange={(value) => handleChange("destinationCustomer", value)}
-                  value={
-                    destinationCustomer && destinationTicket
-                      ? `${destinationCustomer}|${destinationTicket}`
-                      : undefined
-                  }
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  style={{ fontSize: "16px", height: "52px" }}
-                >
-                  {destinationCustomers
-                    .filter((e) => e.user_id?._id && e.tickets)
-                    .map((e) => (
-                      <Select.Option
-                        key={e._id}
-                        value={`${e._id}-${e.user_id._id}|${e.tickets}`}
-                      >
-                        {`${e.user_id.full_name} | ${e.user_id.phone_number} | Ticket: ${e.tickets}`}
-                      </Select.Option>
-                    ))}
-                </Select>
               </Form.Item>
             </Col>
           </Row>

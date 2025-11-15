@@ -597,7 +597,7 @@ const Enroll = () => {
       const user_id = currentGroup.user_id?._id;
       if (user_id) {
         try {
-          await api.put(`/enroll/remove-enroll/${currentGroup._id}`, {
+          await api.put(`/enroll/remove/${currentGroup._id}`, {
             user_id,
             deleted_by: admin,
             deleted_at: new Date(),
