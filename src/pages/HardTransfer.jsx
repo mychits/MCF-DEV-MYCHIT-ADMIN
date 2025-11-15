@@ -35,6 +35,8 @@ const HardTransfer = () => {
   const [transferAmount, setTransferAmount] = useState("");
   const [destinationCustomers, setDestinationCustomers] = useState([]);
   const [sourceCustomers, setSourceCustomers] = useState([]);
+  const [sourceEnrollment, setSourceEnrollment] = useState([]);
+  const [destinationEnrollment, setDestinationEnrollment] = useState([]);
 
   const getGroupNameById = (groupId) => {
     const group = allGroups.find((g) => g._id === groupId);
@@ -143,10 +145,14 @@ const HardTransfer = () => {
         setSourceTicket("");
         setAmountPaid(0);
         break;
+        
       case "sourceCustomer":
-        const [userId, ticket] = value.split("|");
+        const enrollFromSplit =value.split("-")
+        const enrollFromId =Array.isArray( enrollFromSplit) ? enrollFromSplit[0] : []
+        const [userId, ticket] = enrollFromSplit.split("|");
         setSourceCustomer(userId);
         setSourceTicket(ticket);
+        setSourceEnrollment(enrollFromId);
         setAmountPaid(0);
         break;
       case "destinationGroup":
@@ -155,9 +161,13 @@ const HardTransfer = () => {
         setDestinationTicket("");
         break;
       case "destinationCustomer":
-        const [toUserId, toTicket] = value.split("|");
+       const enrollToSplit =value.split("-")
+        const enrollToId =Array.isArray( enrollToSplit) ? enrollToSplit[0] : []
+        const [toUserId, toTicket] = enrollToSplit.split("|");
         setDestinationCustomer(toUserId);
         setDestinationTicket(toTicket);
+        setDestinationEnrollment(enrollToId);
+
         break;
       case "transfer_amount":
         if (value === "" || /^\d*\.?\d*$/.test(value)) {
@@ -191,7 +201,7 @@ const HardTransfer = () => {
     }
   };
 
-  const handleTransfer = async () => {
+  const  handleTransfer = async () => {
     if (
       !sourceGroup ||
       !sourceCustomer ||
@@ -215,6 +225,8 @@ const HardTransfer = () => {
       const payload = {
         fromGroup: sourceGroup,
         fromUserId: sourceCustomer,
+        fromEnrollId:sourceEnrollment,
+        toEnrollId:destinationEnrollment,
         fromTicket: Number(sourceTicket),
         amountPaid,
         transferAmount: parseFloat(transferAmount),
@@ -384,7 +396,7 @@ const HardTransfer = () => {
                       <Select.Option
                       className={`${e.deleted ? "text-red-500" :"text-black"}`}
                         key={e._id}
-                        value={`${e.user_id._id}|${e.tickets}`}
+                        value={`${e._id}-${e.user_id._id}|${e.tickets}`}
                       >
                         {`${e.user_id.full_name} | ${e.user_id.phone_number} | Ticket: ${e.tickets}`}
                       </Select.Option>
@@ -486,7 +498,7 @@ const HardTransfer = () => {
                     .map((e) => (
                       <Select.Option
                         key={e._id}
-                        value={`${e.user_id._id}|${e.tickets}`}
+                        value={`${e._id}-${e.user_id._id}|${e.tickets}`}
                       >
                         {`${e.user_id.full_name} | ${e.user_id.phone_number} | Ticket: ${e.tickets}`}
                       </Select.Option>

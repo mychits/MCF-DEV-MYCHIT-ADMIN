@@ -35,6 +35,8 @@ const SoftTransferCustomer = () => {
   const [transferAmount, setTransferAmount] = useState("");
   const [destinationCustomers, setDestinationCustomers] = useState([]);
   const [sourceCustomers, setSourceCustomers] = useState([]);
+  const [sourceEnrollment, setSourceEnrollment] = useState([]);
+  const [destinationEnrollment, setDestinationEnrollment] = useState([]);
 
   const getGroupNameById = (groupId) => {
     const group = allGroups.find((g) => g._id === groupId);
@@ -145,9 +147,12 @@ const SoftTransferCustomer = () => {
         setAmountPaid(0);
         break;
       case "sourceCustomer":
-        const [userId, ticket] = value.split("|");
+        const enrollFromSplit =value.split("-")
+        const enrollFromId =Array.isArray( enrollFromSplit) ? enrollFromSplit[0] : []
+        const [userId, ticket] = enrollFromSplit.split("|");
         setSourceCustomer(userId);
         setSourceTicket(ticket);
+        setSourceEnrollment(enrollFromId);
         setAmountPaid(0);
         break;
       case "destinationGroup":
@@ -156,9 +161,12 @@ const SoftTransferCustomer = () => {
         setDestinationTicket("");
         break;
       case "destinationCustomer":
-        const [toUserId, toTicket] = value.split("|");
+        const enrollToSplit = value.split("-");
+        const enrollToId = Array.isArray(enrollToSplit) ? enrollToSplit[0] : [];
+        const [toUserId, toTicket] = enrollToSplit.split("|");
         setDestinationCustomer(toUserId);
         setDestinationTicket(toTicket);
+        setDestinationEnrollment(enrollToId);
         break;
       case "transfer_amount":
         if (value === "" || /^\d*\.?\d*$/.test(value)) {
@@ -222,6 +230,8 @@ const SoftTransferCustomer = () => {
         toUser: destinationCustomer,
         toTicket: Number(destinationTicket),
         transferType: "Soft",
+        fromEnrollId:sourceEnrollment,
+        toEnrollId:destinationEnrollment,
       };
       const res = await api.post("/enroll/transfer-customer", payload);
       if (res.status === 200 || res.status === 201) {
@@ -304,8 +314,7 @@ const SoftTransferCustomer = () => {
             <h1 className="text-2xl font-semibold">Soft Transfer</h1>
             <Button
               onClick={handleAddTransferClick}
-               className="bg-blue-950 text-white px-5 py-5 rounded shadow-md hover:bg-blue-800 transition duration-200 text-lg"
-
+              className="bg-blue-950 text-white px-5 py-5 rounded shadow-md hover:bg-blue-800 transition duration-200 text-lg"
               disabled={loader}
             >
               {loader ? (
