@@ -114,6 +114,7 @@ const AllUserReport = () => {
                         groupInstall +
                         firstDividentHead -
                         totalPaidAmount,
+                  chit_asking_month: data?.enrollment?.chit_asking_month || "N/A",
                   status: data.isPrized === "true" ? "Prized" : "Un Prized",
                   statusDiv:
                     data.isPrized === "true" ? (
@@ -187,6 +188,7 @@ const AllUserReport = () => {
 
     { key: "referred_type", header: "Referred Type" },
     { key: "reffered_by", header: "Referred By" },
+    {key: "chit_asking_month", header: "Chit Asking Month"},
     { key: "relationshipManager", header: "Relationship Manager" },
     { key: "payment_type", header: "Payment Type" },
     {

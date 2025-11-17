@@ -84,6 +84,51 @@ const Enroll = () => {
 
   const [searchText, setSearchText] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState([]);
+
+    const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = String(today.getMonth() + 1).padStart(2, "0");
+  const currentYearMonth = `${currentYear}-${currentMonth}`;
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = `0${date.getMonth() + 1}`.slice(-2);
+    const day = `0${date.getDate()}`.slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+
+  const [selectedDate, setSelectedDate] = useState(currentYearMonth);
+
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const [monthValues, setMonthValues] = useState({
+    January: 0,
+    February: 0,
+    March: 0,
+    April: 0,
+    May: 0,
+    June: 0,
+    July: 0,
+    August: 0,
+    September: 0,
+    October: 0,
+    November: 0,
+    December: 0,
+  });
+
+
   const onGlobalSearchChangeHandler = (e) => {
     const { value } = e.target;
     setSearchText(value);
@@ -112,6 +157,30 @@ const Enroll = () => {
     };
     fetchGroups();
   }, []);
+
+    const parseDate = (dateString) => {
+    const [year, month] = dateString.split("-");
+    return {
+      year,
+      month: String(parseInt(month)).padStart(2, "0"),
+      monthName: monthNames[parseInt(month) - 1],
+    };
+  };
+
+  const formatToYearMonth = (year, month) => {
+    return `${year}-${String(month).padStart(2, "0")}`;
+  };
+
+  const getMonthDateRange = (dateString) => {
+    const { year, month } = parseDate(dateString);
+    const startDate = new Date(year, parseInt(month) - 1, 1);
+    const endDate = new Date(year, parseInt(month), 0);
+
+    return {
+      from_date: formatDate(startDate),
+      to_date: formatDate(endDate),
+    };
+  };
 
   useEffect(() => {
     async function fetchAllEnrollmentData() {
@@ -270,38 +339,74 @@ const Enroll = () => {
     const found = referralArray.find((referee) => referee.data);
     return found ? found.value : null;
   }
-  const handleAntInputDSelect = (field, value) => {
-    if (field === "referred_type" ) {
-      setUpdateFormData((prevData) => ({
-        ...prevData,
-        referred_type: "",
-        blocked_referral: true,
-        referred_customer: "",
-        referred_lead: "",
-        agent: "",
-        blocked_referral_type: setRefferedType([
-          { data: prevData?.referred_customer, value: "Customer" },
-          { data: prevData?.referred_lead, value: "Lead" },
-          { data: prevData?.agent, value: "Agent" },
-        ]),
-        blocked_referred_customer: prevData?.referred_customer?._id,
-        blocked_referred_lead: prevData?.referred_lead?._id,
-        blocked_referred_agent: prevData?.agent?._id,
-      }));
-      return;
-    } else {
-      setUpdateFormData((prevData) => ({
-        ...prevData,
-        blocked_referral_type: false,
-        blocked_referred_customer: "",
-        blocked_referred_lead: "",
-        blocked_referred_agent: "",
-        [field]: value,
-      }));
-    }
+  // const handleAntInputDSelect = (field, value) => {
+  //   if (field === "referred_type" ) {
+  //     setUpdateFormData((prevData) => ({
+  //       ...prevData,
+  //       referred_type: "",
+  //       blocked_referral: true,
+  //       referred_customer: "",
+  //       referred_lead: "",
+  //       agent: "",
+  //       blocked_referral_type: setRefferedType([
+  //         { data: prevData?.referred_customer, value: "Customer" },
+  //         { data: prevData?.referred_lead, value: "Lead" },
+  //         { data: prevData?.agent, value: "Agent" },
+  //       ]),
+  //       blocked_referred_customer: prevData?.referred_customer?._id,
+  //       blocked_referred_lead: prevData?.referred_lead?._id,
+  //       blocked_referred_agent: prevData?.agent?._id,
+  //     }));
+  //     return;
+  //   } else {
+  //     setUpdateFormData((prevData) => ({
+  //       ...prevData,
+  //       blocked_referral_type: false,
+  //       blocked_referred_customer: "",
+  //       blocked_referred_lead: "",
+  //       blocked_referred_agent: "",
+  //       [field]: value,
+  //     }));
+  //   }
 
-    setErrors({ ...errors, [field]: "" });
-  };
+  //   setErrors({ ...errors, [field]: "" });
+  // };
+  
+  
+  const handleAntInputDSelect = (field, value) => {
+  if (field === "referred_type") {
+    setUpdateFormData((prevData) => ({
+      ...prevData,
+      referred_type: value,            // ✔ FIXED
+      blocked_referral: true,
+      referred_customer: "",
+      referred_lead: "",
+      agent: "",
+      blocked_referral_type: setRefferedType([
+        { data: prevData?.referred_customer, value: "Customer" },
+        { data: prevData?.referred_lead, value: "Lead" },
+        { data: prevData?.agent, value: "Agent" },
+      ]),
+      blocked_referred_customer: prevData?.referred_customer?._id,
+      blocked_referred_lead: prevData?.referred_lead?._id,
+      blocked_referred_agent: prevData?.agent?._id,
+    }));
+    return;
+  }
+
+  // other fields
+  setUpdateFormData((prevData) => ({
+    ...prevData,
+    blocked_referral_type: false,
+    blocked_referred_customer: "",
+    blocked_referred_lead: "",
+    blocked_referred_agent: "",
+    [field]: value,
+  }));
+
+  setErrors({ ...errors, [field]: "" });
+};
+
   const handleGroupChange = async (groupId) => {
     setSelectedGroup(groupId);
 
@@ -497,7 +602,7 @@ const Enroll = () => {
           agent,
           referred_lead,
           referred_type,
-          chit_asking_month: Number(chit_asking_month),
+          chit_asking_month:formData.chit_asking_month,
           tickets: ticketNumber,
           email_id,
           created_by,
@@ -562,9 +667,9 @@ const Enroll = () => {
         user_id: response.data?.user_id?._id,
         tickets: response.data?.tickets,
         payment_type: response.data?.payment_type,
-        referred_customer: response.data?.referred_customer || "",
-        agent: response.data?.agent || "",
-        referred_lead: response.data?.referred_lead || "",
+        referred_customer: response.data?.referred_customer?._id || "",
+        agent: response.data?.agent?._id || "",
+        referred_lead: response.data?.referred_lead?._id || "",
         referred_type: response.data?.referred_type,
         chit_asking_month: response.data?.chit_asking_month || "",
         blocked_referral: response.data?.blocked_referral || false,
@@ -597,7 +702,7 @@ const Enroll = () => {
       const user_id = currentGroup.user_id?._id;
       if (user_id) {
         try {
-          await api.put(`/enroll/remove/${currentGroup._id}`, {
+          await api.put(`/enroll/remove/${currentGroup?._id}`, {
             user_id,
             deleted_by: admin,
             deleted_at: new Date(),
@@ -1028,12 +1133,17 @@ const Enroll = () => {
                   Chit Asking Month
                 </label>
                 <input
-                  type="number"
-                  name="chit_asking_month"
-                  value={formData.chit_asking_month}
-                  onChange={handleChange}
-                  placeholder="Enter month number (e.g., 1 for Jan)"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full`}
+                  type="month"
+                  className="p-2 border rounded w-full"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setFormData((prev) => ({
+                      ...prev,
+                      chit_asking_month: e.target.value, // <-- FIX
+                    }));
+                  }}
+                  max={formatToYearMonth(currentYear, currentMonth)}
                 />
               </div>
 
@@ -1133,7 +1243,7 @@ const Enroll = () => {
                   >
                     {leads.map((lead) => (
                       <Select.Option key={lead._id} value={lead._id}>
-                        {lead.lead_name}
+                        {lead.lead_name} | {lead.lead_phone}
                       </Select.Option>
                     ))}
                   </Select>
@@ -1156,7 +1266,7 @@ const Enroll = () => {
                   >
                     {agents.map((agent) => (
                       <Select.Option key={agent._id} value={agent._id}>
-                        {agent.name}
+                        {agent.name} | {agent.phone_number}
                       </Select.Option>
                     ))
 
@@ -1194,7 +1304,7 @@ const Enroll = () => {
                   >
                     {employees.map((employee) => (
                       <Select.Option key={employee._id} value={employee._id}>
-                        {employee.name}
+                        {employee.name} | {employee.phone_number}
                       </Select.Option>
                     ))}
                   </Select>
@@ -1381,7 +1491,7 @@ const Enroll = () => {
                   <option value="">Select Customer</option>
                   {users.map((user) => (
                     <option key={user._id} value={user._id}>
-                      {user.full_name}
+                      {user.full_name} | {user.phone_number}
                     </option>
                   ))}
                 </select>
@@ -1422,12 +1532,15 @@ const Enroll = () => {
                   Chit Asking Month
                 </label>
                 <input
-                  type="number"
-                  name="chit_asking_month"
+                  type="month"
+                  className="p-2 border rounded w-full"
                   value={updateFormData.chit_asking_month}
-                  onChange={handleInputChange}
-                  placeholder="Enter month"
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                  onChange={(e) =>
+                    setUpdateFormData((prev) => ({
+                      ...prev,
+                      chit_asking_month: e.target.value, // <-- FIXED
+                    }))
+                  }
                 />
               </div>
 
@@ -1497,7 +1610,7 @@ const Enroll = () => {
                   >
                     {users.map((user) => (
                       <Select.Option key={user._id} value={user._id}>
-                        {user.full_name}
+                        {user.full_name} | {user.phone_number}
                       </Select.Option>
                     ))}
                   </Select>
@@ -1520,7 +1633,7 @@ const Enroll = () => {
                   >
                     {agents.map((agent) => (
                       <Select.Option key={agent._id} value={agent._id}>
-                        {agent.name}
+                        {agent.name} | {agent.phone_number}
                       </Select.Option>
                     ))
 
@@ -1558,7 +1671,7 @@ const Enroll = () => {
                   >
                     {leads.map((lead) => (
                       <Select.Option key={lead._id} value={lead._id}>
-                        {lead.lead_name}
+                        {lead.lead_name} | {lead.lead_phone}
                       </Select.Option>
                     ))}
                   </Select>
@@ -1591,7 +1704,7 @@ const Enroll = () => {
                   >
                     {employees.map((agent) => (
                       <Select.Option key={agent._id} value={agent._id}>
-                        {agent.name}
+                        {agent.name} | {agent.phone_number}
                       </Select.Option>
                     ))}
                   </Select>
