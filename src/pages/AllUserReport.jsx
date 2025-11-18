@@ -87,10 +87,10 @@ const AllUserReport = () => {
 
                   reffered_by: data?.enrollment?.agent
                     ? data.enrollment.agent
-                    : data?.enrollment?.reffered_customer
-                    ? data.enrollment.reffered_customer
+                    : data?.enrollment?.referred_customer
+                    ? data?.enrollment?.referred_customer
                     : data?.enrollment?.reffered_lead
-                    ? data.enrollment.reffered_lead
+                    ? data?.enrollment?.reffered_lead
                     : "N/A",
                   payment_type: data?.enrollment?.payment_type,
                   referred_type: data?.enrollment?.referred_type,
