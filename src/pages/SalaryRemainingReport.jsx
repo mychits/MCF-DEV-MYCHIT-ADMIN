@@ -1671,222 +1671,6 @@ const { RangePicker } = DatePicker;
 //   );
 // };
 
-// const SalaryRemainingReport = () => {
-//   const [employees, setEmployees] = useState([]);
-//   const [selectedEmp, setSelectedEmp] = useState(null);
-//   const [selectedYear, setSelectedYear] = useState(moment().year().toString());
-//   const [reportData, setReportData] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [summary, setSummary] = useState(null);
-//   const [joiningDate, setJoiningDate] = useState(null);
-
-//   useEffect(() => {
-//     fetchEmployees();
-//   }, []);
-
-//   // 🔹 Fetch all employees
-//   const fetchEmployees = async () => {
-//     try {
-//       const res = await api.get("/agent/get-employee");
-//       setEmployees(res.data.employee || []);
-//     } catch (err) {
-//       message.error("Failed to fetch employees");
-//     }
-//   };
-
-//   // 🔹 Fetch report
-//   const fetchSalaryReport = async () => {
-//     if (!selectedEmp) {
-//       message.warning("Please select an employee");
-//       return;
-//     }
-
-//     setLoading(true);
-//     try {
-//       const params = { empId: selectedEmp, year: selectedYear };
-//       const res = await api.get("/salary/get-remaining-salary", { params });
-
-//       if (res.data.success) {
-//         setReportData(res.data.monthlyReport || []);
-//         setSummary(res.data.summary);
-//         setJoiningDate(res.data.joining_date);
-//       } else {
-//         message.error(res.data.error || "Failed to load salary report");
-//         setReportData([]);
-//         setSummary(null);
-//         setJoiningDate(null);
-//       }
-//     } catch (err) {
-//       console.error("Error fetching salary report:", err);
-//       message.error("Error loading salary report");
-//       setReportData([]);
-//       setSummary(null);
-//       setJoiningDate(null);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const isZeroRemaining = (value) =>
-//     /^₹0(\.0*)?$/.test(value?.replace(/,/g, ""));
-
-//   const columns = [
-//     { title: "Month", dataIndex: "month", align: "center" },
-//     {
-//       title: "Expected Salary",
-//       dataIndex: "expected",
-//       align: "right",
-//       render: (v) => <span>{v || "₹0"}</span>,
-//     },
-//     {
-//       title: "Paid Salary",
-//       dataIndex: "paid",
-//       align: "right",
-//       render: (v) => <span>{v || "₹0"}</span>,
-//     },
-//     {
-//       title: "Remaining Salary",
-//       dataIndex: "remaining",
-//       align: "right",
-//       render: (v) => (
-//         <span
-//           style={{
-//             color: isZeroRemaining(v) ? "green" : "red",
-//             fontWeight: 600,
-//           }}
-//         >
-//           {v || "₹0"}
-//         </span>
-//       ),
-//     },
-//   ];
-
-//   // Generate year options (5-year window)
-//   const yearOptions = Array.from({ length: 5 }, (_, i) => {
-//     const year = moment().year() - 2 + i;
-//     return (
-//       <Option key={year} value={year.toString()}>
-//         {year}
-//       </Option>
-//     );
-//   });
-
-//   return (
-//     <div className="p-6 bg-white rounded-lg shadow-md">
-//       <h2 className="text-xl font-semibold mb-6 text-gray-700 text-center">
-//         💼 Salary Remaining Report ({selectedYear})
-//       </h2>
-
-//       {/* 🔹 Filters */}
-//       <div className="flex flex-wrap justify-center gap-4 mb-6">
-//         <div>
-//           <label className="block text-gray-600 mb-1 font-medium">
-//             Employee
-//           </label>
-//           <Select
-//             showSearch
-//             placeholder="Select Employee"
-//             value={selectedEmp}
-//             onChange={(value) => {
-//               setSelectedEmp(value);
-//               setReportData([]);
-//               setSummary(null);
-//               setJoiningDate(null);
-//             }}
-//             style={{ width: 220 }}
-//             optionFilterProp="children"
-//           >
-//             {employees.map((emp) => (
-//               <Option key={emp._id} value={emp._id}>
-//                 {emp.name}
-//               </Option>
-//             ))}
-//           </Select>
-//         </div>
-
-//         <div>
-//           <label className="block text-gray-600 mb-1 font-medium">Year</label>
-//           <Select
-//             value={selectedYear}
-//             onChange={(value) => {
-//               setSelectedYear(value);
-//               setReportData([]);
-//               setSummary(null);
-//               setJoiningDate(null);
-//             }}
-//             style={{ width: 120 }}
-//           >
-//             {yearOptions}
-//           </Select>
-//         </div>
-
-//         <div className="flex items-end">
-//           <Button type="primary" onClick={fetchSalaryReport} loading={loading}>
-//             Generate Report
-//           </Button>
-//         </div>
-//       </div>
-
-    
-    
-
-//       {summary && (
-//   <>
-//     {joiningDate && moment(joiningDate).isValid() && (
-//       <div className="text-center mb-4">
-//         <p className="text-gray-600 text-base font-medium">
-//           🗓️ <strong>Joining Date:</strong>{" "}
-//           <span className="text-gray-800">
-//             {moment(joiningDate).format("DD MMM YYYY")}
-//           </span>
-//         </p>
-//       </div>
-//     )}
-
-//     {/* 🔹 Salary Summary */}
-//     <div className="flex flex-wrap justify-center gap-6 mb-8">
-//       <div className="bg-green-100 p-4 rounded-lg text-center w-60 border border-green-400 shadow-sm">
-//         <p className="text-sm text-gray-600">Expected Salary</p>
-//         <p className="text-lg font-semibold text-green-700">
-//           {summary.totalExpectedSalary || "₹0"}
-//         </p>
-//       </div>
-//       <div className="bg-blue-100 p-4 rounded-lg text-center w-60 border border-blue-400 shadow-sm">
-//         <p className="text-sm text-gray-600">Paid Salary</p>
-//         <p className="text-lg font-semibold text-blue-700">
-//           {summary.totalPaidSalary || "₹0"}
-//         </p>
-//       </div>
-//     </div>
-//   </>
-// )}
-
-//       {/* 📊 Table */}
-//       {loading ? (
-//         <div className="flex justify-center items-center py-10">
-//           <Spin size="large" />
-//         </div>
-//       ) : reportData.length > 0 ? (
-//         <Table
-//           columns={columns}
-//           dataSource={reportData}
-//           rowKey="month"
-//           pagination={false}
-//           bordered
-//         />
-//       ) : summary !== null ? (
-//         <div className="text-center text-gray-500 py-10">
-//           No salary data available for this employee/year.
-//         </div>
-//       ) : (
-//         <div className="text-center text-gray-500 py-10">
-//           Select an employee and click <b>"Generate Report"</b> to view details.
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
 const SalaryRemainingReport = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmp, setSelectedEmp] = useState(null);
@@ -1903,27 +1687,8 @@ const SalaryRemainingReport = () => {
   // 🔹 Fetch all employees
   const fetchEmployees = async () => {
     try {
-      // Replace with your actual API call
-      // const res = await api.get("/agent/get-employee");
-      // Mocking data for demonstration
-      const res = {
-        data: {
-          employee: [
-            { _id: "1", name: "John Doe", joining_date: "2022-01-15" },
-            { _id: "2", name: "Jane Smith", joining_date: "2021-03-20" },
-            { _id: "3", name: "Peter Jones", joining_date: "2023-07-01" },
-          ],
-        },
-      };
+      const res = await api.get("/agent/get-employee");
       setEmployees(res.data.employee || []);
-      
-      // If an employee was already selected, update their joining date from the fresh list
-      if (selectedEmp) {
-        const emp = res.data.employee.find((e) => e._id === selectedEmp);
-        if (emp && emp.joining_date) {
-          setJoiningDate(emp.joining_date);
-        }
-      }
     } catch (err) {
       message.error("Failed to fetch employees");
     }
@@ -1938,46 +1703,25 @@ const SalaryRemainingReport = () => {
 
     setLoading(true);
     try {
-      // Replace with your actual API call
-      // const params = { empId: selectedEmp, year: selectedYear };
-      // const res = await api.get("/salary/get-remaining-salary", { params });
-      
-      // Mocking API response for demonstration
-      const res = {
-        data: {
-          success: true,
-          joining_date: employees.find(e => e._id === selectedEmp)?.joining_date, // Get from the list
-          summary: {
-            totalExpectedSalary: "₹1,200,000",
-            totalPaidSalary: "₹900,000",
-          },
-          monthlyReport: [
-            { month: "January", expected: "₹100,000", paid: "₹100,000", remaining: "₹0" },
-            { month: "February", expected: "₹100,000", paid: "₹75,000", remaining: "₹25,000" },
-            { month: "March", expected: "₹100,000", paid: "₹80,000", remaining: "₹20,000" },
-          ],
-        },
-      };
+      const params = { empId: selectedEmp, year: selectedYear };
+      const res = await api.get("/salary/get-remaining-salary", { params });
 
       if (res.data.success) {
         setReportData(res.data.monthlyReport || []);
         setSummary(res.data.summary);
-        // Set joining date from API response as a fallback, but it's already set from the employee list
-        if (res.data.joining_date) {
-          setJoiningDate(res.data.joining_date);
-        }
+        setJoiningDate(res.data.joining_date);
       } else {
         message.error(res.data.error || "Failed to load salary report");
         setReportData([]);
         setSummary(null);
-        // Don't reset joining date here, as it's tied to the employee, not the report's success
+        setJoiningDate(null);
       }
     } catch (err) {
       console.error("Error fetching salary report:", err);
       message.error("Error loading salary report");
       setReportData([]);
       setSummary(null);
-      // Don't reset joining date here
+      setJoiningDate(null);
     } finally {
       setLoading(false);
     }
@@ -2027,32 +1771,10 @@ const SalaryRemainingReport = () => {
     );
   });
 
-  // --- FIXED HANDLERS ---
-  const handleEmployeeChange = (value) => {
-    setSelectedEmp(value);
-    setReportData([]);
-    setSummary(null);
-    
-    // Get the joining date directly from the employees list
-    const emp = employees.find((e) => e._id === value);
-    if (emp && emp.joining_date) {
-      setJoiningDate(emp.joining_date);
-    } else {
-      setJoiningDate(null);
-    }
-  };
-
-  const handleYearChange = (value) => {
-    setSelectedYear(value);
-    setReportData([]);
-    setSummary(null);
-    // IMPORTANT: Do NOT reset joiningDate when the year changes
-  };
-
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-6 text-gray-700 text-center">
-        Salary Remaining Report ({selectedYear})
+        💼 Salary Remaining Report ({selectedYear})
       </h2>
 
       {/* 🔹 Filters */}
@@ -2065,12 +1787,14 @@ const SalaryRemainingReport = () => {
             showSearch
             placeholder="Select Employee"
             value={selectedEmp}
-            onChange={handleEmployeeChange} // Use the new handler
+            onChange={(value) => {
+              setSelectedEmp(value);
+              setReportData([]);
+              setSummary(null);
+              setJoiningDate(null);
+            }}
             style={{ width: 220 }}
             optionFilterProp="children"
-            filterOption={(input, option) =>
-              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            }
           >
             {employees.map((emp) => (
               <Option key={emp._id} value={emp._id}>
@@ -2084,7 +1808,12 @@ const SalaryRemainingReport = () => {
           <label className="block text-gray-600 mb-1 font-medium">Year</label>
           <Select
             value={selectedYear}
-            onChange={handleYearChange} // Use the new handler
+            onChange={(value) => {
+              setSelectedYear(value);
+              setReportData([]);
+              setSummary(null);
+              setJoiningDate(null);
+            }}
             style={{ width: 120 }}
           >
             {yearOptions}
@@ -2098,41 +1827,39 @@ const SalaryRemainingReport = () => {
         </div>
       </div>
 
-      {/* 🔹 Joining Date Display */}
-      {/* --- FIXED LOGIC --- */}
-      {joiningDate && (
-        <div className="text-center mb-4">
-          <p className="text-gray-600 text-base font-medium">
-            🗓️ <strong>Joining Date:</strong>{" "}
-            <span className="text-gray-800">
-              {moment(joiningDate).isValid()
-                ? moment(joiningDate).format("DD MMM YYYY")
-                : joiningDate // Display as-is if not a valid moment date for debugging
-              }
-            </span>
-          </p>
-        </div>
-      )}
+    
+    
 
       {summary && (
-        <>
-          {/* 🔹 Salary Summary */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8">
-            <div className="bg-green-100 p-4 rounded-lg text-center w-60 border border-green-400 shadow-sm">
-              <p className="text-sm text-gray-600">Expected Salary</p>
-              <p className="text-lg font-semibold text-green-700">
-                {summary.totalExpectedSalary || "₹0"}
-              </p>
-            </div>
-            <div className="bg-blue-100 p-4 rounded-lg text-center w-60 border border-blue-400 shadow-sm">
-              <p className="text-sm text-gray-600">Paid Salary</p>
-              <p className="text-lg font-semibold text-blue-700">
-                {summary.totalPaidSalary || "₹0"}
-              </p>
-            </div>
-          </div>
-        </>
-      )}
+  <>
+    {joiningDate && moment(joiningDate).isValid() && (
+      <div className="text-center mb-4">
+        <p className="text-gray-600 text-base font-medium">
+          🗓️ <strong>Joining Date:</strong>{" "}
+          <span className="text-gray-800">
+            {moment(joiningDate).format("DD MMM YYYY")}
+          </span>
+        </p>
+      </div>
+    )}
+
+    {/* 🔹 Salary Summary */}
+    <div className="flex flex-wrap justify-center gap-6 mb-8">
+      <div className="bg-green-100 p-4 rounded-lg text-center w-60 border border-green-400 shadow-sm">
+        <p className="text-sm text-gray-600">Expected Salary</p>
+        <p className="text-lg font-semibold text-green-700">
+          {summary.totalExpectedSalary || "₹0"}
+        </p>
+      </div>
+      <div className="bg-blue-100 p-4 rounded-lg text-center w-60 border border-blue-400 shadow-sm">
+        <p className="text-sm text-gray-600">Paid Salary</p>
+        <p className="text-lg font-semibold text-blue-700">
+          {summary.totalPaidSalary || "₹0"}
+        </p>
+      </div>
+    </div>
+  </>
+)}
 
       {/* 📊 Table */}
       {loading ? (
@@ -2159,5 +1886,278 @@ const SalaryRemainingReport = () => {
     </div>
   );
 };
+
+// const SalaryRemainingReport = () => {
+//   const [employees, setEmployees] = useState([]);
+//   const [selectedEmp, setSelectedEmp] = useState(null);
+//   const [selectedYear, setSelectedYear] = useState(moment().year().toString());
+//   const [reportData, setReportData] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [summary, setSummary] = useState(null);
+//   const [joiningDate, setJoiningDate] = useState(null);
+
+//   useEffect(() => {
+//     fetchEmployees();
+//   }, []);
+
+//   // 🔹 Fetch all employees
+//   const fetchEmployees = async () => {
+//     try {
+//       // Replace with your actual API call
+//       // const res = await api.get("/agent/get-employee");
+//       // Mocking data for demonstration
+//       const res = {
+//         data: {
+//           employee: [
+//             { _id: "1", name: "John Doe", joining_date: "2022-01-15" },
+//             { _id: "2", name: "Jane Smith", joining_date: "2021-03-20" },
+//             { _id: "3", name: "Peter Jones", joining_date: "2023-07-01" },
+//           ],
+//         },
+//       };
+//       setEmployees(res.data.employee || []);
+      
+//       // If an employee was already selected, update their joining date from the fresh list
+//       if (selectedEmp) {
+//         const emp = res.data.employee.find((e) => e._id === selectedEmp);
+//         if (emp && emp.joining_date) {
+//           setJoiningDate(emp.joining_date);
+//         }
+//       }
+//     } catch (err) {
+//       message.error("Failed to fetch employees");
+//     }
+//   };
+
+//   // 🔹 Fetch report
+//   const fetchSalaryReport = async () => {
+//     if (!selectedEmp) {
+//       message.warning("Please select an employee");
+//       return;
+//     }
+
+//     setLoading(true);
+//     try {
+//       // Replace with your actual API call
+//       // const params = { empId: selectedEmp, year: selectedYear };
+//       // const res = await api.get("/salary/get-remaining-salary", { params });
+      
+//       // Mocking API response for demonstration
+//       const res = {
+//         data: {
+//           success: true,
+//           joining_date: employees.find(e => e._id === selectedEmp)?.joining_date, // Get from the list
+//           summary: {
+//             totalExpectedSalary: "₹1,200,000",
+//             totalPaidSalary: "₹900,000",
+//           },
+//           monthlyReport: [
+//             { month: "January", expected: "₹100,000", paid: "₹100,000", remaining: "₹0" },
+//             { month: "February", expected: "₹100,000", paid: "₹75,000", remaining: "₹25,000" },
+//             { month: "March", expected: "₹100,000", paid: "₹80,000", remaining: "₹20,000" },
+//           ],
+//         },
+//       };
+
+//       if (res.data.success) {
+//         setReportData(res.data.monthlyReport || []);
+//         setSummary(res.data.summary);
+//         // Set joining date from API response as a fallback, but it's already set from the employee list
+//         if (res.data.joining_date) {
+//           setJoiningDate(res.data.joining_date);
+//         }
+//       } else {
+//         message.error(res.data.error || "Failed to load salary report");
+//         setReportData([]);
+//         setSummary(null);
+//         // Don't reset joining date here, as it's tied to the employee, not the report's success
+//       }
+//     } catch (err) {
+//       console.error("Error fetching salary report:", err);
+//       message.error("Error loading salary report");
+//       setReportData([]);
+//       setSummary(null);
+//       // Don't reset joining date here
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const isZeroRemaining = (value) =>
+//     /^₹0(\.0*)?$/.test(value?.replace(/,/g, ""));
+
+//   const columns = [
+//     { title: "Month", dataIndex: "month", align: "center" },
+//     {
+//       title: "Expected Salary",
+//       dataIndex: "expected",
+//       align: "right",
+//       render: (v) => <span>{v || "₹0"}</span>,
+//     },
+//     {
+//       title: "Paid Salary",
+//       dataIndex: "paid",
+//       align: "right",
+//       render: (v) => <span>{v || "₹0"}</span>,
+//     },
+//     {
+//       title: "Remaining Salary",
+//       dataIndex: "remaining",
+//       align: "right",
+//       render: (v) => (
+//         <span
+//           style={{
+//             color: isZeroRemaining(v) ? "green" : "red",
+//             fontWeight: 600,
+//           }}
+//         >
+//           {v || "₹0"}
+//         </span>
+//       ),
+//     },
+//   ];
+
+//   // Generate year options (5-year window)
+//   const yearOptions = Array.from({ length: 5 }, (_, i) => {
+//     const year = moment().year() - 2 + i;
+//     return (
+//       <Option key={year} value={year.toString()}>
+//         {year}
+//       </Option>
+//     );
+//   });
+
+//   // --- FIXED HANDLERS ---
+//   const handleEmployeeChange = (value) => {
+//     setSelectedEmp(value);
+//     setReportData([]);
+//     setSummary(null);
+    
+//     // Get the joining date directly from the employees list
+//     const emp = employees.find((e) => e._id === value);
+//     if (emp && emp.joining_date) {
+//       setJoiningDate(emp.joining_date);
+//     } else {
+//       setJoiningDate(null);
+//     }
+//   };
+
+//   const handleYearChange = (value) => {
+//     setSelectedYear(value);
+//     setReportData([]);
+//     setSummary(null);
+//     // IMPORTANT: Do NOT reset joiningDate when the year changes
+//   };
+
+//   return (
+//     <div className="p-6 bg-white rounded-lg shadow-md">
+//       <h2 className="text-xl font-semibold mb-6 text-gray-700 text-center">
+//         Salary Remaining Report ({selectedYear})
+//       </h2>
+
+//       {/* 🔹 Filters */}
+//       <div className="flex flex-wrap justify-center gap-4 mb-6">
+//         <div>
+//           <label className="block text-gray-600 mb-1 font-medium">
+//             Employee
+//           </label>
+//           <Select
+//             showSearch
+//             placeholder="Select Employee"
+//             value={selectedEmp}
+//             onChange={handleEmployeeChange} // Use the new handler
+//             style={{ width: 220 }}
+//             optionFilterProp="children"
+//             filterOption={(input, option) =>
+//               option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+//             }
+//           >
+//             {employees.map((emp) => (
+//               <Option key={emp._id} value={emp._id}>
+//                 {emp.name}
+//               </Option>
+//             ))}
+//           </Select>
+//         </div>
+
+//         <div>
+//           <label className="block text-gray-600 mb-1 font-medium">Year</label>
+//           <Select
+//             value={selectedYear}
+//             onChange={handleYearChange} // Use the new handler
+//             style={{ width: 120 }}
+//           >
+//             {yearOptions}
+//           </Select>
+//         </div>
+
+//         <div className="flex items-end">
+//           <Button type="primary" onClick={fetchSalaryReport} loading={loading}>
+//             Generate Report
+//           </Button>
+//         </div>
+//       </div>
+
+//       {/* 🔹 Joining Date Display */}
+//       {/* --- FIXED LOGIC --- */}
+//       {joiningDate && (
+//         <div className="text-center mb-4">
+//           <p className="text-gray-600 text-base font-medium">
+//             🗓️ <strong>Joining Date:</strong>{" "}
+//             <span className="text-gray-800">
+//               {moment(joiningDate).isValid()
+//                 ? moment(joiningDate).format("DD MMM YYYY")
+//                 : joiningDate // Display as-is if not a valid moment date for debugging
+//               }
+//             </span>
+//           </p>
+//         </div>
+//       )}
+
+//       {summary && (
+//         <>
+//           {/* 🔹 Salary Summary */}
+//           <div className="flex flex-wrap justify-center gap-6 mb-8">
+//             <div className="bg-green-100 p-4 rounded-lg text-center w-60 border border-green-400 shadow-sm">
+//               <p className="text-sm text-gray-600">Expected Salary</p>
+//               <p className="text-lg font-semibold text-green-700">
+//                 {summary.totalExpectedSalary || "₹0"}
+//               </p>
+//             </div>
+//             <div className="bg-blue-100 p-4 rounded-lg text-center w-60 border border-blue-400 shadow-sm">
+//               <p className="text-sm text-gray-600">Paid Salary</p>
+//               <p className="text-lg font-semibold text-blue-700">
+//                 {summary.totalPaidSalary || "₹0"}
+//               </p>
+//             </div>
+//           </div>
+//         </>
+//       )}
+
+//       {/* 📊 Table */}
+//       {loading ? (
+//         <div className="flex justify-center items-center py-10">
+//           <Spin size="large" />
+//         </div>
+//       ) : reportData.length > 0 ? (
+//         <Table
+//           columns={columns}
+//           dataSource={reportData}
+//           rowKey="month"
+//           pagination={false}
+//           bordered
+//         />
+//       ) : summary !== null ? (
+//         <div className="text-center text-gray-500 py-10">
+//           No salary data available for this employee/year.
+//         </div>
+//       ) : (
+//         <div className="text-center text-gray-500 py-10">
+//           Select an employee and click <b>"Generate Report"</b> to view details.
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
 export default SalaryRemainingReport;

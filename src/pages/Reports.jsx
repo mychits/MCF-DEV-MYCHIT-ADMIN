@@ -17,6 +17,7 @@ import {
   MdOutlineReceiptLong,
   MdMan,
 } from "react-icons/md";
+import { MdCalendarMonth } from "react-icons/md";
 import { FaPersonWalkingArrowLoopLeft } from "react-icons/fa6";
 import { RiMoneyRupeeCircleFill, RiAuctionFill } from "react-icons/ri";
 import { MdOutlinePayments } from "react-icons/md";
@@ -270,7 +271,15 @@ const subMenus = [
     category: "Employee",
    Icon: MdCancel,
    color: "from-blue-500 to-blue-600",
-  }
+  },
+     {
+    id:"29",
+    title: "Chit Asking Month Report",
+    link: "/reports/chit-asking-month-report",
+    category: "Customer",
+   Icon: MdCalendarMonth,
+   color: "from-blue-500 to-blue-600",
+  },
 ];
 
 const categories = ["All", "Reports", "Customer", "Agent" ,"Employee",  "Finance",];

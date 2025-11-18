@@ -125,7 +125,7 @@ import UnApprovedCustomerReport from "../pages/UnApprovedCustomerReport";
 import PaymentReport from "../pages/PaymentReport";
 import PigmySummaryReport from "../pages/PigmySummaryReport";
 
-
+import ChitAskingMonthReport from "../pages/ChitAskingMonthReport";
 import  SalaryRemainingReport from "../pages/SalaryRemainingReport";
 const mainRoutes = createBrowserRouter([
   {
@@ -667,6 +667,7 @@ const mainRoutes = createBrowserRouter([
         path: "outstanding-report",
         element: <OutstandingReport />,
       },
+      {path: "chit-asking-month-report", element: <ChitAskingMonthReport/>},
       {path: "payout-salary-report", element: <PayoutSalaryReport/>},
         {
     path: "target-incentive",

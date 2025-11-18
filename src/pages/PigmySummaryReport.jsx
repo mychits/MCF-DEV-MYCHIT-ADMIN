@@ -1,5 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, PiggyBank, Users, Calendar, TrendingUp, Clock } from "lucide-react";
+import {
+  Search,
+  PiggyBank,
+  Users,
+  Calendar,
+  TrendingUp,
+  Clock,
+} from "lucide-react";
 
 import api from "../instance/TokenInstance";
 import DataTable from "../components/layouts/Datatable";
@@ -11,6 +18,20 @@ const PigmySummaryReport = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPigmyId, setSelectedPigmyId] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [selectedReferredBy, setSelectedReferredBy] = useState("");
+
+  const uniqueReferredBy = useMemo(() => {
+    const setRef = new Set();
+    pigmyReportTable.forEach((p) => {
+      if (p.referredBy && p.referredBy !== "N/A") {
+        setRef.add(p.referredBy);
+      }
+    });
+    return Array.from(setRef).map((name) => ({
+      id: name,
+      label: name,
+    }));
+  }, [pigmyReportTable]);
 
   useEffect(() => {
     const fetchPigmyReport = async () => {
@@ -72,34 +93,56 @@ const PigmySummaryReport = () => {
     [pigmyReportTable]
   );
 
+  // const filteredPigmyReport = useMemo(() => {
+  //   return pigmyReportTable.filter((pigmy) => {
+  //     const matchPigmyId = selectedPigmyId
+  //       ? pigmy.pigmyIds === selectedPigmyId
+  //       : true;
+  //     const matchCustomer = selectedCustomer
+  //       ? pigmy.id === selectedCustomer
+  //       : true;
+  //     return matchPigmyId && matchCustomer;
+  //   });
+  // }, [pigmyReportTable, selectedPigmyId, selectedCustomer]);
+
   const filteredPigmyReport = useMemo(() => {
     return pigmyReportTable.filter((pigmy) => {
       const matchPigmyId = selectedPigmyId
         ? pigmy.pigmyIds === selectedPigmyId
         : true;
+
       const matchCustomer = selectedCustomer
         ? pigmy.id === selectedCustomer
         : true;
-      return matchPigmyId && matchCustomer;
+
+      const matchReferredBy = selectedReferredBy
+        ? pigmy.referredBy === selectedReferredBy
+        : true;
+
+      return matchPigmyId && matchCustomer && matchReferredBy;
     });
-  }, [pigmyReportTable, selectedPigmyId, selectedCustomer]);
+  }, [pigmyReportTable, selectedPigmyId, selectedCustomer, selectedReferredBy]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
     const filtered = filteredPigmyReport;
-    const totalAmount = filtered.reduce((sum, pigmy) => sum + pigmy.totalpigmyAmount, 0);
-    const avgDuration = filtered.length > 0 
-      ? filtered.reduce((sum, pigmy) => {
-          const dur = pigmy.Duration !== "N/A" ? Number(pigmy.Duration) : 0;
-          return sum + dur;
-        }, 0) / filtered.length
-      : 0;
-    
+    const totalAmount = filtered.reduce(
+      (sum, pigmy) => sum + pigmy.totalpigmyAmount,
+      0
+    );
+    const avgDuration =
+      filtered.length > 0
+        ? filtered.reduce((sum, pigmy) => {
+            const dur = pigmy.Duration !== "N/A" ? Number(pigmy.Duration) : 0;
+            return sum + dur;
+          }, 0) / filtered.length
+        : 0;
+
     return {
       totalPigmy: filtered.length,
       totalAmount: totalAmount,
       avgDuration: avgDuration.toFixed(1),
-      uniqueCustomers: new Set(filtered.map(p => p.customerId)).size,
+      uniqueCustomers: new Set(filtered.map((p) => p.customerId)).size,
     };
   }, [filteredPigmyReport]);
 
@@ -123,7 +166,11 @@ const PigmySummaryReport = () => {
           <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
           <p className="text-2xl font-bold text-gray-900">
             {value}
-            {suffix && <span className="text-lg font-normal text-gray-500 ml-1">{suffix}</span>}
+            {suffix && (
+              <span className="text-lg font-normal text-gray-500 ml-1">
+                {suffix}
+              </span>
+            )}
           </p>
         </div>
         <div className={`p-3 rounded-lg ${color}`}>
@@ -147,7 +194,8 @@ const PigmySummaryReport = () => {
             </h1>
           </div>
           <p className="text-gray-600 ml-14">
-            Comprehensive overview of pigmy savings accounts and customer contributions
+            Comprehensive overview of pigmy savings accounts and customer
+            contributions
           </p>
         </div>
 
@@ -168,7 +216,7 @@ const PigmySummaryReport = () => {
               <StatCard
                 icon={TrendingUp}
                 label="Total Amount Collected"
-                value={`₹${summaryStats.totalAmount.toLocaleString('en-IN')}`}
+                value={`₹${summaryStats.totalAmount.toLocaleString("en-IN")}`}
                 color="bg-gradient-to-br from-green-500 to-green-600"
               />
               <StatCard
@@ -194,7 +242,7 @@ const PigmySummaryReport = () => {
                   Filter Options
                 </h2>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Pigmy ID Filter */}
                 <div>
@@ -267,10 +315,45 @@ const PigmySummaryReport = () => {
                     ))}
                   </Select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Referred By
+                    </div>
+                  </label>
+
+                  <Select
+                    showSearch
+                    placeholder="Search or select referred by"
+                    value={selectedReferredBy}
+                    onChange={setSelectedReferredBy}
+                    allowClear
+                    optionLabelProp="label"
+                    className="w-full"
+                    size="large"
+                    filterOption={(input, option) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    <Select.Option value="" label="All Referred By">
+                      All Referred By
+                    </Select.Option>
+
+                    {uniqueReferredBy.map((ref) => (
+                      <Select.Option
+                        key={ref.id}
+                        value={ref.id}
+                        label={ref.label}
+                      >
+                        {ref.label}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </div>
               </div>
             </div>
 
-           
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-2">
               <DataTable
                 columns={PigmyReportColumns}
