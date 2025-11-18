@@ -7,7 +7,15 @@ import { Select, Modal, Table, message, Card, Statistic, Row, Col, Button, DateP
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
 import moment from "moment";
-import { SearchOutlined, EyeOutlined, FilterOutlined, DollarCircleOutlined, UsergroupAddOutlined, PhoneOutlined, CalendarOutlined, CloseCircleOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  UsergroupAddOutlined,
+  PhoneOutlined,
+  CloseCircleOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 import SettingSidebar from "../components/layouts/SettingSidebar";
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -27,6 +35,7 @@ const PenaltyMonitor = () => {
     totalPaid: 0,
     totalBalance: 0,
     totalPenalty: 0,
+    totalLateFee: 0, // 👈 NEW
   });
 
   // 🔹 Modal for breakdown
@@ -76,13 +85,18 @@ const PenaltyMonitor = () => {
                 } catch (err) {
                   console.warn(`Penalty API error for user ${userId}`, err);
                   penaltyData = {
-                    summary: { total_penalty: 0, grand_total_due_with_penalty: 0 },
+                    summary: {
+                      total_penalty: 0,
+                      total_late_payment_charges: 0,
+                      grand_total_due_with_penalty: 0,
+                    },
                   };
                 }
 
-                const balanceWithPenalty =
-                  penaltyData.summary?.grand_total_due_with_penalty || 0;
-                const totalPenalty = penaltyData.summary?.total_penalty || 0;
+                const summary = penaltyData.summary || {};
+                const totalPenalty = summary.total_penalty || 0;
+                const totalLateFee = summary.total_late_payment_charges || 0; // 👈 NEW
+                const balanceWithPenalty = summary.grand_total_due_with_penalty || 0;
 
                 usersList.push({
                   _id: data.enrollment._id,
@@ -94,18 +108,17 @@ const PenaltyMonitor = () => {
                   customerId: usrData.customer_id,
                   amountPaid: data.payments.totalPaidAmount,
                   paymentsTicket: data.payments.ticket,
-                  amountToBePaid:
-                    data.payable.totalPayable + data.profit.totalProfit,
+                  amountToBePaid: data.payable.totalPayable + data.profit.totalProfit,
                   groupName: data.enrollment.group.group_name,
                   enrollmentDate: data.enrollment.createdAt
                     ? data.enrollment.createdAt.split("T")[0]
                     : "",
-                  totalToBePaid:
-                    data.payable.totalPayable + data.profit.totalProfit,
+                  totalToBePaid: data.payable.totalPayable + data.profit.totalProfit,
                   balance: balanceWithPenalty,
                   totalPenalty: totalPenalty,
+                  totalLateFee: totalLateFee, // 👈 NEW
 
-                  // ✅ Action button like PenaltySettings
+                  // ✅ Action button
                   actions: (
                     <Button
                       type="primary"
@@ -141,10 +154,7 @@ const PenaltyMonitor = () => {
           }
         }
 
-        const validUsers = usersList.filter(
-          (u) => Number(u.totalToBePaid || 0) > 0
-        );
-
+        const validUsers = usersList.filter((u) => Number(u.totalToBePaid || 0) > 0);
         setUsersData(validUsers);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -163,22 +173,11 @@ const PenaltyMonitor = () => {
     const groupSet = new Set(filteredUsers.map((user) => user.groupName));
     const totalGroups = groupFilter ? 1 : groupSet.size;
 
-    const totalToBePaid = filteredUsers.reduce(
-      (sum, u) => sum + (u.totalToBePaid || 0),
-      0
-    );
-    const totalPaid = filteredUsers.reduce(
-      (sum, u) => sum + (u.amountPaid || 0),
-      0
-    );
-    const totalBalance = filteredUsers.reduce(
-      (sum, u) => sum + (u.balance || 0),
-      0
-    );
-    const totalPenalty = filteredUsers.reduce(
-      (sum, u) => sum + (u.totalPenalty || 0),
-      0
-    );
+    const totalToBePaid = filteredUsers.reduce((sum, u) => sum + (u.totalToBePaid || 0), 0);
+    const totalPaid = filteredUsers.reduce((sum, u) => sum + (u.amountPaid || 0), 0);
+    const totalBalance = filteredUsers.reduce((sum, u) => sum + (u.balance || 0), 0);
+    const totalPenalty = filteredUsers.reduce((sum, u) => sum + (u.totalPenalty || 0), 0);
+    const totalLateFee = filteredUsers.reduce((sum, u) => sum + (u.totalLateFee || 0), 0); // 👈 NEW
 
     setTotals({
       totalCustomers,
@@ -187,6 +186,7 @@ const PenaltyMonitor = () => {
       totalPaid,
       totalBalance,
       totalPenalty,
+      totalLateFee, // 👈 NEW
     });
   }, [filteredUsers, groupFilter]);
 
@@ -212,133 +212,132 @@ const PenaltyMonitor = () => {
   };
 
   const columns = [
-    { 
-      key: "sl_no", 
-      header: "SL. NO", 
+    {
+      key: "sl_no",
+      header: "SL. NO",
       render: (text, record, index) => (
         <span className="font-medium text-gray-700">{index + 1}</span>
-      )
+      ),
     },
-    { 
-      key: "userName", 
+    {
+      key: "userName",
       header: "Customer Name",
-      render: (text) => (
-        <div className="font-medium text-gray-900">{text}</div>
-      )
+      render: (text) => <div className="font-medium text-gray-900">{text}</div>,
     },
-    { 
-      key: "userPhone", 
+    {
+      key: "userPhone",
       header: "Phone Number",
       render: (text) => (
         <div className="flex items-center">
           <PhoneOutlined className="mr-2 text-blue-500" />
           {text}
         </div>
-      )
+      ),
     },
-    { 
-      key: "customerId", 
+    {
+      key: "customerId",
       header: "Customer ID",
       render: (text) => (
         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{text}</span>
-      )
+      ),
     },
-    { 
-      key: "groupName", 
+    {
+      key: "groupName",
       header: "Group Name",
       render: (text) => (
         <Tag color="blue" className="font-medium">
           {text}
         </Tag>
-      )
+      ),
     },
-    { 
-      key: "enrollmentDate", 
+    {
+      key: "enrollmentDate",
       header: "Enrollment Date",
-      render: (text) => moment(text).format("DD/MM/YYYY")
+      render: (text) => moment(text).format("DD/MM/YYYY"),
     },
-    { 
-      key: "paymentsTicket", 
-      header: "Ticket" 
+    {
+      key: "paymentsTicket",
+      header: "Ticket",
     },
-    { 
-      key: "totalToBePaid", 
+    {
+      key: "totalToBePaid",
       header: "Amount to be Paid",
       render: (text) => (
-        <span className="font-semibold text-green-600">₹{text?.toLocaleString('en-IN')}</span>
-      )
+        <span className="font-semibold text-green-600">₹{text?.toLocaleString("en-IN")}</span>
+      ),
     },
-   
-    { 
-      key: "amountPaid", 
+    {
+      key: "amountPaid",
       header: "Amount Paid",
       render: (text) => (
-        <span className="font-semibold text-indigo-600">₹{text?.toLocaleString('en-IN')}</span>
-      )
+        <span className="font-semibold text-indigo-600">₹{text?.toLocaleString("en-IN")}</span>
+      ),
     },
-     { 
-      key: "totalPenalty", 
+    {
+      key: "totalPenalty",
       header: "Penalty Amount",
       render: (text) => (
-        <span className="font-semibold text-red-600">₹{text?.toLocaleString('en-IN')}</span>
-      )
+        <span className="font-semibold text-red-600">₹{text?.toLocaleString("en-IN")}</span>
+      ),
     },
-    { 
-      key: "balance", 
+    {
+      key: "totalLateFee", // 👈 NEW COLUMN
+      header: "Late Fee",
+      render: (text) => (
+        <span className="font-semibold text-orange-600">₹{text?.toLocaleString("en-IN")}</span>
+      ),
+    },
+    {
+      key: "balance",
       header: "Outstanding with Penalty",
       render: (text) => (
-        <span className={`font-semibold ${text > 0 ? 'text-red-600' : 'text-green-600'}`}>
-          ₹{text?.toLocaleString('en-IN')}
+        <span className={`font-semibold ${text > 0 ? "text-red-600" : "text-green-600"}`}>
+          ₹{text?.toLocaleString("en-IN")}
         </span>
-      )
+      ),
     },
-    { 
-      key: "actions", 
+    {
+      key: "actions",
       header: "Actions",
-      render: (text, record) => record.actions
+      render: (text, record) => record.actions,
     },
-    { 
-      key: "statusDiv", 
+    {
+      key: "statusDiv",
       header: "Status",
-      render: (text) => text
+      render: (text) => text,
     },
   ];
 
   const breakdownColumns = [
-    { 
-      title: "Auction", 
-      dataIndex: "cycle_no", 
-      align: "center", 
+    {
+      title: "Auction",
+      dataIndex: "cycle_no",
+      align: "center",
       width: 80,
-      render: (text) => <span className="font-medium">{text}</span>
+      render: (text) => <span className="font-medium">{text}</span>,
     },
-    // {
-    //   title: "From Date",
-    //   dataIndex: "from_date",
-    //   render: (v) => moment(v).format("DD/MM/YYYY"),
-    // },
     {
       title: "Due Date",
       dataIndex: "to_date",
       render: (v) => moment(v).format("DD/MM/YYYY"),
     },
-    { 
-      title: "Expected", 
-      dataIndex: "expected", 
+    {
+      title: "Expected",
+      dataIndex: "expected",
       align: "right",
-      render: (v) => <span className="font-medium">₹{v?.toFixed(2)}</span>
+      render: (v) => <span className="font-medium">₹{v?.toFixed(2)}</span>,
     },
-    { 
-      title: "Paid", 
-      dataIndex: "paid", 
+    {
+      title: "Paid",
+      dataIndex: "paid",
       align: "right",
-      render: (v) => <span className="text-green-600 font-medium">₹{v?.toFixed(2)}</span>
+      render: (v) => <span className="text-green-600 font-medium">₹{v?.toFixed(2)}</span>,
     },
-    { 
-      title: "Balance", 
-      dataIndex: "balance", 
+    {
+      title: "Balance",
+      dataIndex: "balance",
       align: "right",
-      render: (v) => <span className="text-red-600 font-medium">₹{v?.toFixed(2)}</span>
+      render: (v) => <span className="text-red-600 font-medium">₹{v?.toFixed(2)}</span>,
     },
     {
       title: "Penalty",
@@ -350,11 +349,21 @@ const PenaltyMonitor = () => {
         </span>
       ),
     },
-    { 
-      title: " Penalty Rate", 
-      dataIndex: "penalty_rate_percent", 
+    {
+      title: "Late Fee", // 👈 NEW
+      dataIndex: "late_payment_charges",
+      align: "right",
+      render: (v) => (
+        <span className="text-orange-600 font-medium">
+          ₹{Number(v || 0).toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      title: "Penalty Rate",
+      dataIndex: "penalty_rate_percent",
       align: "center",
-      render: (v) => <span className="text-blue-600">{v}%</span>
+      render: (v) => <span className="text-blue-600">{v}%</span>,
     },
   ];
 
@@ -387,12 +396,14 @@ const PenaltyMonitor = () => {
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 Penalty & Outstanding Report
               </h1>
-              <p className="text-gray-600">Monitor and manage customer penalties and outstanding amounts</p>
+              <p className="text-gray-600">
+                Monitor and manage customer penalties, late fees, and outstanding amounts
+              </p>
             </div>
 
             {/* Filters */}
             <div className="mb-8">
-              <Card 
+              <Card
                 className="shadow-sm rounded-lg border border-gray-200"
                 title={
                   <div className="flex items-center">
@@ -430,8 +441,8 @@ const PenaltyMonitor = () => {
                       className="w-full"
                       onChange={(dates) => {
                         if (dates) {
-                          setFromDate(moment(dates[0]).format('YYYY-MM-DD'));
-                          setToDate(moment(dates[1]).format('YYYY-MM-DD'));
+                          setFromDate(moment(dates[0]).format("YYYY-MM-DD"));
+                          setToDate(moment(dates[1]).format("YYYY-MM-DD"));
                         } else {
                           setFromDate("");
                           setToDate("");
@@ -465,7 +476,7 @@ const PenaltyMonitor = () => {
                       title="Total Customers"
                       value={totals.totalCustomers}
                       prefix={<UsergroupAddOutlined className="text-blue-500" />}
-                      valueStyle={{ color: '#1890ff', fontSize: '1.5rem' }}
+                      valueStyle={{ color: "#1890ff", fontSize: "1.5rem" }}
                     />
                   </Card>
                 </Col>
@@ -475,7 +486,7 @@ const PenaltyMonitor = () => {
                       title="Total Groups"
                       value={totals.totalGroups}
                       prefix={<UsergroupAddOutlined className="text-green-500" />}
-                      valueStyle={{ color: '#52c41a', fontSize: '1.5rem' }}
+                      valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
                     />
                   </Card>
                 </Col>
@@ -485,9 +496,8 @@ const PenaltyMonitor = () => {
                       title="Amount to be Paid"
                       value={totals.totalToBePaid}
                       precision={2}
-                    
-                      valueStyle={{ color: '#1890ff', fontSize: '1.5rem' }}
-                      formatter={(value) => `₹${value?.toLocaleString('en-IN')}`}
+                      valueStyle={{ color: "#1890ff", fontSize: "1.5rem" }}
+                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
                     />
                   </Card>
                 </Col>
@@ -497,9 +507,20 @@ const PenaltyMonitor = () => {
                       title="Total Penalty"
                       value={totals.totalPenalty}
                       precision={2}
-                     
-                      valueStyle={{ color: '#ff4d4f', fontSize: '1.5rem' }}
-                      formatter={(value) => `₹${value?.toLocaleString('en-IN')}`}
+                      valueStyle={{ color: "#ff4d4f", fontSize: "1.5rem" }}
+                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
+                    />
+                  </Card>
+                </Col>
+                {/* 👇 NEW LATE FEE CARD */}
+                <Col xs={24} sm={12} md={4}>
+                  <Card className="shadow-sm border border-gray-200">
+                    <Statistic
+                      title="Total Late Fees"
+                      value={totals.totalLateFee}
+                      precision={2}
+                      valueStyle={{ color: "#f97316", fontSize: "1.5rem" }}
+                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
                     />
                   </Card>
                 </Col>
@@ -509,9 +530,8 @@ const PenaltyMonitor = () => {
                       title="Total Paid"
                       value={totals.totalPaid}
                       precision={2}
-                 
-                      valueStyle={{ color: '#722ed1', fontSize: '1.5rem' }}
-                      formatter={(value) => `₹${value?.toLocaleString('en-IN')}`}
+                      valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
+                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
                     />
                   </Card>
                 </Col>
@@ -521,9 +541,8 @@ const PenaltyMonitor = () => {
                       title="Total Balance"
                       value={totals.totalBalance}
                       precision={2}
-                     
-                      valueStyle={{ color: '#ff4d4f', fontSize: '1.5rem' }}
-                      formatter={(value) => `₹${value?.toLocaleString('en-IN')}`}
+                      valueStyle={{ color: "#ff4d4f", fontSize: "1.5rem" }}
+                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
                     />
                   </Card>
                 </Col>
@@ -531,7 +550,7 @@ const PenaltyMonitor = () => {
             </div>
 
             {/* Data Table */}
-            <Card 
+            <Card
               className="shadow-sm rounded-lg border border-gray-200"
               title={
                 <div className="flex justify-between items-center">
@@ -572,7 +591,7 @@ const PenaltyMonitor = () => {
         onCancel={() => setBreakdownModal(false)}
         footer={null}
         width={1000}
-        bodyStyle={{ padding: '20px' }}
+        bodyStyle={{ padding: "20px" }}
       >
         {loadingBreakdown ? (
           <div className="flex justify-center items-center h-64">
@@ -592,13 +611,13 @@ const PenaltyMonitor = () => {
             {/* ✅ Summary Totals */}
             {breakdownData.length > 0 && (
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                   <div className="text-center">
                     <div className="text-gray-500 text-sm">Expected</div>
                     <div className="text-lg font-semibold">
                       ₹{breakdownData
                         .reduce((sum, d) => sum + (d.expected || 0), 0)
-                        .toLocaleString('en-IN')}
+                        .toLocaleString("en-IN")}
                     </div>
                   </div>
                   <div className="text-center">
@@ -606,19 +625,26 @@ const PenaltyMonitor = () => {
                     <div className="text-lg font-semibold text-green-600">
                       ₹{breakdownData
                         .reduce((sum, d) => sum + (d.paid || 0), 0)
-                        .toLocaleString('en-IN')}
+                        .toLocaleString("en-IN")}
                     </div>
                   </div>
-                 
                   <div className="text-center">
                     <div className="text-gray-500 text-sm">Penalty</div>
                     <div className="text-lg font-semibold text-red-600">
                       ₹{breakdownData
                         .reduce((sum, d) => sum + (d.penalty || 0), 0)
-                        .toLocaleString('en-IN')}
+                        .toLocaleString("en-IN")}
                     </div>
                   </div>
-               
+                  {/* 👇 NEW LATE FEE SUMMARY */}
+                  <div className="text-center">
+                    <div className="text-gray-500 text-sm">Late Fees</div>
+                    <div className="text-lg font-semibold text-orange-600">
+                      ₹{breakdownData
+                        .reduce((sum, d) => sum + (d.late_payment_charges || 0), 0)
+                        .toLocaleString("en-IN")}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
