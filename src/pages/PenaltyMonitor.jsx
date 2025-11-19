@@ -64,14 +64,14 @@ const PenaltyMonitor = () => {
     const fetchData = async () => {
       try {
         setScreenLoading(true);
-        
+
         // Get user data
         const reportResponse = await api.get("/user/all-customers-report");
-        
+
         // Get ALL penalty data in ONE call
         const penaltyResponse = await api.get("/penalty/get-penalty-report"); // This now returns all data
         const allPenaltyData = penaltyResponse.data?.data || [];
-        
+
         // Create a map for fast lookup: "userId_groupId" -> penalty data
         const penaltyMap = new Map();
         allPenaltyData.forEach(penalty => {
@@ -88,7 +88,7 @@ const PenaltyMonitor = () => {
               if (data?.enrollment?.group) {
                 const groupId = data.enrollment.group._id;
                 const userId = usrData._id;
-                
+
                 // 🔥 Get penalty data from the single call (no API call here!)
                 const penaltyKey = `${userId}_${groupId}`;
                 const penaltyData = penaltyMap.get(penaltyKey) || {
@@ -112,18 +112,19 @@ const PenaltyMonitor = () => {
                   userName: usrData.userName,
                   userPhone: usrData.phone_number,
                   customerId: usrData.customer_id,
-                  amountPaid: data.payments.totalPaidAmount,
+                  amountPaid: summary.total_paid || 0,
                   paymentsTicket: data.payments.ticket,
-                  amountToBePaid: data.payable.totalPayable + data.profit.totalProfit,
+                  amountToBePaid: summary.total_expected || 0,
+
                   groupName: data.enrollment.group.group_name,
                   enrollmentDate: data.enrollment.createdAt
                     ? data.enrollment.createdAt.split("T")[0]
                     : "",
-                  totalToBePaid: data.payable.totalPayable + data.profit.totalProfit,
+                  totalToBePaid: summary.total_expected || 0,
                   balance: balanceWithPenalty,
                   totalPenalty: totalPenalty,
                   totalLateFee: totalLateFee,
-                  
+
                   // ✅ Action button - will now use cached data
                   actions: (
                     <Button
