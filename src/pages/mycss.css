@@ -1,0 +1,364 @@
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #1a73e8;
+  animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Print Options Container */
+.print-options-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 210mm;
+  margin-bottom: 20px;
+}
+
+.format-selector {
+  display: flex;
+  gap: 15px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* MAIN CONTAINER */
+.receipt-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  min-height: 100vh;
+}
+
+/* PRINT BUTTON */
+.print-button-container {
+  margin-bottom: 15px;
+}
+.print-button {
+  background: #1a73e8;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+/* VERTICAL FORMAT STYLES */
+.vertical-format .receipt-wrapper {
+  width: 210mm;
+  height: 130mm; /* EXACT half of A4 */
+  background: white;
+  padding: 5mm;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* 1px tear line for vertical format */
+.vertical-format .receipt-wrapper::after {
+  content: "";
+  width: 100%;
+  height: 1px;
+  background: #333;
+  opacity: 0.3;
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+}
+
+/* BOTTOM 50% EMPTY A4 */
+.vertical-format .a4-bottom-empty {
+  width: 210mm;
+  height: 148.5mm;
+}
+
+/* TWO COPIES SIDE-BY-SIDE */
+.vertical-format .side-by-side {
+  display: flex;
+  gap: 1mm; /* 1px tear gap */
+  height: 100%;
+}
+
+/* HORIZONTAL FORMAT STYLES */
+.horizontal-format {
+  width: 210mm;
+  min-height: 148mm;
+  background: white;
+  padding: 10mm 8mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+  border: 1px solid #ccc;
+  position: relative;
+}
+
+.horizontal-format::after {
+  content: "";
+  width: 100%;
+  height: 1px;
+  background: #000;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  opacity: 0.2;
+}
+
+.horizontal-format .a4-bottom-empty {
+  height: 148mm;
+}
+
+/* RECEIPT BOX - COMMON STYLES */
+.pro-receipt {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #d3d8df;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+/* Vertical format specific receipt styles */
+.vertical-format .pro-receipt {
+  width: 50%;
+}
+
+/* Horizontal format specific receipt styles */
+.horizontal-format .pro-receipt {
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+}
+
+/* HEADER - COMMON STYLES */
+.pro-header {
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.pro-left {
+  display: flex;
+  gap: 12px;
+}
+.pro-center {
+  display: flex;
+  gap: 12px;
+}
+
+.pro-logo {
+  width: 50px;
+}
+
+.horizontal-format .pro-logo {
+  width: 55px;
+}
+
+.pro-company {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2b50;
+}
+
+.horizontal-format .pro-company {
+  font-size: 18px;
+}
+
+.pro-address {
+  font-size: 11px;
+  margin: 0;
+  color: #444;
+}
+
+.horizontal-format .pro-address {
+  margin-top: 2px;
+}
+
+.pro-type-box {
+  color: black;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.horizontal-format .pro-type-box {
+ 
+  color: black;
+  padding: 8px 14px;
+  margin-top: 0;
+}
+
+/* TITLE */
+.pro-title {
+  text-align: center;
+  font-size: 16px;
+  margin: 12px 0;
+  font-weight: 600;
+  color: #1f2b50;
+}
+
+.horizontal-format .pro-title {
+  font-size: 17px;
+  letter-spacing: 0.5px;
+}
+
+/* BOXES */
+.pro-box {
+  border: 1px solid #d5dce3;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.horizontal-format .pro-box {
+  background: #f9fafc;
+  padding: 10px 12px;
+}
+
+.pro-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.horizontal-format .pro-row {
+  align-items: center;
+}
+
+.pro-item {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.horizontal-format .pro-item {
+  width: 33%;
+  flex-direction: row;
+  align-items: center;
+  font-size: 13px;
+}
+
+.lbl {
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+}
+
+.horizontal-format .lbl {
+  font-size: 12px;
+}
+
+.pro-item span:last-child {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.horizontal-format .pro-item span:last-child {
+  font-size: 13px;
+}
+
+/* AMOUNT BOX */
+.pro-amount-box {
+  display: flex;
+  justify-content: space-between;
+  background: #e8f5e9;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #b0bec5;
+  margin-bottom: 10px;
+}
+
+.horizontal-format .pro-amount-box {
+  padding: 10px 12px;
+  margin: 12px 0;
+  font-size: 15px;
+}
+
+.pro-amount-box .val {
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.horizontal-format .pro-amount-box .val {
+  font-size: 16px;
+}
+
+.horizontal-format .pro-amount-box .lbl {
+  color: #2e7d32;
+}
+
+/* SIGNATURE */
+.pro-footer {
+  margin-top: 30px;
+  text-align: right;
+}
+
+.horizontal-format .pro-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sign {
+  width: 140px;
+  border-top: 1px solid #aaa;
+  margin-left: auto;
+  margin-top: 30px;
+  padding-top: 4px;
+  font-size: 12px;
+}
+
+.horizontal-format .sign {
+  margin-left: 0;
+  text-align: center;
+}
+
+/* PRINT MODE */
+@media print {
+  .print-button-container,
+  .format-selector {
+    display: none;
+  }
+  body {
+    background: white;
+    background-color: white;
+  }
+  .receipt-container {
+    margin: 0;
+    padding: 0;
+  }
+  .horizontal-format::after {
+    display: none !important;
+  }
+}

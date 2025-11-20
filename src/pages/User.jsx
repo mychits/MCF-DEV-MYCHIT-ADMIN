@@ -136,6 +136,7 @@ const User = () => {
           address: group.address,
           pincode: group.pincode,
           customer_id: group.customer_id,
+          referral_code: group?.referral_code,
           collection_area: group.collection_area?.route_name,
           progress: (
             <div className="flex flex-col items-center justify-center">
@@ -444,6 +445,7 @@ const User = () => {
     { key: "createdAt", header: "Joined On" },
     { key: "address", header: "Customer Address" },
     { key: "pincode", header: "Customer Pincode" },
+    {key: "referral_code", header: "Referral Code"},
     { key: "collection_area", header: "Area" },
     { key: "progress", header: "Progress" },
 

@@ -42,7 +42,7 @@ import { MdCancel } from "react-icons/md";
 import { MdAccountBalanceWallet } from "react-icons/md";
 import { LuTarget } from "react-icons/lu";
 import { TbTargetArrow } from "react-icons/tb";
-
+import { FaExclamationTriangle } from "react-icons/fa";
 const MenuSidebar = [
   {
     id: "$1",
@@ -217,11 +217,18 @@ const MenuSidebar = [
 // ],
 },
   {
+    id: "$2564",
+    title: "Approvals",
+    icon: <FaExclamationTriangle />,
+    link: "/approval-menu",
+  },
+  {
     id: ids.eleven,
     title: "Auctions ",
     icon: <RiAuctionLine />,
     link: "/auction",
   },
+
   {
     id: "$#S",
     title: "Accounts",

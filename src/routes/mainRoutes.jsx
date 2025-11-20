@@ -127,6 +127,7 @@ import PigmySummaryReport from "../pages/PigmySummaryReport";
 
 import ChitAskingMonthReport from "../pages/ChitAskingMonthReport";
 import  SalaryRemainingReport from "../pages/SalaryRemainingReport";
+import AdminApprovalMenu from "../pages/AdminApprovalsMenu";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -253,6 +254,15 @@ const mainRoutes = createBrowserRouter([
     ),
   },
 
+    {
+    path: "/approval-menu/mobile-app-enroll",
+    element: (
+      <ProtectedRoute>
+        <MobileAppEnroll />
+      </ProtectedRoute>
+    ),
+  },
+
   {
     path: "/user",
     element: (
@@ -264,6 +274,14 @@ const mainRoutes = createBrowserRouter([
   ,
   {
     path: "/customer-menu/un-approved-customer",
+    element: (
+      <ProtectedRoute>
+        <UnApprovedCustomer />
+      </ProtectedRoute>
+    ),
+  },
+   {
+    path: "/approval-menu/un-approved-customer",
     element: (
       <ProtectedRoute>
         <UnApprovedCustomer />
@@ -311,6 +329,14 @@ const mainRoutes = createBrowserRouter([
     path: "/group-menu",
     element: (<ProtectedRoute>
       <GroupMenu/>
+      </ProtectedRoute>
+      ),
+
+  },
+   {
+    path: "/approval-menu",
+    element: (<ProtectedRoute>
+      <AdminApprovalMenu/>
       </ProtectedRoute>
       ),
 

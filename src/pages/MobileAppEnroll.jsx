@@ -39,6 +39,57 @@ const MobileAppEnroll = () => {
   });
   const [isExistingEnrollment, setIsExistingEnrollment] = useState(false);
   const [admin, setAdmin] = useState("");
+      const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = String(today.getMonth() + 1).padStart(2, "0");
+    const currentYearMonth = `${currentYear}-${currentMonth}`;
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = `0${date.getMonth() + 1}`.slice(-2);
+      const day = `0${date.getDate()}`.slice(-2);
+      return `${year}-${month}-${day}`;
+    }
+
+     const parseDate = (dateString) => {
+    const [year, month] = dateString.split("-");
+    return {
+      year,
+      month: String(parseInt(month)).padStart(2, "0"),
+      monthName: monthNames[parseInt(month) - 1],
+    };
+  };
+
+  const formatToYearMonth = (year, month) => {
+    return `${year}-${String(month).padStart(2, "0")}`;
+  };
+
+  const getMonthDateRange = (dateString) => {
+    const { year, month } = parseDate(dateString);
+    const startDate = new Date(year, parseInt(month) - 1, 1);
+    const endDate = new Date(year, parseInt(month), 0);
+
+    return {
+      from_date: formatDate(startDate),
+      to_date: formatDate(endDate),
+    };
+  };
+  
+    const [selectedDate, setSelectedDate] = useState(currentYearMonth);
+  
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
   const [formData, setFormData] = useState({
     group_id: "",
     user_id: "",
@@ -215,7 +266,7 @@ const MobileAppEnroll = () => {
         user_id,
         payment_type,
         referred_type,
-        chit_asking_month: Number(chit_asking_month),
+        chit_asking_month: formData.chit_asking_month,
         referred_customer,
         referred_lead,
         agent,
@@ -781,17 +832,22 @@ const MobileAppEnroll = () => {
                 </Select>
               </div>
 
-              <div className="w-full">
-                <label className="block mb-2 text-sm font-medium text-gray-900">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-800">
                   Chit Asking Month
                 </label>
                 <input
-                  type="number"
-                  name="chit_asking_month"
-                  value={formData.chit_asking_month}
-                  onChange={handleChange}
-                  placeholder="Enter month number (e.g., 1 for Jan)"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  type="month"
+                  className="p-2 border rounded w-full"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setFormData((prev) => ({
+                      ...prev,
+                      chit_asking_month: e.target.value, // <-- FIX
+                    }));
+                  }}
+                  max={formatToYearMonth(currentYear, currentMonth)}
                 />
               </div>
 
@@ -893,7 +949,7 @@ const MobileAppEnroll = () => {
                   >
                     {leads.map((lead) => (
                       <Select.Option key={lead._id} value={lead._id}>
-                        {lead.lead_name}
+                        {lead.lead_name} | {lead.lead_phone}
                       </Select.Option>
                     ))}
                   </Select>
@@ -928,7 +984,7 @@ const MobileAppEnroll = () => {
                   >
                     {agents.map((agent) => (
                       <Select.Option key={agent._id} value={agent._id}>
-                        {agent.name}
+                        {agent.name} | {agent.phone_number}
                       </Select.Option>
                     ))}
                   </Select>
