@@ -76,6 +76,11 @@ const PenaltySettings = () => {
   const [searchText, setSearchText] = useState("");
   const isGroupSelected = !!selectedGroup;
 
+  const [vacantChitPenaltyAmount, setVacantChitPenaltyAmount] = useState(0);
+  const [vacantChitGraceDays, setVacantChitGraceDays] = useState(0);
+  const [vacantChitPenaltyRate, setVacantChitPenaltyRate] = useState(0);
+
+
   useEffect(() => {
     if (selectedGroup && penaltyRate >= 0) {
       const installment = getInstallmentAmount(selectedGroup);
@@ -167,6 +172,10 @@ const PenaltySettings = () => {
         installment_amount: installmentAmount,
         group_name: selectedGroup.group_name,
         additional_charges: additionalCharges,
+        vacant_chit_penalty_amount: vacantChitPenaltyAmount,
+        vacant_chit_grace_days: vacantChitGraceDays,
+        vacant_chit_penalty_rate: vacantChitPenaltyRate,
+
       });
 
       message.success("Penalty saved successfully");
@@ -194,8 +203,12 @@ const PenaltySettings = () => {
       penalty_rate: row.penalty_rate,
       grace_days: row.grace_days,
       penalty_amount: row.penalty_amount,
-      late_payment_amount: row.late_payment_amount || 0,
-      days_late_threshold: row.days_late_threshold || 0,
+      late_payment_amount: row.late_payment_amount || 0, // Handles potentially missing field
+      days_late_threshold: row.days_late_threshold || 0, // Handles potentially missing field
+      // Correctly fetch and set vacant chit fields, defaulting to 0 if missing
+      vacant_chit_penalty_amount: row.vacant_chit_penalty_amount || 0,
+      vacant_chit_grace_days: row.vacant_chit_grace_days || 0,
+      vacant_chit_penalty_rate: row.vacant_chit_penalty_rate || 0,
       group_id: row.group_id,
     });
     setIsModalOpen(true);
@@ -212,6 +225,9 @@ const PenaltySettings = () => {
         days_late_threshold: values.days_late_threshold,
         installment_amount: values.installment_amount,
         group_name: values.group_name,
+        vacant_chit_penalty_amount: values.vacant_chit_penalty_amount,
+        vacant_chit_grace_days: values.vacant_chit_grace_days,
+        vacant_chit_penalty_rate: values.vacant_chit_penalty_rate,
       });
       message.success("Penalty updated successfully");
       setIsModalOpen(false);
@@ -604,80 +620,80 @@ const PenaltySettings = () => {
                             ))}
                           </Select>
                         </Col>
-                      
-                      {selectedGroup && (
-  <Col xs={24}>
-    <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-      
-      {/* Monthly */}
-      <div style={{ flex: 1 }}>
-        <div style={{ marginBottom: '6px' }}>
-          <Text strong style={{ color: '#475569', fontSize: '14px' }}>
-            Monthly
-          </Text>
-        </div>
-        <div
-          style={{
-            padding: '12px 16px',
-            background: 'linear-gradient(to right, #f0f9ff, #e0f2fe)',
-            border: '1px solid #bae6fd',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '16px',
-            color: '#0369a1'
-          }}
-        >
-          ₹{Number(selectedGroup.monthly_installment || 0).toLocaleString('en-IN')}
-        </div>
-      </div>
 
-      {/* Weekly */}
-      <div style={{ flex: 1 }}>
-        <div style={{ marginBottom: '6px' }}>
-          <Text strong style={{ color: '#475569', fontSize: '14px' }}>
-            Weekly
-          </Text>
-        </div>
-        <div
-          style={{
-            padding: '12px 16px',
-            background: 'linear-gradient(to right, #fef9c3, #fef3c7)',
-            border: '1px solid #fde68a',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '16px',
-            color: '#ca8a04'
-          }}
-        >
-          ₹{Number(selectedGroup.weekly_installment || 0).toLocaleString('en-IN')}
-        </div>
-      </div>
+                        {selectedGroup && (
+                          <Col xs={24}>
+                            <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
 
-      {/* Daily */}
-      <div style={{ flex: 1 }}>
-        <div style={{ marginBottom: '6px' }}>
-          <Text strong style={{ color: '#475569', fontSize: '14px' }}>
-            Daily
-          </Text>
-        </div>
-        <div
-          style={{
-            padding: '12px 16px',
-            background: 'linear-gradient(to right, #fef2f2, #fee2e2)',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '16px',
-            color: '#b91c1c'
-          }}
-        >
-          ₹{Number(selectedGroup.daily_installment || 0).toLocaleString('en-IN')}
-        </div>
-      </div>
+                              {/* Monthly */}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ marginBottom: '6px' }}>
+                                  <Text strong style={{ color: '#475569', fontSize: '14px' }}>
+                                    Monthly
+                                  </Text>
+                                </div>
+                                <div
+                                  style={{
+                                    padding: '12px 16px',
+                                    background: 'linear-gradient(to right, #f0f9ff, #e0f2fe)',
+                                    border: '1px solid #bae6fd',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    fontSize: '16px',
+                                    color: '#0369a1'
+                                  }}
+                                >
+                                  ₹{Number(selectedGroup.monthly_installment || 0).toLocaleString('en-IN')}
+                                </div>
+                              </div>
 
-    </div>
-  </Col>
-)}
+                              {/* Weekly */}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ marginBottom: '6px' }}>
+                                  <Text strong style={{ color: '#475569', fontSize: '14px' }}>
+                                    Weekly
+                                  </Text>
+                                </div>
+                                <div
+                                  style={{
+                                    padding: '12px 16px',
+                                    background: 'linear-gradient(to right, #fef9c3, #fef3c7)',
+                                    border: '1px solid #fde68a',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    fontSize: '16px',
+                                    color: '#ca8a04'
+                                  }}
+                                >
+                                  ₹{Number(selectedGroup.weekly_installment || 0).toLocaleString('en-IN')}
+                                </div>
+                              </div>
+
+                              {/* Daily */}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ marginBottom: '6px' }}>
+                                  <Text strong style={{ color: '#475569', fontSize: '14px' }}>
+                                    Daily
+                                  </Text>
+                                </div>
+                                <div
+                                  style={{
+                                    padding: '12px 16px',
+                                    background: 'linear-gradient(to right, #fef2f2, #fee2e2)',
+                                    border: '1px solid #fecaca',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    fontSize: '16px',
+                                    color: '#b91c1c'
+                                  }}
+                                >
+                                  ₹{Number(selectedGroup.daily_installment || 0).toLocaleString('en-IN')}
+                                </div>
+                              </div>
+
+                            </div>
+                          </Col>
+                        )}
 
 
                       </Row>
@@ -843,6 +859,80 @@ const PenaltySettings = () => {
                                 formatter={value => `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                 parser={value => value.replace(/\₹\s?|(,*)/g, '')}
                                 placeholder="Enter amount"
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      </Card>
+
+                      {/* Vacant Chit Penalties Section */}
+                      <Card
+                        style={{
+                          borderRadius: '12px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                          marginBottom: '24px',
+                          background: '#ffffff',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: 'linear-gradient(to right, #ffe7cc, #ffd8a8)',
+                            padding: '16px 24px',
+                            borderBottom: '1px solid #ffc078',
+                          }}
+                        >
+                          <Title
+                            level={4}
+                            style={{
+                              margin: 0,
+                              color: '#d9480f',
+                              fontWeight: '600',
+                              fontSize: '18px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <WarningOutlined style={{ marginRight: '8px' }} />
+                            Overdue Charges for Vacant Chit
+                          </Title>
+                        </div>
+
+                        <div style={{ padding: '24px' }}>
+                          <Row gutter={[16, 16]}>
+                            <Col xs={24} sm={12} md={8}>
+                              <Text strong>Vacant Chit Grace Days</Text>
+                              <InputNumber
+                                style={{ width: '100%' }}
+                                min={0}
+                                value={vacantChitGraceDays}
+                                onChange={setVacantChitGraceDays}
+                                size="large"
+                              />
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                              <Text strong>Vacant Chit Penalty Amount (₹)</Text>
+                              <InputNumber
+                                style={{ width: '100%' }}
+                                min={0}
+                                value={vacantChitPenaltyAmount}
+                                onChange={setVacantChitPenaltyAmount}
+                                size="large"
+                              />
+                            </Col>
+
+
+
+                            <Col xs={24} sm={12} md={8}>
+                              <Text strong>Vacant Chit Penalty Rate (%)</Text>
+                              <InputNumber
+                                style={{ width: '100%' }}
+                                min={0}
+                                max={100}
+                                value={vacantChitPenaltyRate}
+                                onChange={setVacantChitPenaltyRate}
+                                size="large"
                               />
                             </Col>
                           </Row>
@@ -1096,6 +1186,34 @@ const PenaltySettings = () => {
                   formatter={value => `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\₹\s?|(,*)/g, '')}
                 />
+              </Form.Item>
+              <Form.Item
+                label={<Text strong style={{ fontSize: '14px', color: '#475569' }}>Vacant Chit Penalty Amount (₹)</Text>}
+                name="vacant_chit_penalty_amount"
+                rules={[{ required: true, message: 'Please enter penalty amount' }]}
+              >
+                <InputNumber
+                  style={{ width: "100%" }}
+                  min={0}
+                  formatter={value => `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\₹\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={<Text strong style={{ fontSize: '14px', color: '#475569' }}>Vacant Chit Grace Days</Text>}
+                name="vacant_chit_grace_days"
+                rules={[{ required: true, message: 'Please enter grace days' }]}
+              >
+                <InputNumber style={{ width: "100%" }} min={0} />
+              </Form.Item>
+
+              <Form.Item
+                label={<Text strong style={{ fontSize: '14px', color: '#475569' }}>Vacant Chit Penalty Rate (%)</Text>}
+                name="vacant_chit_penalty_rate"
+                rules={[{ required: true, message: 'Please enter penalty rate' }]}
+              >
+                <InputNumber style={{ width: "100%" }} min={0} max={100} />
               </Form.Item>
 
               <Form.Item name="group_id" hidden>

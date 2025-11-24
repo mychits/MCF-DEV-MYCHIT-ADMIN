@@ -98,6 +98,15 @@ const PenaltyMonitor = () => {
                     grand_total_due_with_penalty: 0,
                   }
                 };
+                const vacantCycles = penaltyData?.cycles?.filter(c => c.vacant_cycle === true) || [];
+                const isVacantCustomer = vacantCycles.length > 0;
+
+                // check if any vacant cycle has penalty > 0 (means grace period is over)
+                const vacantPenaltyApplied = vacantCycles.some(c => Number(c.penalty) > 0);
+
+                // if no penalty applied → still within grace
+                const vacantWithinGrace = isVacantCustomer && !vacantPenaltyApplied;
+
 
                 const summary = penaltyData.summary || {};
                 const totalPenalty = summary.total_penalty || 0;
@@ -145,15 +154,24 @@ const PenaltyMonitor = () => {
                     </Button>
                   ),
 
-                  statusDiv: data.isPrized === "true" ? (
-                    <Tag color="success" icon={<CheckCircleOutlined />}>
-                      Prized
-                    </Tag>
-                  ) : (
-                    <Tag color="error" icon={<CloseCircleOutlined />}>
-                      Un Prized
-                    </Tag>
-                  ),
+                  statusDiv:
+                    isVacantCustomer ? (
+                      vacantPenaltyApplied ? (
+                        <Tag color="gold">VC Customer</Tag>
+                      ) : (
+                        <Tag color="blue">VC – Within Grace</Tag>
+                      )
+                    ) : data.isPrized === "true" ? (
+                      <Tag color="success" icon={<CheckCircleOutlined />}>
+                        Prized
+                      </Tag>
+                    ) : (
+                      <Tag color="error" icon={<CloseCircleOutlined />}>
+                        Un Prized
+                      </Tag>
+                    ),
+
+
                 });
 
                 count++;
@@ -199,30 +217,63 @@ const PenaltyMonitor = () => {
   }, [filteredUsers, groupFilter]);
 
   // 🔹 Show penalty breakdown - OPTIMIZED
-  const handleShowBreakdown = async (userId, groupId, userName, groupName, cachedPenaltyData = null) => {
-    try {
-      setLoadingBreakdown(true);
-      setSelectedCustomer({ userName, groupName });
-      setBreakdownModal(true);
+const handleShowBreakdown = async (userId, groupId, userName, groupName, cachedPenaltyData = null) => {
+  try {
+    setLoadingBreakdown(true);
+    setSelectedCustomer({ userName, groupName });
+    setBreakdownModal(true);
 
-      let penaltyData = cachedPenaltyData;
+    let penaltyData = cachedPenaltyData;
 
-      // Only fetch if not cached (for edge cases)
-      if (!penaltyData) {
-        const res = await api.get("/penalty/get-penalty-report", {
-          params: { user_id: userId, group_id: groupId },
-        });
-        penaltyData = res.data;
-      }
-
-      setBreakdownData(penaltyData.cycles || []);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to load penalty breakdown");
-    } finally {
-      setLoadingBreakdown(false);
+    // Only fetch if not cached (for edge cases)
+    if (!penaltyData) {
+      const res = await api.get("/penalty/get-penalty-report", {
+        params: { user_id: userId, group_id: groupId },
+      });
+      penaltyData = res.data;
     }
-  };
+
+    // Process cycles to add carry forward information and applied VC amount
+    const processedCycles = penaltyData.cycles?.map((cycle, index, arr) => {
+      // Carry forward for this cycle (balance from previous cycle)
+      const carryForward = index === 0
+        ? 0
+        : arr[index - 1].balance - Math.max(0, arr[index - 1].paid - (arr[index - 1].expected + (arr[index - 1].carry_forward || 0)));
+
+      // Total due for this cycle
+      const cycleTotal = cycle.expected + Math.max(0, carryForward);
+
+      // What gets carried forward to the next cycle
+      const nextCarryForward = cycle.balance - Math.max(0, cycle.paid - cycleTotal);
+
+      // ⭐ VC penalty calculation based on the rate (if vacant cycle)
+      const vcRate = cycle.vacant_cycle ? Number(cycle.penalty_rate_percent || 0) : 0;
+
+      // Calculate the applied VC amount based on the penalty rate (percentage of expected)
+      const appliedVcAmount = cycle.vacant_cycle
+        ? (cycle.expected * vcRate) / 100
+        : 0;
+
+      // Return the processed cycle data with the VC applied amount
+      return {
+        ...cycle,
+        carry_forward: Math.max(0, carryForward),
+        cycle_total: cycleTotal,
+        next_carry_forward: Math.max(0, nextCarryForward),
+        excess: Math.max(0, cycle.paid - cycleTotal),
+        appliedVcAmount, // Added the VC amount here
+      };
+    }) || [];
+
+    setBreakdownData(processedCycles);
+  } catch (err) {
+    console.error(err);
+    message.error("Failed to load penalty breakdown");
+  } finally {
+    setLoadingBreakdown(false);
+  }
+};
+
 
   const columns = [
     {
@@ -327,24 +378,89 @@ const PenaltyMonitor = () => {
       dataIndex: "cycle_no",
       align: "center",
       width: 80,
-      render: (text) => <span className="font-medium">{text}</span>,
+      render: (text, row) =>
+        row.vacant_cycle ? (
+          <Tag color="gold" style={{ fontWeight: "bold" }}>
+            VC
+          </Tag>
+        ) : (
+          <span className="font-medium">{text}</span>
+        ),
     },
+    // {
+    //   title: "From",
+    //   dataIndex: "from_date",
+    //   render: (v) => moment(v).format("DD/MM/YYYY"),
+    // },
     {
       title: "Due Date",
       dataIndex: "to_date",
-      render: (v) => moment(v).format("DD/MM/YYYY"),
+      render: (v, row) =>
+        row.vacant_cycle ? (
+          <span style={{ color: "#b58900", fontWeight: "600" }}>
+            {moment(v).format("DD/MM/YYYY")}
+          </span>
+        ) : (
+          moment(v).format("DD/MM/YYYY")
+        ),
     },
     {
       title: "Expected",
       dataIndex: "expected",
       align: "right",
-      render: (v) => <span className="font-medium">₹{v?.toFixed(2)}</span>,
+      render: (v, row) =>
+        row.vacant_cycle ? (
+          <span style={{ color: "#b58900", fontWeight: "600" }}>₹{v}</span>
+        ) : (
+          <span className="font-medium">₹{v?.toFixed(2)}</span>
+        ),
+    },
+
+{
+  title: "Applied VC Amount",
+  dataIndex: "appliedVcAmount",
+  align: "right",
+  render: (v, row) =>
+    row.vacant_cycle ? (
+      <span className="text-yellow-700 font-bold">₹{Number(v || 0).toFixed(2)}</span>
+    ) : (
+      <span className="text-gray-400">₹0.00</span>
+    ),
+},
+
+    // {
+    //   title: "Carry Forward",
+    //   dataIndex: "carry_forward",
+    //   align: "right",
+    //   render: (v) => (
+    //     <span className={v > 0 ? "text-blue-600 font-medium" : "text-gray-500"}>
+    //       ₹{v?.toFixed(2)}
+    //     </span>
+    //   ),
+    // },
+    {
+      title: "Total Due",
+      dataIndex: "cycle_total",
+      align: "right",
+      render: (v) => (
+        <span className="font-semibold text-purple-600">₹{v?.toFixed(2)}</span>
+      ),
     },
     {
       title: "Paid",
       dataIndex: "paid",
       align: "right",
-      render: (v) => <span className="text-green-600 font-medium">₹{v?.toFixed(2)}</span>,
+      render: (v) => (
+        <span className="text-green-600 font-medium">₹{v?.toFixed(2)}</span>
+      ),
+    },
+    {
+      title: "Applied",
+      dataIndex: "considered_paid",
+      align: "right",
+      render: (v) => (
+        <span className="text-indigo-600 font-medium">₹{v?.toFixed(2)}</span>
+      ),
     },
     {
       title: "Balance",
@@ -356,11 +472,14 @@ const PenaltyMonitor = () => {
       title: "Penalty",
       dataIndex: "penalty",
       align: "right",
-      render: (v) => (
-        <span style={{ color: v > 0 ? "red" : "gray", fontWeight: 500 }}>
-          ₹{v?.toFixed(2)}
-        </span>
-      ),
+      render: (v, row) =>
+        row.vacant_cycle ? (
+          <span style={{ color: "#d97706", fontWeight: 700 }}>₹{v}</span>
+        ) : (
+          <span style={{ color: v > 0 ? "red" : "gray", fontWeight: 500 }}>
+            ₹{v?.toFixed(2)}
+          </span>
+        ),
     },
     {
       title: "Late Fee",
@@ -372,11 +491,26 @@ const PenaltyMonitor = () => {
         </span>
       ),
     },
+    // {
+    //   title: "Next CF",
+    //   dataIndex: "next_carry_forward",
+    //   align: "right",
+    //   render: (v) => (
+    //     <span className={v > 0 ? "text-blue-600 font-medium" : "text-gray-500"}>
+    //       ₹{v?.toFixed(2)}
+    //     </span>
+    //   ),
+    // },
     {
       title: "Penalty Rate",
       dataIndex: "penalty_rate_percent",
       align: "center",
-      render: (v) => <span className="text-blue-600">{v}%</span>,
+      render: (v, row) =>
+        row.vacant_cycle ? (
+          <Tag color="gold">VC Rate</Tag>
+        ) : (
+          <span className="text-blue-600">{v}%</span>
+        ),
     },
   ];
 
@@ -602,7 +736,7 @@ const PenaltyMonitor = () => {
         open={breakdownModal}
         onCancel={() => setBreakdownModal(false)}
         footer={null}
-        width={1000}
+        width={1200}
         bodyStyle={{ padding: "20px" }}
       >
         {loadingBreakdown ? (
@@ -616,49 +750,66 @@ const PenaltyMonitor = () => {
               columns={breakdownColumns}
               pagination={false}
               bordered
-              scroll={{ y: 400 }}
-              className="breakdown-table"
+              scroll={{ x: 1300, y: 400 }}
+              rowClassName={(record) =>
+                record.vacant_cycle ? "bg-yellow-50 border-l-4 border-yellow-500" : ""
+              }
             />
 
+
             {/* ✅ Summary Totals */}
-            {breakdownData.length > 0 && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                  <div className="text-center">
-                    <div className="text-gray-500 text-sm">Expected</div>
-                    <div className="text-lg font-semibold">
-                      ₹{breakdownData
-                        .reduce((sum, d) => sum + (d.expected || 0), 0)
-                        .toLocaleString("en-IN")}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-500 text-sm">Paid</div>
-                    <div className="text-lg font-semibold text-green-600">
-                      ₹{breakdownData
-                        .reduce((sum, d) => sum + (d.paid || 0), 0)
-                        .toLocaleString("en-IN")}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-500 text-sm">Penalty</div>
-                    <div className="text-lg font-semibold text-red-600">
-                      ₹{breakdownData
-                        .reduce((sum, d) => sum + (d.penalty || 0), 0)
-                        .toLocaleString("en-IN")}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-500 text-sm">Late Fees</div>
-                    <div className="text-lg font-semibold text-orange-600">
-                      ₹{breakdownData
-                        .reduce((sum, d) => sum + (d.late_payment_charges || 0), 0)
-                        .toLocaleString("en-IN")}
-                    </div>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-6">
+              <div className="text-center">
+                <div className="text-gray-500 text-sm">Expected</div>
+                <div className="text-lg font-semibold">
+                  ₹{breakdownData.reduce((s, d) => s + (d.expected || 0), 0).toLocaleString("en-IN")}
                 </div>
               </div>
-            )}
+
+              <div className="text-center">
+                <div className="text-gray-500 text-sm">Paid</div>
+                <div className="text-lg font-semibold text-green-600">
+                  ₹{breakdownData.reduce((s, d) => s + (d.paid || 0), 0).toLocaleString("en-IN")}
+                </div>
+              </div>
+
+              <div className="text-center">
+                <div className="text-gray-500 text-sm">Penalty</div>
+                <div className="text-lg font-semibold text-red-600">
+                  ₹{breakdownData.reduce((s, d) => s + (d.penalty || 0), 0).toLocaleString("en-IN")}
+                </div>
+              </div>
+
+              <div className="text-center">
+                <div className="text-gray-500 text-sm">Late Fees</div>
+                <div className="text-lg font-semibold text-orange-600">
+                  ₹{breakdownData.reduce((s, d) => s + (d.late_payment_charges || 0), 0).toLocaleString("en-IN")}
+                </div>
+              </div>
+
+        
+              {/* <div className="text-center">
+                <div className="text-gray-500 text-sm">VC Expected</div>
+                <div className="text-lg font-bold text-yellow-600">
+                  ₹{breakdownData
+                    .filter((d) => d.vacant_cycle)
+                    .reduce((s, d) => s + (d.expected || 0), 0)
+                    .toLocaleString("en-IN")}
+                </div>
+              </div> */}
+
+              {/* 🆕 VC Penalty */}
+              <div className="text-center">
+                <div className="text-gray-500 text-sm">VC Penalty</div>
+                <div className="text-lg font-bold text-yellow-700">
+                  ₹{breakdownData
+                    .filter((d) => d.vacant_cycle)
+                    .reduce((s, d) => s + (d.penalty || 0), 0)
+                    .toLocaleString("en-IN")}
+                </div>
+              </div>
+            </div>
+
           </>
         )}
       </Modal>
