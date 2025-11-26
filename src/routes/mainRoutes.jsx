@@ -132,6 +132,7 @@ import SuspensePayments from "../pages/SuspensePayments";
 import InActiveUserReport from "../pages/InActiveUserReport";
 import NonConvertedLead from "../pages/NonConvertedLead";
 import ConvertedLead from "../pages/ConvertedLead";
+import UserRegistrationSourceSummaryReport from "../pages/UserRegistrationSourceSummaryReport";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -719,7 +720,7 @@ const mainRoutes = createBrowserRouter([
    {path: "salary-remaining", element: <SalaryRemainingReport/>},
     {path: "non-converted-lead-report", element: <NonConvertedLead/>},
    {path: "converted-lead-report", element: <ConvertedLead/>},
-
+    {path: "user-registration-source-summary-report", element: <UserRegistrationSourceSummaryReport/>},
     ],
   },
 

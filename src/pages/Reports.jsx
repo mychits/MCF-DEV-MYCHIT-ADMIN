@@ -39,6 +39,7 @@ import { MdCancel } from "react-icons/md";
 import { BsCalculator } from "react-icons/bs";
 import { LiaPeopleCarrySolid } from "react-icons/lia";
 import { MdPersonOff } from "react-icons/md";
+import { FaMobileAlt } from "react-icons/fa";
 const subMenus = [
   {
     id:"1",
@@ -298,6 +299,14 @@ const subMenus = [
    Icon: MdCalendarMonth,
    color: "from-blue-500 to-blue-600",
   },
+       {
+    id:"32",
+    title: "user Installed source report",
+    link: "/reports/user-registration-source-summary-report",
+    category: "Customer",
+   Icon: FaMobileAlt,
+   color: "from-blue-500 to-blue-600",
+  },
   
 ];
 
@@ -350,7 +359,7 @@ const Reports = () => {
           ))}
         </div>
 
-        <div className="flex-grow p-6 ">
+        <div className="flex-grow p-6 bg-gradient-to-br from-gray-50 to-gray-100">
           {location.pathname === "/reports" ? (
             <>
               {/* Search Bar */}
