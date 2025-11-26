@@ -359,7 +359,7 @@ const Reports = () => {
           ))}
         </div>
 
-        <div className="flex-grow p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="flex-grow p-6 ">
           {location.pathname === "/reports" ? (
             <>
               {/* Search Bar */}
