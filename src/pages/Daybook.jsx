@@ -289,7 +289,7 @@ const Daybook = () => {
             name: group?.user_id?.full_name,
             category: group?.pay_for || "Chit",
             phone_number: group?.user_id?.phone_number,
-            ticket: group?.ticket,
+            ticket:group?.loan?group.loan?.loan_id:group?.pigme?group.pigme?.pigme_id: group?.ticket,
             receipt: group?.receipt_no,
             old_receipt_no: group?.old_receipt_no,
             amount: group?.amount,

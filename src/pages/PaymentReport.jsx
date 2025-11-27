@@ -326,7 +326,7 @@ const PaymentReport = () => {
             phone_number: group?.user_id?.phone_number,
             receipt_no: group?.receipt_no,
             old_receipt_no: group?.old_receipt_no,
-            ticket: group?.ticket,
+             ticket:group?.loan?group.loan?.loan_id:group?.pigme?group.pigme?.pigme_id: group?.ticket,
             amount: group?.amount,
             transaction_date: group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
