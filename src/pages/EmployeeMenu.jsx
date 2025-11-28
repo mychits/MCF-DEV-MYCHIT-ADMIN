@@ -26,7 +26,7 @@ const StaffMenu = () => {
       color: "from-green-600 to-green-700",
       lightColor: "bg-green-50",
       borderColor: "border-green-200",
-      href: "/staff-menu/employee-menu/add-employee-attendance",
+      href: "/staff-menu/employee-menu/employee-attendance",
       stats: "Attendance Information",
     },
   ];

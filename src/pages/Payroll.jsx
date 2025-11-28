@@ -418,7 +418,7 @@ const Payroll = () => {
           designation_id: selectedManagerId,
           reporting_manager_id: selectedReportingManagerId,
         };
-        const response = await api.post("/agent/add-employee", dataToSend, {
+        const response = await api.post("/agent/employee", dataToSend, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -525,9 +525,7 @@ const Payroll = () => {
   };
   const handleUpdateModalOpen = async (userId) => {
     try {
-      const response = await api.get(
-        `/agent/get-employee-by-id/${userId}`
-      );
+      const response = await api.get(`/agent/get-employee-by-id/${userId}`);
       setCurrentUpdateUser(response.data?.employee);
       setUpdateFormData({
         name: response?.data?.employee?.name,
@@ -551,25 +549,29 @@ const Payroll = () => {
           response?.data?.employee?.emergency_contact_person,
         total_allocated_leaves:
           response?.data?.employee?.total_allocated_leaves?.toString() || "2",
-         earnings: {
-    basic: response?.data?.employee?.earnings?.basic || "",
-    hra: response?.data?.employee?.earnings?.hra || "",
-    travel_allowance: response?.data?.employee?.earnings?.travel_allowance || "",
-    medical_allowance: response?.data?.employee?.earnings?.medical_allowance || "",
-    basket_of_benifits: response?.data?.employee?.earnings?.basket_of_benifits || "",
-    performance_bonus: response?.data?.employee?.earnings?.performance_bonus || "",
-    other_allowances: response?.data?.employee?.earnings?.other_allowances || "",
-    conveyance: response?.data?.employee?.earnings?.conveyance || "",
-  },
+        earnings: {
+          basic: response?.data?.employee?.earnings?.basic || "",
+          hra: response?.data?.employee?.earnings?.hra || "",
+          travel_allowance:
+            response?.data?.employee?.earnings?.travel_allowance || "",
+          medical_allowance:
+            response?.data?.employee?.earnings?.medical_allowance || "",
+          basket_of_benifits:
+            response?.data?.employee?.earnings?.basket_of_benifits || "",
+          performance_bonus:
+            response?.data?.employee?.earnings?.performance_bonus || "",
+          other_allowances:
+            response?.data?.employee?.earnings?.other_allowances || "",
+          conveyance: response?.data?.employee?.earnings?.conveyance || "",
+        },
 
-  deductions: {
-    income_tax:
-      response?.data?.employee?.deductions?.income_tax || "",
-    esi: response?.data?.employee?.deductions?.esi || "",
-    epf: response?.data?.employee?.deductions?.epf || "",
-    professional_tax:
-      response?.data?.employee?.deductions?.professional_tax || "",
-  },
+        deductions: {
+          income_tax: response?.data?.employee?.deductions?.income_tax || "",
+          esi: response?.data?.employee?.deductions?.esi || "",
+          epf: response?.data?.employee?.deductions?.epf || "",
+          professional_tax:
+            response?.data?.employee?.deductions?.professional_tax || "",
+        },
       });
       setSelectedManagerId(response.data?.employee?.designation_id?._id || "");
       setSelectedReportingManagerId(
@@ -673,3389 +675,1658 @@ const Payroll = () => {
       }
     }
   };
-  const handleManager = async (event) => {
-    const groupId = event.target.value;
-    setSelectedManagerId(groupId);
-    const selected = managers.find((mgr) => mgr._id === groupId);
-    setSelectedManagerTitle(selected?.title || "");
-  };
-  const handleReportingManager = async (event) => {
-    const reportingId = event.target.value;
-    setSelectedReportingManagerId(reportingId);
-  };
 
-  const handleDeductionChange = (index, field, value, isUpdate = false) => {
-    if (isUpdate) {
-      const updatedDeductions = [...updateFormData.deductions];
-      updatedDeductions[index][field] = value;
-      setUpdateFormData({ ...updateFormData, deductions: updatedDeductions });
-    } else {
-      const updatedDeductions = [...formData.deductions];
-      updatedDeductions[index][field] = value;
-      setFormData({ ...formData, deductions: updatedDeductions });
-    }
-  };
-
-  const addDeductionField = (isUpdate = false) => {
-    const newDeduction = {
-      deduction_amount: "",
-      deduction_justification: "",
-      note: "",
-    };
-    if (isUpdate) {
-      setUpdateFormData({
-        ...updateFormData,
-        deductions: [...updateFormData.deductions, newDeduction],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        deductions: [...formData.deductions, newDeduction],
-      });
-    }
-  };
-
-  const removeDeductionField = (index, isUpdate = false) => {
-    if (isUpdate) {
-      const updated = updateFormData.deductions.filter((_, i) => i !== index);
-      setUpdateFormData({ ...updateFormData, deductions: updated });
-    } else {
-      const updated = formData.deductions.filter((_, i) => i !== index);
-      setFormData({ ...formData, deductions: updated });
-    }
-  };
-
-  // return (
-  //   <>
-  //     <div>
-  //       <div className="flex mt-20">
-  //         <Navbar
-  //           onGlobalSearchChangeHandler={onGlobalSearchChangeHandler}
-  //           visibility={true}
-  //         />
-  //         <Sidebar />
-  //         <CustomAlertDialog
-  //           type={alertConfig.type}
-  //           isVisible={alertConfig.visibility}
-  //           message={alertConfig.message}
-  //           onClose={() =>
-  //             setAlertConfig((prev) => ({ ...prev, visibility: false }))
-  //           }
-  //         />
-  //         <div className="flex-grow p-7">
-  //           <div className="mt-6 mb-8">
-  //             <div className="flex justify-between items-center w-full">
-  //               <h1 className="text-2xl font-semibold">Employee</h1>
-  //               <button
-  //                 onClick={() => {
-  //                   setShowModal(true);
-  //                   setErrors({});
-  //                 }}
-  //                 className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
-  //               >
-  //                 + Add Employee
-  //               </button>
-  //             </div>
-  //           </div>
-  //           {TableEmployees?.length > 0 && !isLoading ? (
-  //             <DataTable
-  //               updateHandler={handleUpdateModalOpen}
-  //               data={filterOption(TableEmployees, searchText)}
-  //               columns={columns}
-  //               exportedPdfName="Employee"
-  //               exportedFileName={`Employees.csv`}
-  //             />
-  //           ) : (
-  //             <CircularLoader
-  //               isLoading={isLoading}
-  //               failure={TableEmployees?.length <= 0}
-  //               data="Employee Data"
-  //             />
-  //           )}
-  //         </div>
-  //       </div>
-  //       <Modal isVisible={showModal} onClose={() => setShowModal(false)}>
-  //         <div className="py-6 px-5 lg:px-8 text-left">
-  //           <h3 className="mb-4 text-xl font-bold text-gray-900">
-  //             Add Employee
-  //           </h3>
-  //           <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="email"
-  //               >
-  //                 Full Name <span className="text-red-500">*</span>
-  //               </label>
-  //               <Input
-  //                 type="text"
-  //                 name="name"
-  //                 value={formData.name}
-  //                 onChange={handleChange}
-  //                 id="name"
-  //                 placeholder="Enter the Full Name"
-  //                 required
-  //                 className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //               />
-  //               {errors.name && (
-  //                 <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-  //               )}
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Email <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="email"
-  //                   name="email"
-  //                   value={formData.email}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Email"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.email && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.email}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Phone Number <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="phone_number"
-  //                   value={formData.phone_number}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Phone Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.phone_number && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.phone_number}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="pass"
-  //                 >
-  //                   Password <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="pass"
-  //                   name="password"
-  //                   value={formData.password}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Password"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.password && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.password}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Pincode <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="pincode"
-  //                   value={formData.pincode}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Pincode"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.pincode && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.pincode}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Adhaar Number <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="adhaar_no"
-  //                   value={formData.adhaar_no}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Adhaar Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.adhaar_no && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.adhaar_no}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Pan Number <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="pan_no"
-  //                   value={formData.pan_no}
-  //                   onChange={handleChange}
-  //                   id="text"
-  //                   placeholder="Enter Pan Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.pan_no && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="email"
-  //               >
-  //                 Address <span className="text-red-500">*</span>
-  //               </label>
-  //               <Input
-  //                 type="text"
-  //                 name="address"
-  //                 value={formData.address}
-  //                 onChange={handleChange}
-  //                 id="name"
-  //                 placeholder="Enter the Address"
-  //                 required
-  //                 className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //               />
-  //               {errors.address && (
-  //                 <p className="mt-2 text-sm text-red-600">{errors.address}</p>
-  //               )}
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="category"
-  //                 >
-  //                   Designation <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Select
-  //                   id="designation_id"
-  //                   name="designation_id"
-  //                   value={selectedManagerId || undefined}
-  //                   onChange={handleAntDSelectManager}
-  //                   placeholder="Select Designation"
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   showSearch
-  //                   popupMatchSelectWidth={false}
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                 >
-  //                   {managers.map((mgr) => (
-  //                     <Select.Option key={mgr._id} value={mgr._id}>
-  //                       {mgr.title}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.designation_id && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.designation_id}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="status"
-  //                 >
-  //                   Status <span className="text-red-500">*</span>
-  //                 </label>
-  //                 {/* <select
-  //                   name="status"
-  //                   value={formData?.status}
-  //                   onChange={handleChange}
-  //                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-  //                 >
-  //                   <option value="">Select Status</option>
-  //                   <option value="active">Active</option>
-  //                   <option value="inactive">Inactive</option>
-  //                   <option value="terminated">Terminated</option>
-  //                 </select> */}
-  //                 <Select
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   placeholder="Select Status"
-  //                   popupMatchSelectWidth={false}
-  //                   showSearch
-  //                   name="status"
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                   value={formData?.status || undefined}
-  //                   onChange={(value) => handleAntDSelect("status", value)}
-  //                 >
-  //                   {["Active", "Inactive", "Terminated"].map((stype) => (
-  //                     <Select.Option key={stype} value={stype.toLowerCase()}>
-  //                       {stype}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.status && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.status}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="joiningdate"
-  //                 >
-  //                   Joining Date <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="joining_date"
-  //                   value={formData.joining_date}
-  //                   onChange={handleChange}
-  //                   id="joiningdate"
-  //                   placeholder="Enter Employee Joining Date"
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.joining_date && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.joining_date}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="ld"
-  //                 >
-  //                   Leaving Date <span className="text-red-500"></span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="leaving_date"
-  //                   value={formData.leaving_date}
-  //                   onChange={handleChange}
-  //                   id="ld"
-  //                   placeholder="Enter Leaving Date"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="dob"
-  //                 >
-  //                   Date of Birth <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="dob"
-  //                   value={formData.dob}
-  //                   onChange={handleChange}
-  //                   id="dob"
-  //                   placeholder="Enter Employee Date of Birth"
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.dob && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="gender"
-  //                 >
-  //                   Gender <span className="text-red-500">*</span>
-  //                 </label>
-  //                 {/* <select
-  //                   name="gender"
-  //                   value={formData?.gender}
-  //                   onChange={handleChange}
-  //                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-  //                 >
-  //                   <option value="">Select Gender</option>
-  //                   <option value="male">Male</option>
-  //                   <option value="female">Female</option>
-  //                 </select> */}
-  //                 <Select
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   placeholder="Select Gender"
-  //                   popupMatchSelectWidth={false}
-  //                   showSearch
-  //                   name="gender"
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                   value={formData?.gender || undefined}
-  //                   onChange={(value) => handleAntDSelect("gender", value)}
-  //                 >
-  //                   {["Male", "Female", "Others"].map((gender) => (
-  //                     <Select.Option key={gender} value={gender.toLowerCase()}>
-  //                       {gender}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.gender && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="sal"
-  //                 >
-  //                   Salary <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="salary"
-  //                   value={formData.salary}
-  //                   onChange={handleChange}
-  //                   id="sal"
-  //                   placeholder="Enter Your Salary"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.salary && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="alternate"
-  //                 >
-  //                   Alternate Phone Number{" "}
-  //                   <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="alternate_number"
-  //                   value={formData.alternate_number}
-  //                   onChange={handleChange}
-  //                   id="alternate"
-  //                   placeholder="Enter Alternate Phone Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.alternate_number && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.alternate_number}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="total_allocated_leaves"
-  //                 >
-  //                   Total Allocated Leaves{" "}
-  //                   <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="total_allocated_leaves"
-  //                   value={formData.total_allocated_leaves}
-  //                   onChange={handleChange}
-  //                   id="total_allocated_leaves"
-  //                   placeholder="Enter total allocated leaves"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.total_allocated_leaves && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.total_allocated_leaves}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="cp"
-  //                 >
-  //                   Emergency Contact Person
-  //                   <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="emergency_contact_person"
-  //                   value={formData.emergency_contact_person}
-  //                   onChange={handleChange}
-  //                   id="cp"
-  //                   placeholder="Enter Emergency Contact Person Name"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.emergency_contact_person && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.emergency_contact_person}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="emergency"
-  //                 >
-  //                   Emergency Phone Number{" "}
-  //                 </label>
-  //                 <div className="flex items-center mb-2 gap-2">
-  //                   <Input
-  //                     type="tel"
-  //                     name="emergency_contact_number"
-  //                     value={formData.emergency_contact_number?.[0] || ""}
-  //                     onChange={(e) =>
-  //                       handlePhoneChange(formData, setFormData, 0, e)
-  //                     }
-  //                     id="emergency_0"
-  //                     placeholder="Enter Default Emergency Phone Number"
-  //                     required
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 {formData.emergency_contact_number
-  //                   ?.slice(1)
-  //                   .map((phone, index) => (
-  //                     <div key={index} className="flex items-center mb-2 gap-2">
-  //                       <Input
-  //                         type="tel"
-  //                         name={`emergency_phone_${index + 1}`}
-  //                         value={phone}
-  //                         onChange={(e) =>
-  //                           handlePhoneChange(
-  //                             formData,
-  //                             setFormData,
-  //                             index + 1,
-  //                             e
-  //                           )
-  //                         }
-  //                         id={`emergency_${index + 1}`}
-  //                         placeholder="Enter Additional Emergency Phone Number"
-  //                         className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                       />
-  //                       {index > 0 && (
-  //                         <button
-  //                           type="button"
-  //                           onClick={() =>
-  //                             removePhoneField(formData, setFormData, index + 1)
-  //                           }
-  //                           className="text-red-600 text-sm"
-  //                         >
-  //                           Remove
-  //                         </button>
-  //                       )}
-  //                     </div>
-  //                   ))}
-  //                 <button
-  //                   type="button"
-  //                   onClick={() => addPhoneField(formData, setFormData)}
-  //                   className="mt-2 text-blue-600 text-sm"
-  //                 >
-  //                   + Add Another
-  //                 </button>
-  //               </div>
-  //             </div>
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="earnings"
-  //               >
-  //                 Earnings
-  //               </label>
-
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="basic"
-  //                   >
-  //                     Basic Salary <span className="text-red-500">*</span>
-  //                   </label>
-  //                   <Input
-  //                     type="Number"
-  //                     name="earnings.basic"
-  //                     value={formData.earnings?.basic}
-  //                     onChange={handleSalaryChange}
-  //                     id="basic"
-  //                     placeholder="Enter Employee Basic Salary"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="hra"
-  //                   >
-  //                     House Rent Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.hra"
-  //                     value={formData.earnings?.hra}
-  //                     onChange={handleSalaryChange}
-  //                     id="hra"
-  //                     placeholder="Enter House Rent Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="travel_allowance"
-  //                   >
-  //                     Travel Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.travel_allowance"
-  //                     value={formData.earnings?.travel_allowance}
-  //                     onChange={handleSalaryChange}
-  //                     id="travel_allowance"
-  //                     placeholder="Enter Employee Travel Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="medical_allowance"
-  //                   >
-  //                     Medical Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.medical_allowance"
-  //                     value={formData.earnings?.medical_allowance}
-  //                     onChange={handleSalaryChange}
-  //                     id="medical_allowance"
-  //                     placeholder="Enter  Medical Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="basket_of_benifits"
-  //                   >
-  //                     Basket of Benifits <span className="text-red-500">*</span>
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.basket_of_benifits"
-  //                     value={formData.earnings?.basket_of_benifits}
-  //                     onChange={handleSalaryChange}
-  //                     id="basket_of_benifits"
-  //                     placeholder="Enter Employee Basket of Benifits"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.performance_bonus"
-  //                   >
-  //                     Performance Bonus
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.performance_bonus"
-  //                     value={formData.earnings?.performance_bonus}
-  //                     onChange={handleSalaryChange}
-  //                     id="earnings?.performance_bonus"
-  //                     placeholder="Enter House Rent Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.other_allowances"
-  //                   >
-  //                     Other Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.other_allowances"
-  //                     value={formData.earnings?.other_allowances}
-  //                     onChange={handleSalaryChange}
-  //                     id="earnings?.other_allowances"
-  //                     placeholder="Enter Employee Travel Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.conveyance"
-  //                   >
-  //                     Conveyance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.conveyance"
-  //                     value={formData.earnings?.conveyance}
-  //                     onChange={handleSalaryChange}
-  //                     id="earnings?.conveyance"
-  //                     placeholder="Enter Conveyance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="Deduction"
-  //               >
-  //                 Deduction
-  //               </label>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.income_tax"
-  //                   >
-  //                     Income Tax
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.income_tax"
-  //                     value={formData.deductions?.income_tax}
-  //                     onChange={handleSalaryChange}
-  //                     id="deductions?.income_tax"
-  //                     placeholder="Enter Employee Income Tax"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.esi"
-  //                   >
-  //                     Employees' State Insurance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.esi"
-  //                     value={formData.deductions?.esi}
-  //                     onChange={handleSalaryChange}
-  //                     id="deductions?.esi"
-  //                     placeholder="Enter Employees' State Insurance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.epf"
-  //                   >
-  //                     Employees' Provident Fund
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.epf"
-  //                     value={formData.deductions?.epf}
-  //                     onChange={handleSalaryChange}
-  //                     id="deductions?.epf"
-  //                     placeholder="Enter Employees' Provident Fund"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.professional_tax"
-  //                   >
-  //                     Professional Tax
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.professional_tax"
-  //                     value={formData.deductions?.professional_tax}
-  //                     onChange={handleSalaryChange}
-  //                     id="deductions?.professional_tax"
-  //                     placeholder="Enter Employees' Professional Tax"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <div className="w-full flex justify-end">
-  //               <button
-  //                 type="submit"
-  //                 className="w-1/4 text-white bg-blue-700 hover:bg-blue-800
-  //             focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center border-2 border-black"
-  //               >
-  //                 Save Employee
-  //               </button>
-  //             </div>
-  //           </form>
-  //         </div>
-  //       </Modal>
-  //       <Modal
-  //         isVisible={showModalUpdate}
-  //         onClose={() => setShowModalUpdate(false)}
-  //       >
-  //         <div className="py-6 px-5 lg:px-8 text-left">
-  //           <h3 className="mb-4 text-xl font-bold text-gray-900">
-  //             Update Employee
-  //           </h3>
-  //           <form className="space-y-6" onSubmit={handleUpdate} noValidate>
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="email"
-  //               >
-  //                 Full Name <span className="text-red-500 ">*</span>
-  //               </label>
-  //               <Input
-  //                 type="text"
-  //                 name="name"
-  //                 value={updateFormData.name}
-  //                 onChange={handleInputChange}
-  //                 id="name"
-  //                 placeholder="Enter the Full Name"
-  //                 required
-  //                 className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //               />
-  //               {errors.name && (
-  //                 <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-  //               )}
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Email <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="email"
-  //                   name="email"
-  //                   value={updateFormData.email}
-  //                   onChange={handleInputChange}
-  //                   id="text"
-  //                   placeholder="Enter Email"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.email && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.email}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Phone Number <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="phone_number"
-  //                   value={updateFormData.phone_number}
-  //                   onChange={handleInputChange}
-  //                   id="text"
-  //                   placeholder="Enter Phone Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.phone_number && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.phone_number}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-full">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Password <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="password"
-  //                   value={updateFormData.password}
-  //                   onChange={handleInputChange}
-  //                   id="update-password"
-  //                   placeholder="Enter Password"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.password && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.password}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-full">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Pincode <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="pincode"
-  //                   value={updateFormData.pincode}
-  //                   onChange={handleInputChange}
-  //                   id="text"
-  //                   placeholder="Enter Pincode"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.pincode && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.pincode}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Adhaar Number <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="adhaar_no"
-  //                   value={updateFormData.adhaar_no}
-  //                   onChange={handleInputChange}
-  //                   id="text"
-  //                   placeholder="Enter Adhaar Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.adhaar_no && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.adhaar_no}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="date"
-  //                 >
-  //                   Pan Number <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="pan_no"
-  //                   value={updateFormData.pan_no}
-  //                   onChange={handleInputChange}
-  //                   id="text"
-  //                   placeholder="Enter Pan Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.pan_no && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="email"
-  //               >
-  //                 Address <span className="text-red-500 ">*</span>
-  //               </label>
-  //               <Input
-  //                 type="text"
-  //                 name="address"
-  //                 value={updateFormData.address}
-  //                 onChange={handleInputChange}
-  //                 id="name"
-  //                 placeholder="Enter the Address"
-  //                 required
-  //                 className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //               />
-  //               {errors.address && (
-  //                 <p className="mt-2 text-sm text-red-600">{errors.address}</p>
-  //               )}
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="category"
-  //                 >
-  //                   Designation <span className="text-red-500 ">*</span>
-  //                 </label>
-
-  //                 <Select
-  //                   id="designation_id"
-  //                   name="designation_id"
-  //                   value={selectedManagerId || undefined}
-  //                   onChange={handleAntDSelectManager}
-  //                   placeholder="Select Designation"
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   showSearch
-  //                   popupMatchSelectWidth={false}
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                 >
-  //                   {managers.map((manager) => (
-  //                     <Select.Option key={manager._id} value={manager._id}>
-  //                       {manager.title}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.designation_id && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.designation_id}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="status"
-  //                 >
-  //                   Status <span className="text-red-500">*</span>
-  //                 </label>
-  //                 {/* <select
-  //                   name="status"
-  //                   value={updateFormData?.status}
-  //                   onChange={handleInputChange}
-  //                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-  //                 >
-  //                   <option value="">Select Status</option>
-  //                   <option value="active">Active</option>
-  //                   <option value="inactive">Inactive</option>
-  //                   <option value="terminated">Terminated</option>
-  //                 </select> */}
-  //                 <Select
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   placeholder="Select Status"
-  //                   popupMatchSelectWidth={false}
-  //                   showSearch
-  //                   name="status"
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                   value={updateFormData?.status || undefined}
-  //                   onChange={(value) => handleAntInputDSelect("status", value)}
-  //                 >
-  //                   {["Active", "Inactive", "Terminated"].map((status) => (
-  //                     <Select.Option key={status} value={status.toLowerCase()}>
-  //                       {status}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.status && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.status}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="joiningdate"
-  //                 >
-  //                   Joining Date <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="joining_date"
-  //                   value={updateFormData.joining_date}
-  //                   onChange={handleInputChange}
-  //                   id="joiningdate"
-  //                   placeholder="Enter Employee Joining Date"
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.joining_date && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.joining_date}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="ld"
-  //                 >
-  //                   Leaving Date <span className="text-red-500"></span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="leaving_date"
-  //                   value={
-  //                     updateFormData?.leaving_date
-  //                       ? new Date(updateFormData?.leaving_date || "")
-  //                           .toISOString()
-  //                           .split("T")[0]
-  //                       : ""
-  //                   }
-  //                   onChange={handleInputChange}
-  //                   id="ld"
-  //                   placeholder="Enter Leaving Date"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="doB"
-  //                 >
-  //                   Date of Birth <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="date"
-  //                   name="dob"
-  //                   value={
-  //                     updateFormData?.dob
-  //                       ? new Date(updateFormData?.dob || "")
-  //                           .toISOString()
-  //                           .split("T")[0]
-  //                       : ""
-  //                   }
-  //                   onChange={handleInputChange}
-  //                   id="doB"
-  //                   placeholder="Enter Employee Date of Birth"
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.dob && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="gender"
-  //                 >
-  //                   Gender <span className="text-red-500">*</span>
-  //                 </label>
-  //                 {/* <select
-  //                   name="gender"
-  //                   value={updateFormData?.gender}
-  //                   onChange={handleInputChange}
-  //                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
-  //                 >
-  //                   <option value="">Select Gender</option>
-  //                   <option value="male">Male</option>
-  //                   <option value="female">Female</option>
-  //                 </select> */}
-  //                 <Select
-  //                   className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-  //                   placeholder="Select Gender"
-  //                   popupMatchSelectWidth={false}
-  //                   showSearch
-  //                   name="gender"
-  //                   filterOption={(input, option) =>
-  //                     option.children
-  //                       .toLowerCase()
-  //                       .includes(input.toLowerCase())
-  //                   }
-  //                   value={updateFormData?.gender || undefined}
-  //                   onChange={(value) => handleAntInputDSelect("gender", value)}
-  //                 >
-  //                   {["Male", "Female", "Others"].map((gender) => (
-  //                     <Select.Option key={gender} value={gender.toLowerCase()}>
-  //                       {gender}
-  //                     </Select.Option>
-  //                   ))}
-  //                 </Select>
-  //                 {errors.gender && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="sal"
-  //                 >
-  //                   Salary <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="salary"
-  //                   value={updateFormData.salary}
-  //                   onChange={handleInputChange}
-  //                   id="sal"
-  //                   placeholder="Enter Salary"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.salary && (
-  //                   <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="alternate"
-  //                 >
-  //                   Alternate Phone Number{" "}
-  //                   <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="alternate_number"
-  //                   value={updateFormData.alternate_number}
-  //                   onChange={handleInputChange}
-  //                   id="alternate"
-  //                   placeholder="Enter Alternate Phone Number"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.alternate_number && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.alternate_number}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="total_allocated_leaves"
-  //                 >
-  //                   Total No. of Leaves <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="number"
-  //                   name="total_allocated_leaves"
-  //                   value={updateFormData.total_allocated_leaves}
-  //                   onChange={handleInputChange}
-  //                   id="total_allocated_leaves"
-  //                   placeholder="Enter total leaves"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.total_allocated_leaves && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.total_allocated_leaves}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="cp"
-  //                 >
-  //                   Emergency Contact Person{" "}
-  //                   <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   name="emergency_contact_person"
-  //                   value={updateFormData?.emergency_contact_person}
-  //                   onChange={handleInputChange}
-  //                   id="ld"
-  //                   placeholder="Enter Emergency Contact Person Name"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //                 {errors.emergency_contact_person && (
-  //                   <p className="mt-2 text-sm text-red-600">
-  //                     {errors.emergency_contact_person}
-  //                   </p>
-  //                 )}
-  //               </div>
-  //             </div>
-  //             <div className="flex flex-row justify-between space-x-4">
-  //               <div className="w-1/2">
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="emergency"
-  //                 >
-  //                   Emergency Phone Number{" "}
-  //                 </label>
-  //                 <div className="flex items-center mb-2 gap-2">
-  //                   <Input
-  //                     type="tel"
-  //                     name="emergency_contact_number"
-  //                     value={updateFormData.emergency_contact_number?.[0] || ""}
-  //                     onChange={(e) =>
-  //                       handlePhoneChange(
-  //                         updateFormData,
-  //                         setUpdateFormData,
-  //                         0,
-  //                         e
-  //                       )
-  //                     }
-  //                     id="emergency_0"
-  //                     placeholder="Enter Default Emergency Phone Number"
-  //                     required
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 {updateFormData.emergency_contact_number
-  //                   ?.slice(1)
-  //                   .map((phone, index) => (
-  //                     <div
-  //                       key={index + 1}
-  //                       className="flex items-center mb-2 gap-2"
-  //                     >
-  //                       <Input
-  //                         type="tel"
-  //                         name={`emergency_phone_${index + 1}`}
-  //                         value={phone}
-  //                         onChange={(e) =>
-  //                           handlePhoneChange(
-  //                             updateFormData,
-  //                             setUpdateFormData,
-  //                             index + 1,
-  //                             e
-  //                           )
-  //                         }
-  //                         id={`emergency_${index + 1}`}
-  //                         placeholder="Enter Additional Emergency Phone Number"
-  //                         className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                       />
-  //                       <button
-  //                         type="button"
-  //                         onClick={() =>
-  //                           removePhoneField(
-  //                             updateFormData,
-  //                             setUpdateFormData,
-  //                             index + 1
-  //                           )
-  //                         }
-  //                         className="text-red-600 text-sm"
-  //                       >
-  //                         Remove
-  //                       </button>
-  //                     </div>
-  //                   ))}
-  //                 <button
-  //                   type="button"
-  //                   onClick={() =>
-  //                     addPhoneField(updateFormData, setUpdateFormData)
-  //                   }
-  //                   className="mt-2 text-blue-600 text-sm"
-  //                 >
-  //                   + Add Another
-  //                 </button>
-  //               </div>
-  //             </div>
-
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text font-medium text-gray-900 "
-  //                 htmlFor="earnings"
-  //               >
-  //                 Earnings
-  //               </label>
-
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.basic"
-  //                   >
-  //                     Basic Salary <span className="text-red-500">*</span>
-  //                   </label>
-  //                   <Input
-  //                     type="Number"
-  //                     name="earnings.basic"
-  //                     value={updateFormData.earnings?.basic}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.basic"
-  //                     placeholder="Enter Employee Basic Salary"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.hra"
-  //                   >
-  //                     House Rent Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.hra"
-  //                     value={updateFormData.earnings?.hra}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.hra"
-  //                     placeholder="Enter House Rent Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.travel_allowance"
-  //                   >
-  //                     Travel Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.travel_allowance"
-  //                     value={updateFormData.earnings?.travel_allowance}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.travel_allowance"
-  //                     placeholder="Enter Employee Travel Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.medical_allowance"
-  //                   >
-  //                     Medical Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.medical_allowance"
-  //                     value={updateFormData.earnings?.medical_allowance}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.medical_allowance"
-  //                     placeholder="Enter  Medical Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.basket_of_benifits"
-  //                   >
-  //                     Basket of Benifits <span className="text-red-500">*</span>
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.basket_of_benifits"
-  //                     value={updateFormData.earnings?.basket_of_benifits}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.basket_of_benifits"
-  //                     placeholder="Enter Employee Basket of Benifits"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.performance_bonus"
-  //                   >
-  //                     Performance Bonus
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.performance_bonus"
-  //                     value={updateFormData.earnings?.performance_bonus}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.performance_bonus"
-  //                     placeholder="Enter House Rent Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.other_allowances"
-  //                   >
-  //                     Other Allowance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.other_allowances"
-  //                     value={updateFormData.earnings?.other_allowances}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.other_allowances"
-  //                     placeholder="Enter Employee Travel Allowance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.conveyance"
-  //                   >
-  //                     Conveyance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="earnings.conveyance"
-  //                     value={updateFormData.earnings?.conveyance}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="earnings?.conveyance"
-  //                     placeholder="Enter Conveyance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <div>
-  //               <label
-  //                 className="block mb-2 text-sm font-medium text-gray-900"
-  //                 htmlFor="earnings"
-  //               >
-  //                 Deduction
-  //               </label>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.income_tax"
-  //                   >
-  //                     Income Tax
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.income_tax"
-  //                     value={updateFormData.deductions?.income_tax}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="deductions?.income_tax"
-  //                     placeholder="Enter Employee Income Tax"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.esi"
-  //                   >
-  //                     Employees' State Insurance
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.esi"
-  //                     value={updateFormData.deductions?.esi}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="deductions?.esi"
-  //                     placeholder="Enter Employees' State Insurance"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //               <div className="flex flex-row justify-between space-x-4">
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="deductions?.epf"
-  //                   >
-  //                     Employees' Provident Fund
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.epf"
-  //                     value={updateFormData.deductions?.epf}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="deductions?.epf"
-  //                     placeholder="Enter Employees' Provident Fund"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //                 <div className="w-1/2">
-  //                   <label
-  //                     className="block mb-2 text-sm font-medium text-gray-900"
-  //                     htmlFor="earnings?.professional_tax"
-  //                   >
-  //                     Professional Tax
-  //                   </label>
-  //                   <Input
-  //                     type="number"
-  //                     name="deductions.professional_tax"
-  //                     value={updateFormData.deductions?.professional_tax}
-  //                     onChange={handleSalaryInputChange}
-  //                     id="deductions?.professional_tax"
-  //                     placeholder="Enter Employees' Professional Tax"
-  //                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <div className="w-full flex justify-end">
-  //               <button
-  //                 type="submit"
-  //                 className="w-1/4 text-white bg-blue-700 hover:bg-blue-800 border-2 border-black
-  //             focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-  //               >
-  //                 Update Employee
-  //               </button>
-  //             </div>
-  //           </form>
-  //         </div>
-  //       </Modal>
-  //       <Modal
-  //         isVisible={showModalDelete}
-  //         onClose={() => {
-  //           setShowModalDelete(false);
-  //           setCurrentUser(null);
-  //         }}
-  //       >
-  //         <div className="py-6 px-5 lg:px-8 text-left">
-  //           <h3 className="mb-4 text-xl font-bold text-gray-900">
-  //             Delete Employee
-  //           </h3>
-  //           {currentUser && (
-  //             <form
-  //               onSubmit={(e) => {
-  //                 e.preventDefault();
-  //                 handleDeleteUser();
-  //               }}
-  //               className="space-y-6"
-  //             >
-  //               <div>
-  //                 <label
-  //                   className="block mb-2 text-sm font-medium text-gray-900"
-  //                   htmlFor="groupName"
-  //                 >
-  //                   Please enter{" "}
-  //                   <span className="text-primary font-bold">
-  //                     {currentUser.name}
-  //                   </span>{" "}
-  //                   to confirm deletion.{" "}
-  //                   <span className="text-red-500 ">*</span>
-  //                 </label>
-  //                 <Input
-  //                   type="text"
-  //                   id="groupName"
-  //                   placeholder="Enter the employee Full Name"
-  //                   required
-  //                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-  //                 />
-  //               </div>
-  //               <button
-  //                 type="submit"
-  //                 className="w-full text-white bg-red-700 hover:bg-red-800
-  //         focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-  //               >
-  //                 Delete
-  //               </button>
-  //             </form>
-  //           )}
-  //         </div>
-  //       </Modal>
-  //     </div>
-  //   </>
-  // );
-return (
-  <>
-    <div>
-      <div className="flex mt-20">
-        <Navbar
-          onGlobalSearchChangeHandler={onGlobalSearchChangeHandler}
-          visibility={true}
-        />
-        <Sidebar />
-        <CustomAlertDialog
-          type={alertConfig.type}
-          isVisible={alertConfig.visibility}
-          message={alertConfig.message}
-          onClose={() =>
-            setAlertConfig((prev) => ({ ...prev, visibility: false }))
-          }
-        />
-        <div className="flex-grow p-7">
-          <div className="mt-6 mb-8">
-            <div className="flex justify-between items-center w-full">
-              <h1 className="text-2xl font-semibold">Employee</h1>
-              <button
-                onClick={() => {
-                  setShowModal(true);
-                  setErrors({});
-                }}
-                className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
-              >
-                + Add Employee
-              </button>
+  return (
+    <>
+      <div>
+        <div className="flex mt-20">
+          <Navbar
+            onGlobalSearchChangeHandler={onGlobalSearchChangeHandler}
+            visibility={true}
+          />
+          <Sidebar />
+          <CustomAlertDialog
+            type={alertConfig.type}
+            isVisible={alertConfig.visibility}
+            message={alertConfig.message}
+            onClose={() =>
+              setAlertConfig((prev) => ({ ...prev, visibility: false }))
+            }
+          />
+          <div className="flex-grow p-7">
+            <div className="mt-6 mb-8">
+              <div className="flex justify-between items-center w-full">
+                <h1 className="text-2xl font-semibold">Employee</h1>
+                <button
+                  onClick={() => {
+                    setShowModal(true);
+                    setErrors({});
+                  }}
+                  className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
+                >
+                  + Add Employee
+                </button>
+              </div>
             </div>
+            {TableEmployees?.length > 0 && !isLoading ? (
+              <DataTable
+                updateHandler={handleUpdateModalOpen}
+                data={filterOption(TableEmployees, searchText)}
+                columns={columns}
+                exportedPdfName="Employee"
+                exportedFileName={`Employees.csv`}
+              />
+            ) : (
+              <CircularLoader
+                isLoading={isLoading}
+                failure={TableEmployees?.length <= 0}
+                data="Employee Data"
+              />
+            )}
           </div>
-          {TableEmployees?.length > 0 && !isLoading ? (
-            <DataTable
-              updateHandler={handleUpdateModalOpen}
-              data={filterOption(TableEmployees, searchText)}
-              columns={columns}
-              exportedPdfName="Employee"
-              exportedFileName={`Employees.csv`}
-            />
-          ) : (
-            <CircularLoader
-              isLoading={isLoading}
-              failure={TableEmployees?.length <= 0}
-              data="Employee Data"
-            />
-          )}
         </div>
-      </div>
-      <Modal isVisible={showModal} onClose={() => setShowModal(false)}>
-        <div className="py-6 px-5 lg:px-8 text-left">
-          <h3 className="mb-4 text-xl font-bold text-gray-900">
-            Add Employee
-          </h3>
-          <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="name"
-              >
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                id="name"
-                placeholder="Enter the Full Name"
-                required
-                className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-              />
-              {errors.name && (
-                <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
+        <Modal isVisible={showModal} onClose={() => setShowModal(false)}>
+          <div className="py-6 px-5 lg:px-8 text-left">
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              Add Employee
+            </h3>
+            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+              <div>
                 <label
                   className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="email"
+                  htmlFor="name"
                 >
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  id="email"
-                  placeholder="Enter Email"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.email && (
-                  <p className="mt-2 text-sm text-red-600">{errors.email}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="phone_number"
-                >
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  name="phone_number"
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  id="phone_number"
-                  placeholder="Enter Phone Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.phone_number && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.phone_number}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="password"
-                >
-                  Password <span className="text-red-500">*</span>
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="text"
-                  name="password"
-                  value={formData.password}
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  id="password"
-                  placeholder="Enter Password"
+                  id="name"
+                  placeholder="Enter the Full Name"
                   required
                   className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                 />
-                {errors.password && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.password}
-                  </p>
+                {errors.name && (
+                  <p className="mt-2 text-sm text-red-600">{errors.name}</p>
                 )}
               </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="pincode"
-                >
-                  Pincode <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  id="pincode"
-                  placeholder="Enter Pincode"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.pincode && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.pincode}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="adhaar_no"
-                >
-                  Adhaar Number <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="adhaar_no"
-                  value={formData.adhaar_no}
-                  onChange={handleChange}
-                  id="adhaar_no"
-                  placeholder="Enter Adhaar Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.adhaar_no && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.adhaar_no}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="pan_no"
-                >
-                  Pan Number <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="pan_no"
-                  value={formData.pan_no}
-                  onChange={handleChange}
-                  id="pan_no"
-                  placeholder="Enter Pan Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.pan_no && (
-                  <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="address"
-              >
-                Address <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                id="address"
-                placeholder="Enter the Address"
-                required
-                className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-              />
-              {errors.address && (
-                <p className="mt-2 text-sm text-red-600">{errors.address}</p>
-              )}
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="designation_id"
-                >
-                  Designation <span className="text-red-500 ">*</span>
-                </label>
-                <Select
-                  id="designation_id"
-                  name="designation_id"
-                  value={selectedManagerId || undefined}
-                  onChange={handleAntDSelectManager}
-                  placeholder="Select Designation"
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  showSearch
-                  popupMatchSelectWidth={false}
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                >
-                  {managers.map((mgr) => (
-                    <Select.Option key={mgr._id} value={mgr._id}>
-                      {mgr.title}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.designation_id && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.designation_id}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="status"
-                >
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  placeholder="Select Status"
-                  popupMatchSelectWidth={false}
-                  showSearch
-                  name="status"
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  value={formData?.status || undefined}
-                  onChange={(value) => handleAntDSelect("status", value)}
-                >
-                  {["Active", "Inactive", "Terminated"].map((stype) => (
-                    <Select.Option key={stype} value={stype.toLowerCase()}>
-                      {stype}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.status && (
-                  <p className="mt-2 text-sm text-red-600">{errors.status}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="joining_date"
-                >
-                  Joining Date <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="date"
-                  name="joining_date"
-                  value={formData.joining_date}
-                  onChange={handleChange}
-                  id="joining_date"
-                  placeholder="Enter Employee Joining Date"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.joining_date && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.joining_date}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="leaving_date"
-                >
-                  Leaving Date
-                </label>
-                <Input
-                  type="date"
-                  name="leaving_date"
-                  value={formData.leaving_date}
-                  onChange={handleChange}
-                  id="leaving_date"
-                  placeholder="Enter Leaving Date"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="dob"
-                >
-                  Date of Birth <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleChange}
-                  id="dob"
-                  placeholder="Enter Employee Date of Birth"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.dob && (
-                  <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="gender"
-                >
-                  Gender <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  placeholder="Select Gender"
-                  popupMatchSelectWidth={false}
-                  showSearch
-                  name="gender"
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  value={formData?.gender || undefined}
-                  onChange={(value) => handleAntDSelect("gender", value)}
-                >
-                  {["Male", "Female", "Others"].map((gender) => (
-                    <Select.Option key={gender} value={gender.toLowerCase()}>
-                      {gender}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.gender && (
-                  <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="salary"
-                >
-                  Salary <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="number"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleChange}
-                  id="salary"
-                  placeholder="Enter Your Salary"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.salary && (
-                  <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="alternate_number"
-                >
-                  Alternate Phone Number{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  name="alternate_number"
-                  value={formData.alternate_number}
-                  onChange={handleChange}
-                  id="alternate_number"
-                  placeholder="Enter Alternate Phone Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.alternate_number && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.alternate_number}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="total_allocated_leaves"
-                >
-                  Total Allocated Leaves{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="number"
-                  name="total_allocated_leaves"
-                  value={formData.total_allocated_leaves}
-                  onChange={handleChange}
-                  id="total_allocated_leaves"
-                  placeholder="Enter total allocated leaves"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.total_allocated_leaves && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.total_allocated_leaves}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="emergency_contact_person"
-                >
-                  Emergency Contact Person
-                  <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="emergency_contact_person"
-                  value={formData.emergency_contact_person}
-                  onChange={handleChange}
-                  id="emergency_contact_person"
-                  placeholder="Enter Emergency Contact Person Name"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.emergency_contact_person && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.emergency_contact_person}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="emergency_contact_number"
-                >
-                  Emergency Phone Number{" "}
-                </label>
-                <div className="flex items-center mb-2 gap-2">
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="email"
+                  >
+                    Email <span className="text-red-500">*</span>
+                  </label>
                   <Input
-                    type="tel"
-                    name="emergency_contact_number"
-                    value={formData.emergency_contact_number?.[0] || ""}
-                    onChange={(e) =>
-                      handlePhoneChange(formData, setFormData, 0, e)
-                    }
-                    id="emergency_contact_number_0"
-                    placeholder="Enter Default Emergency Phone Number"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    id="email"
+                    placeholder="Enter Email"
                     required
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
+                  {errors.email && (
+                    <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                  )}
                 </div>
-                {formData.emergency_contact_number
-                  ?.slice(1)
-                  .map((phone, index) => (
-                    <div key={index} className="flex items-center mb-2 gap-2">
-                      <Input
-                        type="tel"
-                        name={`emergency_phone_${index + 1}`}
-                        value={phone}
-                        onChange={(e) =>
-                          handlePhoneChange(
-                            formData,
-                            setFormData,
-                            index + 1,
-                            e
-                          )
-                        }
-                        id={`emergency_contact_number_${index + 1}`}
-                        placeholder="Enter Additional Emergency Phone Number"
-                        className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                      />
-                      {index > 0 && (
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="phone_number"
+                  >
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="tel"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    id="phone_number"
+                    placeholder="Enter Phone Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.phone_number && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.phone_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="password"
+                  >
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    id="password"
+                    placeholder="Enter Password"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="pincode"
+                  >
+                    Pincode <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    id="pincode"
+                    placeholder="Enter Pincode"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.pincode && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.pincode}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="adhaar_no"
+                  >
+                    Adhaar Number <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="adhaar_no"
+                    value={formData.adhaar_no}
+                    onChange={handleChange}
+                    id="adhaar_no"
+                    placeholder="Enter Adhaar Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.adhaar_no && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.adhaar_no}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="pan_no"
+                  >
+                    Pan Number <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="pan_no"
+                    value={formData.pan_no}
+                    onChange={handleChange}
+                    id="pan_no"
+                    placeholder="Enter Pan Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.pan_no && (
+                    <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                  htmlFor="address"
+                >
+                  Address <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  id="address"
+                  placeholder="Enter the Address"
+                  required
+                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                />
+                {errors.address && (
+                  <p className="mt-2 text-sm text-red-600">{errors.address}</p>
+                )}
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="designation_id"
+                  >
+                    Designation <span className="text-red-500 ">*</span>
+                  </label>
+                  <Select
+                    id="designation_id"
+                    name="designation_id"
+                    value={selectedManagerId || undefined}
+                    onChange={handleAntDSelectManager}
+                    placeholder="Select Designation"
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    showSearch
+                    popupMatchSelectWidth={false}
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                  >
+                    {managers.map((mgr) => (
+                      <Select.Option key={mgr._id} value={mgr._id}>
+                        {mgr.title}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.designation_id && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.designation_id}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="status"
+                  >
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    placeholder="Select Status"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="status"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={formData?.status || undefined}
+                    onChange={(value) => handleAntDSelect("status", value)}
+                  >
+                    {["Active", "Inactive", "Terminated"].map((stype) => (
+                      <Select.Option key={stype} value={stype.toLowerCase()}>
+                        {stype}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.status && (
+                    <p className="mt-2 text-sm text-red-600">{errors.status}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="joining_date"
+                  >
+                    Joining Date <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    name="joining_date"
+                    value={formData.joining_date}
+                    onChange={handleChange}
+                    id="joining_date"
+                    placeholder="Enter Employee Joining Date"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.joining_date && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.joining_date}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="leaving_date"
+                  >
+                    Leaving Date
+                  </label>
+                  <Input
+                    type="date"
+                    name="leaving_date"
+                    value={formData.leaving_date}
+                    onChange={handleChange}
+                    id="leaving_date"
+                    placeholder="Enter Leaving Date"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="dob"
+                  >
+                    Date of Birth <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    id="dob"
+                    placeholder="Enter Employee Date of Birth"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.dob && (
+                    <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="gender"
+                  >
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    placeholder="Select Gender"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="gender"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={formData?.gender || undefined}
+                    onChange={(value) => handleAntDSelect("gender", value)}
+                  >
+                    {["Male", "Female", "Others"].map((gender) => (
+                      <Select.Option key={gender} value={gender.toLowerCase()}>
+                        {gender}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.gender && (
+                    <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="salary"
+                  >
+                    Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="salary"
+                    value={formData.salary}
+                    onChange={handleChange}
+                    id="salary"
+                    placeholder="Enter Your Salary"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.salary && (
+                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="alternate_number"
+                  >
+                    Alternate Phone Number{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="tel"
+                    name="alternate_number"
+                    value={formData.alternate_number}
+                    onChange={handleChange}
+                    id="alternate_number"
+                    placeholder="Enter Alternate Phone Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.alternate_number && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.alternate_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="total_allocated_leaves"
+                  >
+                    Total Allocated Leaves{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="total_allocated_leaves"
+                    value={formData.total_allocated_leaves}
+                    onChange={handleChange}
+                    id="total_allocated_leaves"
+                    placeholder="Enter total allocated leaves"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.total_allocated_leaves && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.total_allocated_leaves}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="emergency_contact_person"
+                  >
+                    Emergency Contact Person
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="emergency_contact_person"
+                    value={formData.emergency_contact_person}
+                    onChange={handleChange}
+                    id="emergency_contact_person"
+                    placeholder="Enter Emergency Contact Person Name"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.emergency_contact_person && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.emergency_contact_person}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="emergency_contact_number"
+                  >
+                    Emergency Phone Number{" "}
+                  </label>
+                  <div className="flex items-center mb-2 gap-2">
+                    <Input
+                      type="tel"
+                      name="emergency_contact_number"
+                      value={formData.emergency_contact_number?.[0] || ""}
+                      onChange={(e) =>
+                        handlePhoneChange(formData, setFormData, 0, e)
+                      }
+                      id="emergency_contact_number_0"
+                      placeholder="Enter Default Emergency Phone Number"
+                      required
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  {formData.emergency_contact_number
+                    ?.slice(1)
+                    .map((phone, index) => (
+                      <div key={index} className="flex items-center mb-2 gap-2">
+                        <Input
+                          type="tel"
+                          name={`emergency_phone_${index + 1}`}
+                          value={phone}
+                          onChange={(e) =>
+                            handlePhoneChange(
+                              formData,
+                              setFormData,
+                              index + 1,
+                              e
+                            )
+                          }
+                          id={`emergency_contact_number_${index + 1}`}
+                          placeholder="Enter Additional Emergency Phone Number"
+                          className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removePhoneField(formData, setFormData, index + 1)
+                            }
+                            className="text-red-600 text-sm"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  <button
+                    type="button"
+                    onClick={() => addPhoneField(formData, setFormData)}
+                    className="mt-2 text-blue-600 text-sm"
+                  >
+                    + Add Another
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label
+                  className="block mb-4 text-3xl font-bold text-gray-900"
+                  htmlFor="earnings"
+                >
+                  Earnings
+                </label>
+
+                <div className="flex flex-row justify-between space-x-4 mb-6">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="basic"
+                    >
+                      Basic Salary
+                    </label>
+                    <Input
+                      type="Number"
+                      name="earnings.basic"
+                      value={
+                        formData.earnings?.basic === 0
+                          ? ""
+                          : formData.earnings?.basic
+                      }
+                      onChange={handleSalaryChange}
+                      id="basic"
+                      placeholder="Enter Employee Basic Salary"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="hra"
+                    >
+                      House Rent Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.hra"
+                      value={
+                        formData.earnings?.hra === 0
+                          ? ""
+                          : formData.earnings?.hra
+                      }
+                      onChange={handleSalaryChange}
+                      id="hra"
+                      placeholder="Enter House Rent Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="travel_allowance"
+                    >
+                      Travel Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.travel_allowance"
+                      value={formData.earnings?.travel_allowance}
+                      onChange={handleSalaryChange}
+                      id="travel_allowance"
+                      placeholder="Enter Employee Travel Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="medical_allowance"
+                    >
+                      Medical Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.medical_allowance"
+                      value={formData.earnings?.medical_allowance}
+                      onChange={handleSalaryChange}
+                      id="medical_allowance"
+                      placeholder="Enter  Medical Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="basket_of_benifits"
+                    >
+                      Basket of Benifits <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.basket_of_benifits"
+                      value={formData.earnings?.basket_of_benifits}
+                      onChange={handleSalaryChange}
+                      id="basket_of_benifits"
+                      placeholder="Enter Employee Basket of Benifits"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="performance_bonus"
+                    >
+                      Performance Bonus
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.performance_bonus"
+                      value={formData.earnings?.performance_bonus}
+                      onChange={handleSalaryChange}
+                      id="performance_bonus"
+                      placeholder="Enter Performance Bonus"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="other_allowances"
+                    >
+                      Other Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.other_allowances"
+                      value={formData.earnings?.other_allowances}
+                      onChange={handleSalaryChange}
+                      id="other_allowances"
+                      placeholder="Enter Other Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="conveyance"
+                    >
+                      Conveyance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.conveyance"
+                      value={formData.earnings?.conveyance}
+                      onChange={handleSalaryChange}
+                      id="conveyance"
+                      placeholder="Enter Conveyance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  className="block mb-4 text-2xl font-bold text-gray-900"
+                  htmlFor="deductions"
+                >
+                  Deductions
+                </label>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="income_tax"
+                    >
+                      Income Tax
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.income_tax"
+                      value={formData.deductions?.income_tax}
+                      onChange={handleSalaryChange}
+                      id="income_tax"
+                      placeholder="Enter Employee Income Tax"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="esi"
+                    >
+                      Employees' State Insurance
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.esi"
+                      value={formData.deductions?.esi}
+                      onChange={handleSalaryChange}
+                      id="esi"
+                      placeholder="Enter Employees' State Insurance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="epf"
+                    >
+                      Employees' Provident Fund
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.epf"
+                      value={formData.deductions?.epf}
+                      onChange={handleSalaryChange}
+                      id="epf"
+                      placeholder="Enter Employees' Provident Fund"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="professional_tax"
+                    >
+                      Professional Tax
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.professional_tax"
+                      value={formData.deductions?.professional_tax}
+                      onChange={handleSalaryChange}
+                      id="professional_tax"
+                      placeholder="Enter Employees' Professional Tax"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full flex justify-end">
+                <button
+                  type="submit"
+                  className="w-1/4 text-white bg-blue-700 hover:bg-blue-800
+            focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center border-2 border-black"
+                >
+                  Save Employee
+                </button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+        <Modal
+          isVisible={showModalUpdate}
+          onClose={() => setShowModalUpdate(false)}
+        >
+          <div className="py-6 px-5 lg:px-8 text-left">
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              Update Employee
+            </h3>
+            <form className="space-y-6" onSubmit={handleUpdate} noValidate>
+              <div>
+                <label
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                  htmlFor="update_name"
+                >
+                  Full Name <span className="text-red-500 ">*</span>
+                </label>
+                <Input
+                  type="text"
+                  name="name"
+                  value={updateFormData.name}
+                  onChange={handleInputChange}
+                  id="update_name"
+                  placeholder="Enter the Full Name"
+                  required
+                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                />
+                {errors.name && (
+                  <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+                )}
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_email"
+                  >
+                    Email <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={updateFormData.email}
+                    onChange={handleInputChange}
+                    id="update_email"
+                    placeholder="Enter Email"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.email && (
+                    <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_phone_number"
+                  >
+                    Phone Number <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="tel"
+                    name="phone_number"
+                    value={updateFormData.phone_number}
+                    onChange={handleInputChange}
+                    id="update_phone_number"
+                    placeholder="Enter Phone Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.phone_number && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.phone_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_password"
+                  >
+                    Password <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="password"
+                    value={updateFormData.password}
+                    onChange={handleInputChange}
+                    id="update_password"
+                    placeholder="Enter Password"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_pincode"
+                  >
+                    Pincode <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="pincode"
+                    value={updateFormData.pincode}
+                    onChange={handleInputChange}
+                    id="update_pincode"
+                    placeholder="Enter Pincode"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.pincode && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.pincode}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_adhaar_no"
+                  >
+                    Adhaar Number <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="adhaar_no"
+                    value={updateFormData.adhaar_no}
+                    onChange={handleInputChange}
+                    id="update_adhaar_no"
+                    placeholder="Enter Adhaar Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.adhaar_no && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.adhaar_no}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_pan_no"
+                  >
+                    Pan Number <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="pan_no"
+                    value={updateFormData.pan_no}
+                    onChange={handleInputChange}
+                    id="update_pan_no"
+                    placeholder="Enter Pan Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.pan_no && (
+                    <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                  htmlFor="update_address"
+                >
+                  Address <span className="text-red-500 ">*</span>
+                </label>
+                <Input
+                  type="text"
+                  name="address"
+                  value={updateFormData.address}
+                  onChange={handleInputChange}
+                  id="update_address"
+                  placeholder="Enter the Address"
+                  required
+                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                />
+                {errors.address && (
+                  <p className="mt-2 text-sm text-red-600">{errors.address}</p>
+                )}
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_designation_id"
+                  >
+                    Designation <span className="text-red-500 ">*</span>
+                  </label>
+
+                  <Select
+                    id="update_designation_id"
+                    name="designation_id"
+                    value={selectedManagerId || undefined}
+                    onChange={handleAntDSelectManager}
+                    placeholder="Select Designation"
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    showSearch
+                    popupMatchSelectWidth={false}
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                  >
+                    {managers.map((manager) => (
+                      <Select.Option key={manager._id} value={manager._id}>
+                        {manager.title}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.designation_id && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.designation_id}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_status"
+                  >
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    placeholder="Select Status"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="status"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={updateFormData?.status || undefined}
+                    onChange={(value) => handleAntInputDSelect("status", value)}
+                  >
+                    {["Active", "Inactive", "Terminated"].map((status) => (
+                      <Select.Option key={status} value={status.toLowerCase()}>
+                        {status}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.status && (
+                    <p className="mt-2 text-sm text-red-600">{errors.status}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_joining_date"
+                  >
+                    Joining Date <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    name="joining_date"
+                    value={updateFormData.joining_date}
+                    onChange={handleInputChange}
+                    id="update_joining_date"
+                    placeholder="Enter Employee Joining Date"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.joining_date && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.joining_date}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_leaving_date"
+                  >
+                    Leaving Date
+                  </label>
+                  <Input
+                    type="date"
+                    name="leaving_date"
+                    value={
+                      updateFormData?.leaving_date
+                        ? new Date(updateFormData?.leaving_date || "")
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={handleInputChange}
+                    id="update_leaving_date"
+                    placeholder="Enter Leaving Date"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_dob"
+                  >
+                    Date of Birth <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    name="dob"
+                    value={
+                      updateFormData?.dob
+                        ? new Date(updateFormData?.dob || "")
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={handleInputChange}
+                    id="update_dob"
+                    placeholder="Enter Employee Date of Birth"
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.dob && (
+                    <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_gender"
+                  >
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
+                    placeholder="Select Gender"
+                    popupMatchSelectWidth={false}
+                    showSearch
+                    name="gender"
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    value={updateFormData?.gender || undefined}
+                    onChange={(value) => handleAntInputDSelect("gender", value)}
+                  >
+                    {["Male", "Female", "Others"].map((gender) => (
+                      <Select.Option key={gender} value={gender.toLowerCase()}>
+                        {gender}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  {errors.gender && (
+                    <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_salary"
+                  >
+                    Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="salary"
+                    value={updateFormData.salary}
+                    onChange={handleInputChange}
+                    id="update_salary"
+                    placeholder="Enter Salary"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.salary && (
+                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_alternate_number"
+                  >
+                    Alternate Phone Number{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="tel"
+                    name="alternate_number"
+                    value={updateFormData.alternate_number}
+                    onChange={handleInputChange}
+                    id="update_alternate_number"
+                    placeholder="Enter Alternate Phone Number"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.alternate_number && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.alternate_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_total_allocated_leaves"
+                  >
+                    Total No. of Leaves <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="total_allocated_leaves"
+                    value={updateFormData.total_allocated_leaves}
+                    onChange={handleInputChange}
+                    id="update_total_allocated_leaves"
+                    placeholder="Enter total leaves"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.total_allocated_leaves && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.total_allocated_leaves}
+                    </p>
+                  )}
+                </div>
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_emergency_contact_person"
+                  >
+                    Emergency Contact Person{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    name="emergency_contact_person"
+                    value={updateFormData?.emergency_contact_person}
+                    onChange={handleInputChange}
+                    id="update_emergency_contact_person"
+                    placeholder="Enter Emergency Contact Person Name"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.emergency_contact_person && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.emergency_contact_person}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_emergency_contact_number"
+                  >
+                    Emergency Phone Number{" "}
+                  </label>
+                  <div className="flex items-center mb-2 gap-2">
+                    <Input
+                      type="tel"
+                      name="emergency_contact_number"
+                      value={updateFormData.emergency_contact_number?.[0] || ""}
+                      onChange={(e) =>
+                        handlePhoneChange(
+                          updateFormData,
+                          setUpdateFormData,
+                          0,
+                          e
+                        )
+                      }
+                      id="update_emergency_contact_number_0"
+                      placeholder="Enter Default Emergency Phone Number"
+                      required
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  {updateFormData.emergency_contact_number
+                    ?.slice(1)
+                    .map((phone, index) => (
+                      <div
+                        key={index + 1}
+                        className="flex items-center mb-2 gap-2"
+                      >
+                        <Input
+                          type="tel"
+                          name={`emergency_phone_${index + 1}`}
+                          value={phone}
+                          onChange={(e) =>
+                            handlePhoneChange(
+                              updateFormData,
+                              setUpdateFormData,
+                              index + 1,
+                              e
+                            )
+                          }
+                          id={`update_emergency_contact_number_${index + 1}`}
+                          placeholder="Enter Additional Emergency Phone Number"
+                          className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                        />
                         <button
                           type="button"
                           onClick={() =>
-                            removePhoneField(formData, setFormData, index + 1)
+                            removePhoneField(
+                              updateFormData,
+                              setUpdateFormData,
+                              index + 1
+                            )
                           }
                           className="text-red-600 text-sm"
                         >
                           Remove
                         </button>
-                      )}
-                    </div>
-                  ))}
-                <button
-                  type="button"
-                  onClick={() => addPhoneField(formData, setFormData)}
-                  className="mt-2 text-blue-600 text-sm"
+                      </div>
+                    ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addPhoneField(updateFormData, setUpdateFormData)
+                    }
+                    className="mt-2 text-blue-600 text-sm"
+                  >
+                    + Add Another
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  className="block mb-2 text-2xl font-medium text-gray-900 "
+                  htmlFor="update_earnings"
                 >
-                  + Add Another
+                  Earnings
+                </label>
+
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_basic"
+                    >
+                      Basic Salary
+                    </label>
+                    <Input
+                      type="Number"
+                      name="earnings.basic"
+                      value={updateFormData.earnings?.basic}
+                      onChange={handleSalaryInputChange}
+                      id="update_basic"
+                      placeholder="Enter Employee Basic Salary"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_hra"
+                    >
+                      House Rent Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.hra"
+                      value={updateFormData.earnings?.hra}
+                      onChange={handleSalaryInputChange}
+                      id="update_hra"
+                      placeholder="Enter House Rent Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_travel_allowance"
+                    >
+                      Travel Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.travel_allowance"
+                      value={updateFormData.earnings?.travel_allowance}
+                      onChange={handleSalaryInputChange}
+                      id="update_travel_allowance"
+                      placeholder="Enter Employee Travel Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_medical_allowance"
+                    >
+                      Medical Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.medical_allowance"
+                      value={updateFormData.earnings?.medical_allowance}
+                      onChange={handleSalaryInputChange}
+                      id="update_medical_allowance"
+                      placeholder="Enter  Medical Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_basket_of_benifits"
+                    >
+                      Basket of Benifits <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.basket_of_benifits"
+                      value={updateFormData.earnings?.basket_of_benifits}
+                      onChange={handleSalaryInputChange}
+                      id="update_basket_of_benifits"
+                      placeholder="Enter Employee Basket of Benifits"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_performance_bonus"
+                    >
+                      Performance Bonus
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.performance_bonus"
+                      value={updateFormData.earnings?.performance_bonus}
+                      onChange={handleSalaryInputChange}
+                      id="update_performance_bonus"
+                      placeholder="Enter Performance Bonus"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_other_allowances"
+                    >
+                      Other Allowance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.other_allowances"
+                      value={updateFormData.earnings?.other_allowances}
+                      onChange={handleSalaryInputChange}
+                      id="update_other_allowances"
+                      placeholder="Enter Other Allowance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_conveyance"
+                    >
+                      Conveyance
+                    </label>
+                    <Input
+                      type="number"
+                      name="earnings.conveyance"
+                      value={updateFormData.earnings?.conveyance}
+                      onChange={handleSalaryInputChange}
+                      id="update_conveyance"
+                      placeholder="Enter Conveyance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                  htmlFor="update_deductions"
+                >
+                  Deduction
+                </label>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_income_tax"
+                    >
+                      Income Tax
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.income_tax"
+                      value={updateFormData.deductions?.income_tax}
+                      onChange={handleSalaryInputChange}
+                      id="update_income_tax"
+                      placeholder="Enter Employee Income Tax"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_esi"
+                    >
+                      Employees' State Insurance
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.esi"
+                      value={updateFormData.deductions?.esi}
+                      onChange={handleSalaryInputChange}
+                      id="update_esi"
+                      placeholder="Enter Employees' State Insurance"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between space-x-4">
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_epf"
+                    >
+                      Employees' Provident Fund
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.epf"
+                      value={updateFormData.deductions?.epf}
+                      onChange={handleSalaryInputChange}
+                      id="update_epf"
+                      placeholder="Enter Employees' Provident Fund"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                      htmlFor="update_professional_tax"
+                    >
+                      Professional Tax
+                    </label>
+                    <Input
+                      type="number"
+                      name="deductions.professional_tax"
+                      value={updateFormData.deductions?.professional_tax}
+                      onChange={handleSalaryInputChange}
+                      id="update_professional_tax"
+                      placeholder="Enter Employees' Professional Tax"
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full flex justify-end">
+                <button
+                  type="submit"
+                  className="w-1/4 text-white bg-blue-700 hover:bg-blue-800 border-2 border-black
+            focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                >
+                  Update Employee
                 </button>
               </div>
-            </div>
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="earnings"
+            </form>
+          </div>
+        </Modal>
+        <Modal
+          isVisible={showModalDelete}
+          onClose={() => {
+            setShowModalDelete(false);
+            setCurrentUser(null);
+          }}
+        >
+          <div className="py-6 px-5 lg:px-8 text-left">
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              Delete Employee
+            </h3>
+            {currentUser && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleDeleteUser();
+                }}
+                className="space-y-6"
               >
-                Earnings
-              </label>
-
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
+                <div>
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="basic"
+                    htmlFor="delete_employee_name"
                   >
-                    Basic Salary <span className="text-red-500">*</span>
+                    Please enter{" "}
+                    <span className="text-primary font-bold">
+                      {currentUser.name}
+                    </span>{" "}
+                    to confirm deletion.{" "}
+                    <span className="text-red-500 ">*</span>
                   </label>
                   <Input
-                    type="Number"
-                    name="earnings.basic"
-                    value={formData.earnings?.basic}
-                    onChange={handleSalaryChange}
-                    id="basic"
-                    placeholder="Enter Employee Basic Salary"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="hra"
-                  >
-                    House Rent Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.hra"
-                    value={formData.earnings?.hra}
-                    onChange={handleSalaryChange}
-                    id="hra"
-                    placeholder="Enter House Rent Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="travel_allowance"
-                  >
-                    Travel Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.travel_allowance"
-                    value={formData.earnings?.travel_allowance}
-                    onChange={handleSalaryChange}
-                    id="travel_allowance"
-                    placeholder="Enter Employee Travel Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="medical_allowance"
-                  >
-                    Medical Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.medical_allowance"
-                    value={formData.earnings?.medical_allowance}
-                    onChange={handleSalaryChange}
-                    id="medical_allowance"
-                    placeholder="Enter  Medical Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="basket_of_benifits"
-                  >
-                    Basket of Benifits <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.basket_of_benifits"
-                    value={formData.earnings?.basket_of_benifits}
-                    onChange={handleSalaryChange}
-                    id="basket_of_benifits"
-                    placeholder="Enter Employee Basket of Benifits"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="performance_bonus"
-                  >
-                    Performance Bonus
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.performance_bonus"
-                    value={formData.earnings?.performance_bonus}
-                    onChange={handleSalaryChange}
-                    id="performance_bonus"
-                    placeholder="Enter Performance Bonus"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="other_allowances"
-                  >
-                    Other Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.other_allowances"
-                    value={formData.earnings?.other_allowances}
-                    onChange={handleSalaryChange}
-                    id="other_allowances"
-                    placeholder="Enter Other Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="conveyance"
-                  >
-                    Conveyance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.conveyance"
-                    value={formData.earnings?.conveyance}
-                    onChange={handleSalaryChange}
-                    id="conveyance"
-                    placeholder="Enter Conveyance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="deductions"
-              >
-                Deductions
-              </label>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="income_tax"
-                  >
-                    Income Tax
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.income_tax"
-                    value={formData.deductions?.income_tax}
-                    onChange={handleSalaryChange}
-                    id="income_tax"
-                    placeholder="Enter Employee Income Tax"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="esi"
-                  >
-                    Employees' State Insurance
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.esi"
-                    value={formData.deductions?.esi}
-                    onChange={handleSalaryChange}
-                    id="esi"
-                    placeholder="Enter Employees' State Insurance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="epf"
-                  >
-                    Employees' Provident Fund
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.epf"
-                    value={formData.deductions?.epf}
-                    onChange={handleSalaryChange}
-                    id="epf"
-                    placeholder="Enter Employees' Provident Fund"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="professional_tax"
-                  >
-                    Professional Tax
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.professional_tax"
-                    value={formData.deductions?.professional_tax}
-                    onChange={handleSalaryChange}
-                    id="professional_tax"
-                    placeholder="Enter Employees' Professional Tax"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full flex justify-end">
-              <button
-                type="submit"
-                className="w-1/4 text-white bg-blue-700 hover:bg-blue-800
-            focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center border-2 border-black"
-              >
-                Save Employee
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-      <Modal
-        isVisible={showModalUpdate}
-        onClose={() => setShowModalUpdate(false)}
-      >
-        <div className="py-6 px-5 lg:px-8 text-left">
-          <h3 className="mb-4 text-xl font-bold text-gray-900">
-            Update Employee
-          </h3>
-          <form className="space-y-6" onSubmit={handleUpdate} noValidate>
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="update_name"
-              >
-                Full Name <span className="text-red-500 ">*</span>
-              </label>
-              <Input
-                type="text"
-                name="name"
-                value={updateFormData.name}
-                onChange={handleInputChange}
-                id="update_name"
-                placeholder="Enter the Full Name"
-                required
-                className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-              />
-              {errors.name && (
-                <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_email"
-                >
-                  Email <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={updateFormData.email}
-                  onChange={handleInputChange}
-                  id="update_email"
-                  placeholder="Enter Email"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.email && (
-                  <p className="mt-2 text-sm text-red-600">{errors.email}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_phone_number"
-                >
-                  Phone Number <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  name="phone_number"
-                  value={updateFormData.phone_number}
-                  onChange={handleInputChange}
-                  id="update_phone_number"
-                  placeholder="Enter Phone Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.phone_number && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.phone_number}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_password"
-                >
-                  Password <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="password"
-                  value={updateFormData.password}
-                  onChange={handleInputChange}
-                  id="update_password"
-                  placeholder="Enter Password"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.password && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_pincode"
-                >
-                  Pincode <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="pincode"
-                  value={updateFormData.pincode}
-                  onChange={handleInputChange}
-                  id="update_pincode"
-                  placeholder="Enter Pincode"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.pincode && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.pincode}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_adhaar_no"
-                >
-                  Adhaar Number <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="adhaar_no"
-                  value={updateFormData.adhaar_no}
-                  onChange={handleInputChange}
-                  id="update_adhaar_no"
-                  placeholder="Enter Adhaar Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.adhaar_no && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.adhaar_no}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_pan_no"
-                >
-                  Pan Number <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="pan_no"
-                  value={updateFormData.pan_no}
-                  onChange={handleInputChange}
-                  id="update_pan_no"
-                  placeholder="Enter Pan Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.pan_no && (
-                  <p className="mt-2 text-sm text-red-600">{errors.pan_no}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="update_address"
-              >
-                Address <span className="text-red-500 ">*</span>
-              </label>
-              <Input
-                type="text"
-                name="address"
-                value={updateFormData.address}
-                onChange={handleInputChange}
-                id="update_address"
-                placeholder="Enter the Address"
-                required
-                className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-              />
-              {errors.address && (
-                <p className="mt-2 text-sm text-red-600">{errors.address}</p>
-              )}
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_designation_id"
-                >
-                  Designation <span className="text-red-500 ">*</span>
-                </label>
-
-                <Select
-                  id="update_designation_id"
-                  name="designation_id"
-                  value={selectedManagerId || undefined}
-                  onChange={handleAntDSelectManager}
-                  placeholder="Select Designation"
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  showSearch
-                  popupMatchSelectWidth={false}
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                >
-                  {managers.map((manager) => (
-                    <Select.Option key={manager._id} value={manager._id}>
-                      {manager.title}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.designation_id && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.designation_id}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_status"
-                >
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  placeholder="Select Status"
-                  popupMatchSelectWidth={false}
-                  showSearch
-                  name="status"
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  value={updateFormData?.status || undefined}
-                  onChange={(value) => handleAntInputDSelect("status", value)}
-                >
-                  {["Active", "Inactive", "Terminated"].map((status) => (
-                    <Select.Option key={status} value={status.toLowerCase()}>
-                      {status}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.status && (
-                  <p className="mt-2 text-sm text-red-600">{errors.status}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_joining_date"
-                >
-                  Joining Date <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="date"
-                  name="joining_date"
-                  value={updateFormData.joining_date}
-                  onChange={handleInputChange}
-                  id="update_joining_date"
-                  placeholder="Enter Employee Joining Date"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.joining_date && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.joining_date}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_leaving_date"
-                >
-                  Leaving Date
-                </label>
-                <Input
-                  type="date"
-                  name="leaving_date"
-                  value={
-                    updateFormData?.leaving_date
-                      ? new Date(updateFormData?.leaving_date || "")
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={handleInputChange}
-                  id="update_leaving_date"
-                  placeholder="Enter Leaving Date"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_dob"
-                >
-                  Date of Birth <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="date"
-                  name="dob"
-                  value={
-                    updateFormData?.dob
-                      ? new Date(updateFormData?.dob || "")
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={handleInputChange}
-                  id="update_dob"
-                  placeholder="Enter Employee Date of Birth"
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.dob && (
-                  <p className="mt-2 text-sm text-red-600">{errors.dob}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_gender"
-                >
-                  Gender <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  className="bg-gray-50 border h-14 border-gray-300 text-gray-900 text-sm rounded-lg w-full"
-                  placeholder="Select Gender"
-                  popupMatchSelectWidth={false}
-                  showSearch
-                  name="gender"
-                  filterOption={(input, option) =>
-                    option.children
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  value={updateFormData?.gender || undefined}
-                  onChange={(value) => handleAntInputDSelect("gender", value)}
-                >
-                  {["Male", "Female", "Others"].map((gender) => (
-                    <Select.Option key={gender} value={gender.toLowerCase()}>
-                      {gender}
-                    </Select.Option>
-                  ))}
-                </Select>
-                {errors.gender && (
-                  <p className="mt-2 text-sm text-red-600">{errors.gender}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_salary"
-                >
-                  Salary <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="number"
-                  name="salary"
-                  value={updateFormData.salary}
-                  onChange={handleInputChange}
-                  id="update_salary"
-                  placeholder="Enter Salary"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.salary && (
-                  <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_alternate_number"
-                >
-                  Alternate Phone Number{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  name="alternate_number"
-                  value={updateFormData.alternate_number}
-                  onChange={handleInputChange}
-                  id="update_alternate_number"
-                  placeholder="Enter Alternate Phone Number"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.alternate_number && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.alternate_number}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_total_allocated_leaves"
-                >
-                  Total No. of Leaves <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="number"
-                  name="total_allocated_leaves"
-                  value={updateFormData.total_allocated_leaves}
-                  onChange={handleInputChange}
-                  id="update_total_allocated_leaves"
-                  placeholder="Enter total leaves"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.total_allocated_leaves && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.total_allocated_leaves}
-                  </p>
-                )}
-              </div>
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_emergency_contact_person"
-                >
-                  Emergency Contact Person{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="text"
-                  name="emergency_contact_person"
-                  value={updateFormData?.emergency_contact_person}
-                  onChange={handleInputChange}
-                  id="update_emergency_contact_person"
-                  placeholder="Enter Emergency Contact Person Name"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-                {errors.emergency_contact_person && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.emergency_contact_person}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-row justify-between space-x-4">
-              <div className="w-1/2">
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="update_emergency_contact_number"
-                >
-                  Emergency Phone Number{" "}
-                </label>
-                <div className="flex items-center mb-2 gap-2">
-                  <Input
-                    type="tel"
-                    name="emergency_contact_number"
-                    value={updateFormData.emergency_contact_number?.[0] || ""}
-                    onChange={(e) =>
-                      handlePhoneChange(
-                        updateFormData,
-                        setUpdateFormData,
-                        0,
-                        e
-                      )
-                    }
-                    id="update_emergency_contact_number_0"
-                    placeholder="Enter Default Emergency Phone Number"
+                    type="text"
+                    id="delete_employee_name"
+                    placeholder="Enter the employee Full Name"
                     required
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
                 </div>
-                {updateFormData.emergency_contact_number
-                  ?.slice(1)
-                  .map((phone, index) => (
-                    <div
-                      key={index + 1}
-                      className="flex items-center mb-2 gap-2"
-                    >
-                      <Input
-                        type="tel"
-                        name={`emergency_phone_${index + 1}`}
-                        value={phone}
-                        onChange={(e) =>
-                          handlePhoneChange(
-                            updateFormData,
-                            setUpdateFormData,
-                            index + 1,
-                            e
-                          )
-                        }
-                        id={`update_emergency_contact_number_${index + 1}`}
-                        placeholder="Enter Additional Emergency Phone Number"
-                        className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removePhoneField(
-                            updateFormData,
-                            setUpdateFormData,
-                            index + 1
-                          )
-                        }
-                        className="text-red-600 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
                 <button
-                  type="button"
-                  onClick={() =>
-                    addPhoneField(updateFormData, setUpdateFormData)
-                  }
-                  className="mt-2 text-blue-600 text-sm"
-                >
-                  + Add Another
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label
-                className="block mb-2 text font-medium text-gray-900 "
-                htmlFor="update_earnings"
-              >
-                Earnings
-              </label>
-
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_basic"
-                  >
-                    Basic Salary <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="Number"
-                    name="earnings.basic"
-                    value={updateFormData.earnings?.basic}
-                    onChange={handleSalaryInputChange}
-                    id="update_basic"
-                    placeholder="Enter Employee Basic Salary"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_hra"
-                  >
-                    House Rent Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.hra"
-                    value={updateFormData.earnings?.hra}
-                    onChange={handleSalaryInputChange}
-                    id="update_hra"
-                    placeholder="Enter House Rent Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_travel_allowance"
-                  >
-                    Travel Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.travel_allowance"
-                    value={updateFormData.earnings?.travel_allowance}
-                    onChange={handleSalaryInputChange}
-                    id="update_travel_allowance"
-                    placeholder="Enter Employee Travel Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_medical_allowance"
-                  >
-                    Medical Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.medical_allowance"
-                    value={updateFormData.earnings?.medical_allowance}
-                    onChange={handleSalaryInputChange}
-                    id="update_medical_allowance"
-                    placeholder="Enter  Medical Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_basket_of_benifits"
-                  >
-                    Basket of Benifits <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.basket_of_benifits"
-                    value={updateFormData.earnings?.basket_of_benifits}
-                    onChange={handleSalaryInputChange}
-                    id="update_basket_of_benifits"
-                    placeholder="Enter Employee Basket of Benifits"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_performance_bonus"
-                  >
-                    Performance Bonus
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.performance_bonus"
-                    value={updateFormData.earnings?.performance_bonus}
-                    onChange={handleSalaryInputChange}
-                    id="update_performance_bonus"
-                    placeholder="Enter Performance Bonus"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_other_allowances"
-                  >
-                    Other Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.other_allowances"
-                    value={updateFormData.earnings?.other_allowances}
-                    onChange={handleSalaryInputChange}
-                    id="update_other_allowances"
-                    placeholder="Enter Other Allowance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_conveyance"
-                  >
-                    Conveyance
-                  </label>
-                  <Input
-                    type="number"
-                    name="earnings.conveyance"
-                    value={updateFormData.earnings?.conveyance}
-                    onChange={handleSalaryInputChange}
-                    id="update_conveyance"
-                    placeholder="Enter Conveyance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label
-                className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="update_deductions"
-              >
-                Deduction
-              </label>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_income_tax"
-                  >
-                    Income Tax
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.income_tax"
-                    value={updateFormData.deductions?.income_tax}
-                    onChange={handleSalaryInputChange}
-                    id="update_income_tax"
-                    placeholder="Enter Employee Income Tax"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_esi"
-                  >
-                    Employees' State Insurance
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.esi"
-                    value={updateFormData.deductions?.esi}
-                    onChange={handleSalaryInputChange}
-                    id="update_esi"
-                    placeholder="Enter Employees' State Insurance"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_epf"
-                  >
-                    Employees' Provident Fund
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.epf"
-                    value={updateFormData.deductions?.epf}
-                    onChange={handleSalaryInputChange}
-                    id="update_epf"
-                    placeholder="Enter Employees' Provident Fund"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_professional_tax"
-                  >
-                    Professional Tax
-                  </label>
-                  <Input
-                    type="number"
-                    name="deductions.professional_tax"
-                    value={updateFormData.deductions?.professional_tax}
-                    onChange={handleSalaryInputChange}
-                    id="update_professional_tax"
-                    placeholder="Enter Employees' Professional Tax"
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full flex justify-end">
-              <button
-                type="submit"
-                className="w-1/4 text-white bg-blue-700 hover:bg-blue-800 border-2 border-black
-            focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-              >
-                Update Employee
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-      <Modal
-        isVisible={showModalDelete}
-        onClose={() => {
-          setShowModalDelete(false);
-          setCurrentUser(null);
-        }}
-      >
-        <div className="py-6 px-5 lg:px-8 text-left">
-          <h3 className="mb-4 text-xl font-bold text-gray-900">
-            Delete Employee
-          </h3>
-          {currentUser && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleDeleteUser();
-              }}
-              className="space-y-6"
-            >
-              <div>
-                <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="delete_employee_name"
-                >
-                  Please enter{" "}
-                  <span className="text-primary font-bold">
-                    {currentUser.name}
-                  </span>{" "}
-                  to confirm deletion.{" "}
-                  <span className="text-red-500 ">*</span>
-                </label>
-                <Input
-                  type="text"
-                  id="delete_employee_name"
-                  placeholder="Enter the employee Full Name"
-                  required
-                  className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full text-white bg-red-700 hover:bg-red-800
+                  type="submit"
+                  className="w-full text-white bg-red-700 hover:bg-red-800
         focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-              >
-                Delete
-              </button>
-            </form>
-          )}
-        </div>
-      </Modal>
-    </div>
-  </>
-);
+                >
+                  Delete
+                </button>
+              </form>
+            )}
+          </div>
+        </Modal>
+      </div>
+    </>
+  );
 };
 export default Payroll;
