@@ -418,7 +418,7 @@ const Payroll = () => {
           designation_id: selectedManagerId,
           reporting_manager_id: selectedReportingManagerId,
         };
-        const response = await api.post("/agent/employee", dataToSend, {
+        const response = await api.post("/employee", dataToSend, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -1287,7 +1287,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -1298,7 +1298,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.travel_allowance"
-                      value={formData.earnings?.travel_allowance}
+                      value={formData.earnings?.travel_allowance === 0 ? "" : formData.earnings?.travel_allowance}
                       onChange={handleSalaryChange}
                       id="travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
@@ -1315,7 +1315,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.medical_allowance"
-                      value={formData.earnings?.medical_allowance}
+                      value={formData.earnings?.medical_allowance === 0 ? "" :formData.earnings?.medical_allowance }
                       onChange={handleSalaryChange}
                       id="medical_allowance"
                       placeholder="Enter  Medical Allowance"
@@ -1323,18 +1323,18 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="basket_of_benifits"
                     >
-                      Basket of Benifits <span className="text-red-500">*</span>
+                      Basket of Benifits 
                     </label>
                     <Input
                       type="number"
                       name="earnings.basket_of_benifits"
-                      value={formData.earnings?.basket_of_benifits}
+                      value={formData.earnings?.basket_of_benifits === 0 ? "" : formData.earnings?.basket_of_benifits}
                       onChange={handleSalaryChange}
                       id="basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
@@ -1351,7 +1351,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.performance_bonus"
-                      value={formData.earnings?.performance_bonus}
+                      value={formData.earnings?.performance_bonus === 0 ? "" : formData.earnings?.performance_bonus}
                       onChange={handleSalaryChange}
                       id="performance_bonus"
                       placeholder="Enter Performance Bonus"
@@ -1359,7 +1359,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -1370,7 +1370,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.other_allowances"
-                      value={formData.earnings?.other_allowances}
+                      value={formData.earnings?.other_allowances === 0 ? "" : formData.earnings?.other_allowances }
                       onChange={handleSalaryChange}
                       id="other_allowances"
                       placeholder="Enter Other Allowance"
@@ -1387,7 +1387,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.conveyance"
-                      value={formData.earnings?.conveyance}
+                      value={formData.earnings?.conveyance === 0 ? "" : formData.earnings?.conveyance}
                       onChange={handleSalaryChange}
                       id="conveyance"
                       placeholder="Enter Conveyance"
@@ -1404,7 +1404,7 @@ const Payroll = () => {
                 >
                   Deductions
                 </label>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -1415,7 +1415,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.income_tax"
-                      value={formData.deductions?.income_tax}
+                      value={formData.deductions?.income_tax === 0 ? "" : formData.deductions?.income_tax }
                       onChange={handleSalaryChange}
                       id="income_tax"
                       placeholder="Enter Employee Income Tax"
@@ -1432,7 +1432,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.esi"
-                      value={formData.deductions?.esi}
+                      value={formData.deductions?.esi === 0 ? "" : formData.deductions?.esi }
                       onChange={handleSalaryChange}
                       id="esi"
                       placeholder="Enter Employees' State Insurance"
@@ -1440,7 +1440,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -1451,7 +1451,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.epf"
-                      value={formData.deductions?.epf}
+                      value={formData.deductions?.epf === 0 ? "" :formData.deductions?.epf}
                       onChange={handleSalaryChange}
                       id="epf"
                       placeholder="Enter Employees' Provident Fund"
@@ -1468,7 +1468,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.professional_tax"
-                      value={formData.deductions?.professional_tax}
+                      value={formData.deductions?.professional_tax === 0 ? "" : formData.deductions?.professional_tax}
                       onChange={handleSalaryChange}
                       id="professional_tax"
                       placeholder="Enter Employees' Professional Tax"
@@ -2036,7 +2036,7 @@ const Payroll = () => {
                   Earnings
                 </label>
 
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -2047,7 +2047,7 @@ const Payroll = () => {
                     <Input
                       type="Number"
                       name="earnings.basic"
-                      value={updateFormData.earnings?.basic}
+                      value={updateFormData.earnings?.basic === 0 ? "" : updateFormData.earnings?.basic}
                       onChange={handleSalaryInputChange}
                       id="update_basic"
                       placeholder="Enter Employee Basic Salary"
@@ -2064,7 +2064,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.hra"
-                      value={updateFormData.earnings?.hra}
+                      value={updateFormData.earnings?.hra === 0 ? "": updateFormData.earnings?.hra}
                       onChange={handleSalaryInputChange}
                       id="update_hra"
                       placeholder="Enter House Rent Allowance"
@@ -2072,7 +2072,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -2083,7 +2083,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.travel_allowance"
-                      value={updateFormData.earnings?.travel_allowance}
+                      value={updateFormData.earnings?.travel_allowance === 0 ? "" :updateFormData.earnings?.travel_allowance }
                       onChange={handleSalaryInputChange}
                       id="update_travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
@@ -2100,7 +2100,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.medical_allowance"
-                      value={updateFormData.earnings?.medical_allowance}
+                      value={updateFormData.earnings?.medical_allowance === 0 ? "" : updateFormData.earnings?.medical_allowance}
                       onChange={handleSalaryInputChange}
                       id="update_medical_allowance"
                       placeholder="Enter  Medical Allowance"
@@ -2108,18 +2108,18 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basket_of_benifits"
                     >
-                      Basket of Benifits <span className="text-red-500">*</span>
+                      Basket of Benifits 
                     </label>
                     <Input
                       type="number"
                       name="earnings.basket_of_benifits"
-                      value={updateFormData.earnings?.basket_of_benifits}
+                      value={updateFormData.earnings?.basket_of_benifits === 0 ? "" : updateFormData.earnings?.basket_of_benifits }
                       onChange={handleSalaryInputChange}
                       id="update_basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
@@ -2136,7 +2136,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.performance_bonus"
-                      value={updateFormData.earnings?.performance_bonus}
+                      value={updateFormData.earnings?.performance_bonus === 0 ? "" : updateFormData.earnings?.performance_bonus }
                       onChange={handleSalaryInputChange}
                       id="update_performance_bonus"
                       placeholder="Enter Performance Bonus"
@@ -2144,7 +2144,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -2155,7 +2155,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.other_allowances"
-                      value={updateFormData.earnings?.other_allowances}
+                      value={updateFormData.earnings?.other_allowances === 0 ? "": updateFormData.earnings?.other_allowances}
                       onChange={handleSalaryInputChange}
                       id="update_other_allowances"
                       placeholder="Enter Other Allowance"
@@ -2172,7 +2172,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.conveyance"
-                      value={updateFormData.earnings?.conveyance}
+                      value={updateFormData.earnings?.conveyance === 0 ? "" : updateFormData.earnings?.conveyance}
                       onChange={handleSalaryInputChange}
                       id="update_conveyance"
                       placeholder="Enter Conveyance"
@@ -2184,12 +2184,12 @@ const Payroll = () => {
 
               <div>
                 <label
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-2xl font-medium text-gray-900"
                   htmlFor="update_deductions"
                 >
                   Deduction
                 </label>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -2200,7 +2200,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.income_tax"
-                      value={updateFormData.deductions?.income_tax}
+                      value={updateFormData.deductions?.income_tax === 0 ? "": updateFormData.deductions?.income_tax }
                       onChange={handleSalaryInputChange}
                       id="update_income_tax"
                       placeholder="Enter Employee Income Tax"
@@ -2217,7 +2217,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.esi"
-                      value={updateFormData.deductions?.esi}
+                      value={updateFormData.deductions?.esi === 0 ? "": updateFormData.deductions?.esi }
                       onChange={handleSalaryInputChange}
                       id="update_esi"
                       placeholder="Enter Employees' State Insurance"
@@ -2225,7 +2225,7 @@ const Payroll = () => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-row justify-between space-x-4">
+                <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">
                     <label
                       className="block mb-2 text-sm font-medium text-gray-900"
@@ -2236,7 +2236,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.epf"
-                      value={updateFormData.deductions?.epf}
+                      value={updateFormData.deductions?.epf === 0 ? "": updateFormData.deductions?.epf}
                       onChange={handleSalaryInputChange}
                       id="update_epf"
                       placeholder="Enter Employees' Provident Fund"
@@ -2253,7 +2253,7 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.professional_tax"
-                      value={updateFormData.deductions?.professional_tax}
+                      value={updateFormData.deductions?.professional_tax === 0 ? "" : updateFormData.deductions?.professional_tax}
                       onChange={handleSalaryInputChange}
                       id="update_professional_tax"
                       placeholder="Enter Employees' Professional Tax"
