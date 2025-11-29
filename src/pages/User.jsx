@@ -149,6 +149,7 @@ const User = () => {
               : "Unknown",
           // referral_code: group?.referral_code,
           collection_area: group.collection_area?.route_name,
+          progressValue: group?.percentage,
           progress: (
             <div className="flex flex-col items-center justify-center">
               <div
@@ -169,7 +170,7 @@ const User = () => {
                         : "text-indigo-600"
                     }`}
                   >
-                    {group.percentage}%
+                    {group?.percentage}%
                   </span>
                 </div>
               </div>
@@ -466,6 +467,24 @@ const User = () => {
     { key: "action", header: "Action" },
   ];
 
+    const printtableColumns = [
+    { key: "id", header: "SL. NO" },
+    { key: "approval_status", header: "Approval Status" },
+    { key: "customer_id", header: "Customer Id" },
+    { key: "name", header: "Customer Name" },
+    { key: "phone_number", header: "Customer Phone Number" },
+    { key: "createdAt", header: "Joined On" },
+    { key: "address", header: "Customer Address" },
+    { key: "pincode", header: "Customer Pincode" },
+    { key: "referral_type", header: "Referred Type" },
+    { key: "referredBy", header: "Referred By" },
+    { key: "trackSource", header: "Track Source" },
+    //  {key: "referral_code", header: "Referral Code"},
+    { key: "collection_area", header: "Area" },
+    { key: "progressValue", header: "Progress" },
+    { key: "action", header: "Action" },
+  ];
+
   const filteredUsers = users.filter((user) =>
     user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -700,6 +719,9 @@ const User = () => {
                 updateHandler={handleUpdateModalOpen}
                 data={filterOption(TableUsers, searchText)}
                 columns={columns}
+                
+                exportCols={printtableColumns}
+                isExportEnabled={true}
                 exportedPdfName="Customers"
                 exportedFileName={`Customers.csv`}
               />
