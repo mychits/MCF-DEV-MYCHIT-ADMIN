@@ -121,7 +121,7 @@ const PenaltyMonitor = () => {
   const fetchData = async () => {
     try {
       setScreenLoading(true);
-      const reportResponse = await api.get("/user");
+      const reportResponse = await api.get("/user/all-customers-report");
       const penaltyResponse = await api.get("/penalty/get-penalty-report");
       const allPenaltyData = penaltyResponse.data?.data || [];
       const penaltyMap = new Map();
