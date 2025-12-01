@@ -43,6 +43,8 @@ import { MdAccountBalanceWallet } from "react-icons/md";
 import { LuTarget } from "react-icons/lu";
 import { TbTargetArrow } from "react-icons/tb";
 import { FaExclamationTriangle } from "react-icons/fa";
+
+import { TbGraph } from "react-icons/tb";
 const MenuSidebar = [
   {
     id: "$1",
@@ -188,7 +190,7 @@ const MenuSidebar = [
       //   },
       // ],
     },
-
+   { title: "Penalty Monitor", icon: <TbGraph size={25} />, link: "/penalty-monitor" },
   {
     id: "$7",
     title: "Leads",
