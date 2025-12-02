@@ -215,10 +215,49 @@ const Payroll = () => {
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    const basic =1000;
+    const hra = 1000;
+    const travelAllowance = 1000;
+    const medicalAllowance = 1000;
+    const basketOfBenifits = 1000;
+    const performanceBonus = 1000;
+    const otherAllowances = 1000;
+    const conveyance = 1000;
+    const incomeTax = 1000;
+    const esi = 1000;
+    const epf = 1000;
+    const professionalTax = 1000;
+    const salaryAdvance = 1000;
+    if (name === "salary") {
+      setFormData((prevData) => ({
+        ...prevData,
+        deductions: {
+          ...prevData.deductions,
+          basic,
+          hra,
+          travel_allowance: travelAllowance,
+          medical_allowance: medicalAllowance,
+          basket_of_benifits: basketOfBenifits,
+          performance_bonus: performanceBonus,
+          other_allowances: otherAllowances,
+          conveyance: conveyance,
+        },
+        earnings: {
+          ...prevData.earnings,
+          income_tax: incomeTax,
+          esi,
+          epf,
+          professional_tax: professionalTax,
+          salary_advance: salaryAdvance,
+        },
+        [name]: value,
+      }));
+      
+    }else{
+
+      setFormData((prevData) => ({ ...prevData,[name]:value }));
+    }
+
     setErrors((prevData) => ({
       ...prevData,
       [name]: "",
@@ -1080,7 +1119,7 @@ const Payroll = () => {
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="salary"
                   >
-                  Gross Salary <span className="text-red-500">*</span>
+                    Fixed Salary <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"
@@ -1298,7 +1337,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.travel_allowance"
-                      value={formData.earnings?.travel_allowance === 0 ? "" : formData.earnings?.travel_allowance}
+                      value={
+                        formData.earnings?.travel_allowance === 0
+                          ? ""
+                          : formData.earnings?.travel_allowance
+                      }
                       onChange={handleSalaryChange}
                       id="travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
@@ -1315,7 +1358,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.medical_allowance"
-                      value={formData.earnings?.medical_allowance === 0 ? "" :formData.earnings?.medical_allowance }
+                      value={
+                        formData.earnings?.medical_allowance === 0
+                          ? ""
+                          : formData.earnings?.medical_allowance
+                      }
                       onChange={handleSalaryChange}
                       id="medical_allowance"
                       placeholder="Enter  Medical Allowance"
@@ -1329,12 +1376,16 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="basket_of_benifits"
                     >
-                      Basket of Benifits 
+                      Basket of Benifits
                     </label>
                     <Input
                       type="number"
                       name="earnings.basket_of_benifits"
-                      value={formData.earnings?.basket_of_benifits === 0 ? "" : formData.earnings?.basket_of_benifits}
+                      value={
+                        formData.earnings?.basket_of_benifits === 0
+                          ? ""
+                          : formData.earnings?.basket_of_benifits
+                      }
                       onChange={handleSalaryChange}
                       id="basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
@@ -1351,7 +1402,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.performance_bonus"
-                      value={formData.earnings?.performance_bonus === 0 ? "" : formData.earnings?.performance_bonus}
+                      value={
+                        formData.earnings?.performance_bonus === 0
+                          ? ""
+                          : formData.earnings?.performance_bonus
+                      }
                       onChange={handleSalaryChange}
                       id="performance_bonus"
                       placeholder="Enter Performance Bonus"
@@ -1370,7 +1425,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.other_allowances"
-                      value={formData.earnings?.other_allowances === 0 ? "" : formData.earnings?.other_allowances }
+                      value={
+                        formData.earnings?.other_allowances === 0
+                          ? ""
+                          : formData.earnings?.other_allowances
+                      }
                       onChange={handleSalaryChange}
                       id="other_allowances"
                       placeholder="Enter Other Allowance"
@@ -1387,7 +1446,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.conveyance"
-                      value={formData.earnings?.conveyance === 0 ? "" : formData.earnings?.conveyance}
+                      value={
+                        formData.earnings?.conveyance === 0
+                          ? ""
+                          : formData.earnings?.conveyance
+                      }
                       onChange={handleSalaryChange}
                       id="conveyance"
                       placeholder="Enter Conveyance"
@@ -1415,7 +1478,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.income_tax"
-                      value={formData.deductions?.income_tax === 0 ? "" : formData.deductions?.income_tax }
+                      value={
+                        formData.deductions?.income_tax === 0
+                          ? ""
+                          : formData.deductions?.income_tax
+                      }
                       onChange={handleSalaryChange}
                       id="income_tax"
                       placeholder="Enter Employee Income Tax"
@@ -1432,7 +1499,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.esi"
-                      value={formData.deductions?.esi === 0 ? "" : formData.deductions?.esi }
+                      value={
+                        formData.deductions?.esi === 0
+                          ? ""
+                          : formData.deductions?.esi
+                      }
                       onChange={handleSalaryChange}
                       id="esi"
                       placeholder="Enter Employees' State Insurance"
@@ -1451,7 +1522,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.epf"
-                      value={formData.deductions?.epf === 0 ? "" :formData.deductions?.epf}
+                      value={
+                        formData.deductions?.epf === 0
+                          ? ""
+                          : formData.deductions?.epf
+                      }
                       onChange={handleSalaryChange}
                       id="epf"
                       placeholder="Enter Employees' Provident Fund"
@@ -1468,7 +1543,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.professional_tax"
-                      value={formData.deductions?.professional_tax === 0 ? "" : formData.deductions?.professional_tax}
+                      value={
+                        formData.deductions?.professional_tax === 0
+                          ? ""
+                          : formData.deductions?.professional_tax
+                      }
                       onChange={handleSalaryChange}
                       id="professional_tax"
                       placeholder="Enter Employees' Professional Tax"
@@ -1861,7 +1940,7 @@ const Payroll = () => {
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="update_salary"
                   >
-                  Gross Salary <span className="text-red-500">*</span>
+                    Fixed Salary <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"
@@ -2047,7 +2126,11 @@ const Payroll = () => {
                     <Input
                       type="Number"
                       name="earnings.basic"
-                      value={updateFormData.earnings?.basic === 0 ? "" : updateFormData.earnings?.basic}
+                      value={
+                        updateFormData.earnings?.basic === 0
+                          ? ""
+                          : updateFormData.earnings?.basic
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_basic"
                       placeholder="Enter Employee Basic Salary"
@@ -2064,7 +2147,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.hra"
-                      value={updateFormData.earnings?.hra === 0 ? "": updateFormData.earnings?.hra}
+                      value={
+                        updateFormData.earnings?.hra === 0
+                          ? ""
+                          : updateFormData.earnings?.hra
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_hra"
                       placeholder="Enter House Rent Allowance"
@@ -2083,7 +2170,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.travel_allowance"
-                      value={updateFormData.earnings?.travel_allowance === 0 ? "" :updateFormData.earnings?.travel_allowance }
+                      value={
+                        updateFormData.earnings?.travel_allowance === 0
+                          ? ""
+                          : updateFormData.earnings?.travel_allowance
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
@@ -2100,7 +2191,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.medical_allowance"
-                      value={updateFormData.earnings?.medical_allowance === 0 ? "" : updateFormData.earnings?.medical_allowance}
+                      value={
+                        updateFormData.earnings?.medical_allowance === 0
+                          ? ""
+                          : updateFormData.earnings?.medical_allowance
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_medical_allowance"
                       placeholder="Enter  Medical Allowance"
@@ -2114,12 +2209,16 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basket_of_benifits"
                     >
-                      Basket of Benifits 
+                      Basket of Benifits
                     </label>
                     <Input
                       type="number"
                       name="earnings.basket_of_benifits"
-                      value={updateFormData.earnings?.basket_of_benifits === 0 ? "" : updateFormData.earnings?.basket_of_benifits }
+                      value={
+                        updateFormData.earnings?.basket_of_benifits === 0
+                          ? ""
+                          : updateFormData.earnings?.basket_of_benifits
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
@@ -2136,7 +2235,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.performance_bonus"
-                      value={updateFormData.earnings?.performance_bonus === 0 ? "" : updateFormData.earnings?.performance_bonus }
+                      value={
+                        updateFormData.earnings?.performance_bonus === 0
+                          ? ""
+                          : updateFormData.earnings?.performance_bonus
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_performance_bonus"
                       placeholder="Enter Performance Bonus"
@@ -2155,7 +2258,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.other_allowances"
-                      value={updateFormData.earnings?.other_allowances === 0 ? "": updateFormData.earnings?.other_allowances}
+                      value={
+                        updateFormData.earnings?.other_allowances === 0
+                          ? ""
+                          : updateFormData.earnings?.other_allowances
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_other_allowances"
                       placeholder="Enter Other Allowance"
@@ -2172,7 +2279,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="earnings.conveyance"
-                      value={updateFormData.earnings?.conveyance === 0 ? "" : updateFormData.earnings?.conveyance}
+                      value={
+                        updateFormData.earnings?.conveyance === 0
+                          ? ""
+                          : updateFormData.earnings?.conveyance
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_conveyance"
                       placeholder="Enter Conveyance"
@@ -2200,7 +2311,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.income_tax"
-                      value={updateFormData.deductions?.income_tax === 0 ? "": updateFormData.deductions?.income_tax }
+                      value={
+                        updateFormData.deductions?.income_tax === 0
+                          ? ""
+                          : updateFormData.deductions?.income_tax
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_income_tax"
                       placeholder="Enter Employee Income Tax"
@@ -2217,7 +2332,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.esi"
-                      value={updateFormData.deductions?.esi === 0 ? "": updateFormData.deductions?.esi }
+                      value={
+                        updateFormData.deductions?.esi === 0
+                          ? ""
+                          : updateFormData.deductions?.esi
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_esi"
                       placeholder="Enter Employees' State Insurance"
@@ -2236,7 +2355,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.epf"
-                      value={updateFormData.deductions?.epf === 0 ? "": updateFormData.deductions?.epf}
+                      value={
+                        updateFormData.deductions?.epf === 0
+                          ? ""
+                          : updateFormData.deductions?.epf
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_epf"
                       placeholder="Enter Employees' Provident Fund"
@@ -2253,7 +2376,11 @@ const Payroll = () => {
                     <Input
                       type="number"
                       name="deductions.professional_tax"
-                      value={updateFormData.deductions?.professional_tax === 0 ? "" : updateFormData.deductions?.professional_tax}
+                      value={
+                        updateFormData.deductions?.professional_tax === 0
+                          ? ""
+                          : updateFormData.deductions?.professional_tax
+                      }
                       onChange={handleSalaryInputChange}
                       id="update_professional_tax"
                       placeholder="Enter Employees' Professional Tax"
