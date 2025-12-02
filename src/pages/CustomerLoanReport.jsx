@@ -23,6 +23,7 @@ const CustomerLoanReport = () => {
     const fetchLoanReport = async () => {
       try {
         const response = await api.get(`/payment/customers/loan-report`);
+        console.info(response, " test fvdfhjdfgjhgf");
 
         const formattedData = response.data.loanReports.map((loan, index) => ({
           id: loan?._id,
@@ -33,7 +34,7 @@ const CustomerLoanReport = () => {
           customerId: loan?.borrower?.customer_id || "N/A",
           customerName: loan?.borrower?.full_name || "N/A",
           customerPhone: loan?.borrower?.phone_number || "N/A",
-
+          daily_payment_amount: loan?.daily_payment_amount || "N/A",
           loanStartDate: loan?.start_date
             ? new Date(loan.start_date).toLocaleDateString("en-GB")
             : "N/A",
@@ -47,6 +48,7 @@ const CustomerLoanReport = () => {
 
           referredBy: loan?.referredBy || "N/A",
         }));
+        
 
         setLoanReportTable(formattedData);
       } catch (error) {
@@ -127,9 +129,11 @@ const CustomerLoanReport = () => {
     { key: "customerPhone", header: "Phone Number" },
     { key: "loanStartDate", header: "Loan Start Date" },
     { key: "loanServiceCharges", header: "Service Charges" },
+    {key: "daily_payment_amount", header: "Daily Payment"},
     { key: "loanAmount", header: "Loan Amount" },
     { key: "totalLoanAmount", header: "Total Paid Loan Amount" },
     { key: "referredBy", header: "Referred By" },
+
     { key: "loanBalance", header: "Balance" },
   ];
 

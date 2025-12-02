@@ -44,6 +44,7 @@ const Daybook = () => {
   const [showFilterField, setShowFilterField] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+  const [selectedPaymentFor, setSelectedPaymentFor] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [hideAccountType, setHideAccountType] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
@@ -244,6 +245,7 @@ const Daybook = () => {
             account_type: selectedAccountType,
             collected_by: collectionAgent,
             admin_type: collectionAdmin,
+            pay_for: selectedPaymentFor,
           },
           signal:abortController.signal
         },);
@@ -352,6 +354,7 @@ const Daybook = () => {
     selectedAccountType,
     collectionAgent,
     collectionAdmin,
+    selectedPaymentFor,
   ]);
 
   const columns = [
@@ -727,6 +730,40 @@ const Daybook = () => {
                       </Select.Option>
                       <Select.Option value="Transfer">Transfer</Select.Option>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Payment For
+                    </label>
+                    <Select
+  value={selectedPaymentFor}
+  showSearch
+  placeholder="Select payment mode"
+  popupMatchSelectWidth={false}
+  onChange={(groupId) => setSelectedPaymentFor(groupId)}
+  className="w-full"
+  style={{ height: "44px" }}
+
+  // 🔥 Custom filter logic
+  filterOption={(input, option) => {
+    
+    const text = option.children.toLowerCase();
+    const search = input.toLowerCase();
+
+    // When searching "chit", exclude Pigme & Loan
+    if (search === "chit") {
+      return text.includes("chit") || text.includes("all");
+    }
+
+    // Default search behavior
+    return text.includes(search);
+  }}
+>
+  <Select.Option value="">All</Select.Option>
+  <Select.Option value="Chit">Chit</Select.Option>
+  <Select.Option value="Pigme">Pigme</Select.Option>
+  <Select.Option value="Loan">Loan</Select.Option>
+</Select>
                   </div>
 
                   {/* Account Type */}

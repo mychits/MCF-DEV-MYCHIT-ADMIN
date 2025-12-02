@@ -55,7 +55,7 @@ const PaymentReport = () => {
   const [selectedAccountType, setSelectedAccountType] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [payments, setPayments] = useState([]);
-
+  const [selectedPaymentFor, setSelectedPaymentFor] = useState("");
   const [collectionAgent, setCollectionAgent] = useState("");
   const [collectionAdmin, setCollectionAdmin] = useState("");
   const [agents, setAgents] = useState([]);
@@ -298,6 +298,7 @@ const PaymentReport = () => {
             account_type: selectedAccountType,
             collected_by: collectionAgent,
             admin_type: collectionAdmin,
+            pay_for: selectedPaymentFor,
           },
           signal: abortController.signal,
         });
@@ -326,7 +327,11 @@ const PaymentReport = () => {
             phone_number: group?.user_id?.phone_number,
             receipt_no: group?.receipt_no,
             old_receipt_no: group?.old_receipt_no,
-             ticket:group?.loan?group.loan?.loan_id:group?.pigme?group.pigme?.pigme_id: group?.ticket,
+            ticket: group?.loan
+              ? group.loan?.loan_id
+              : group?.pigme
+              ? group.pigme?.pigme_id
+              : group?.ticket,
             amount: group?.amount,
             transaction_date: group?.createdAt?.split("T")?.[0],
             mode: group?.pay_type,
@@ -390,6 +395,7 @@ const PaymentReport = () => {
     selectedAccountType,
     collectionAgent,
     collectionAdmin,
+    selectedPaymentFor,
   ]);
 
   const columns = [
@@ -705,6 +711,39 @@ const PaymentReport = () => {
                     </Select>
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Payment For
+                    </label>
+                    <Select
+                      value={selectedPaymentFor}
+                      showSearch
+                      placeholder="Select payment mode"
+                      popupMatchSelectWidth={false}
+                      onChange={(groupId) => setSelectedPaymentFor(groupId)}
+                      className="w-full"
+                      style={{ height: "44px" }}
+                      // 🔥 Custom filter logic
+                      filterOption={(input, option) => {
+                        const text = option.children.toLowerCase();
+                        const search = input.toLowerCase();
+
+                        // When searching "chit", exclude Pigme & Loan
+                        if (search === "chit") {
+                          return text.includes("chit") || text.includes("all");
+                        }
+
+                        // Default search behavior
+                        return text.includes(search);
+                      }}
+                    >
+                      <Select.Option value="">All</Select.Option>
+                      <Select.Option value="Chit">Chit</Select.Option>
+                      <Select.Option value="Pigme">Pigme</Select.Option>
+                      <Select.Option value="Loan">Loan</Select.Option>
+                    </Select>
+                  </div>
+
                   {/* Account Type Filter */}
                   {showAllPaymentModes && (
                     <div className="space-y-2">
@@ -794,7 +833,6 @@ const PaymentReport = () => {
 
                   <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-4">
-                     
                       <p className="text-white/90 text-sm font-semibold uppercase tracking-wider">
                         Total Amount
                       </p>
