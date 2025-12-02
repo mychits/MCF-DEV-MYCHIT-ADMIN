@@ -88,7 +88,6 @@ const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
     { key: "siNo", header: "SL. NO" },
     { key: "employeeName", header: "Employee Name" },
     { key: "employeeCode", header: "Employee Id" },
-    { key: "transactionId", header: "Transaction Id" },
     { key: "salaryMonth", header: "Salary Month" },
     { key: "salaryYear", header: "Year" },
     { key: "payDate", header: "Pay Date" },
