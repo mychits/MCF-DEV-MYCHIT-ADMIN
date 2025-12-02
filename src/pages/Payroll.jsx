@@ -1080,7 +1080,7 @@ const Payroll = () => {
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="salary"
                   >
-                    Salary <span className="text-red-500">*</span>
+                  Gross Salary <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"
@@ -1861,7 +1861,7 @@ const Payroll = () => {
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="update_salary"
                   >
-                    Salary <span className="text-red-500">*</span>
+                  Gross Salary <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"
@@ -2030,7 +2030,7 @@ const Payroll = () => {
 
               <div>
                 <label
-                  className="block mb-2 text-2xl font-medium text-gray-900 "
+                  className="block mb-4 text-3xl font-bold text-gray-900"
                   htmlFor="update_earnings"
                 >
                   Earnings
@@ -2184,10 +2184,10 @@ const Payroll = () => {
 
               <div>
                 <label
-                  className="block mb-2 text-2xl font-medium text-gray-900"
+                  className="block mb-4 text-3xl font-bold text-gray-900"
                   htmlFor="update_deductions"
                 >
-                  Deduction
+                  Deductions
                 </label>
                 <div className="flex flex-row justify-between space-x-4 mb-6">
                   <div className="w-1/2">

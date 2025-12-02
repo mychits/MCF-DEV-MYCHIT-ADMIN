@@ -1,76 +1,132 @@
 // src/components/SalarySlipPrint.jsx
-import  { useState } from "react";
-import { Select } from "antd";
-//import { API } from "../api"; // adjust your API import path
+import { useState, useEffect, useRef } from "react";
+import { Spin, Alert, Button, Card, Divider } from "antd";
 import api from "../../instance/TokenInstance";
 import imageInput from "../../assets/images/Agent.png";
-//import logoBase64 from "../assets/companyLogoBase64"; // keep your base64 logo here
+import { useParams } from "react-router-dom";
+import { PrinterOutlined, DownloadOutlined } from "@ant-design/icons";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
-const { Option } = Select;
-
-
-const SalarySlipPrint = ({ payment }) => {
+const SalarySlipPrint = () => {
+  const params = useParams();
+  const paymentId = params.id || "";
   const [printFormat, setPrintFormat] = useState("format1");
+  const [payment, setPayment] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [previewContent, setPreviewContent] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const previewRef = useRef(null);
 
- 
-  if (!payment || typeof payment !== "object" || !payment.employee_id) {
-    console.error("Payment details or agent information are missing.");
-    return null; // Return null to not render anything if data is missing
+  // Fetch payment details when component mounts or paymentId changes
+  useEffect(() => {
+    if (!paymentId) {
+      setError("Payment ID is required");
+      return;
+    }
+
+    const fetchPaymentDetails = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await api.get(`/salary-payment/${paymentId}`);
+        setPayment(response.data?.data);
+      } catch (err) {
+        console.error("Error fetching payment details:", err);
+        setError("Failed to fetch payment details. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentDetails();
+  }, [paymentId]);
+
+  // Update preview when format or payment data changes
+  useEffect(() => {
+    if (payment) {
+      const content = generateSalarySlipContent();
+      setPreviewContent(content);
+    }
+  }, [printFormat, payment]);
+
+  if (loading) {
+    return <div className="flex justify-center p-4"><Spin size="large" /></div>;
   }
 
+  if (error) {
+    return <div className="p-4"><Alert message={error} type="error" showIcon /></div>;
+  }
 
-const handleSalaryPrint = () => {
-  try {
+  if (!payment || typeof payment !== "object" || !payment.employee_id) {
+    return <div className="p-4"><Alert message="Payment details not found" type="warning" showIcon /></div>;
+  }
 
-    console.info(payment, "hagfjhdagfjhdgf");
+  const generateSalarySlipContent = () => {
+    try {
+      const agent = payment.employee_id;
+      const payslipId = payment._id;
+      const payDate = payment.pay_date || payment.createdAt;
+      const fromDate = payment.salary_from_date;
+      const toDate = payment.salary_to_date;
+      const salaryMonth = payment.salary_month;
+      const salaryYear = payment.salary_year;
+      
+      // Extract earnings and deductions from the payment data
+      const earnings = payment.earnings || {};
+      const deductions = payment.deductions || {};
+      const additionalPayments = payment.additional_payments || [];
+      
+      // Calculate values
+      const monthlySalary = parseFloat(earnings.basic || 0);
+      const hra = parseFloat(earnings.hra || 0);
+      const travelAllowance = parseFloat(earnings.travel_allowance || 0);
+      const medicalAllowance = parseFloat(earnings.medical_allowance || 0);
+      const basketOfBenefits = parseFloat(earnings.basket_of_benifits || 0);
+      const performanceBonus = parseFloat(earnings.performance_bonus || 0);
+      const otherAllowances = parseFloat(earnings.other_allowances || 0);
+      const conveyance = parseFloat(earnings.conveyance || 0);
+      
+      const incomeTax = parseFloat(deductions.income_tax || 0);
+      const esi = parseFloat(deductions.esi || 0);
+      const epf = parseFloat(deductions.epf || 0);
+      const professionalTax = parseFloat(deductions.professional_tax || 0);
+      const salaryAdvance = parseFloat(deductions.salary_advance || 0);
+      
+      // Calculate additional payments total
+      const additionalPaymentsTotal = additionalPayments.reduce(
+        (sum, payment) => sum + parseFloat(payment.value || 0), 0
+      );
+      
+      // Calculate total earnings and deductions
+      const totalEarnings = monthlySalary + hra + travelAllowance + medicalAllowance + 
+                           basketOfBenefits + performanceBonus + otherAllowances + 
+                           conveyance + additionalPaymentsTotal;
+      
+      const totalDeductions = incomeTax + esi + epf + professionalTax + salaryAdvance;
+      
+      const netPayable = parseFloat(payment.net_payable || 0);
+      
+      // Calculate LOP (Loss of Pay)
+      const lop = totalEarnings - netPayable - totalDeductions;
+      
+      // Format date
+      const formatDate = (date) => {
+        if (!date) return "N/A";
+        return new Date(date).toLocaleDateString("en-IN", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      };
+      
+      // Convert amount to words
+      const amountInWords = numToWords(netPayable);
 
-    const agent = payment.employee_id;
-    const payoutMeta = payment?.payout_metadata || {};
-    console.info(payment?.employee_id?.employeeCode, "hsdgfjhgsfjhdsgfjhfdsg");
-    const payslipId = payment?.payout_metadata?.receipt_no || payment._id;
-    // const payDate = payment?.payout_metadata?.createdAt?.split("T")[0];
-    const payDate =
-  (payoutMeta.createdAt || payoutMeta.created_at)?.split("T")[0] ||
-  new Date(payment?.createdAt || payment?.created_at).toISOString().split("T")[0];
-    // const paidMonth = payment?.year;
-    const fromDate = payoutMeta.date_range?.from?.split("T")[0] || null;
-const toDate = payoutMeta.date_range?.to?.split("T")[0] || null;
-    const absences = parseInt(payment.total_absences || 0); // ✅ From your data: "1"
-    const adjustedAbsences = absences > 2 ? absences - 2 : 0;
-    const monthlySalary = parseFloat(agent?.salary || 0);
-    const monthPayment = parseFloat(payment?.payout_metadata?.total_paid_amount || 0);
-    const deductionDetails = payoutMeta?.deductions_details?.[0] || {};
-  
-// Assign values to variables if deductionDetails exists
-const deductionPFAmount = deductionDetails?.amount || 0;
-const deductionPFJustification = deductionDetails?.justification || "N/A";
-console.info(deductionPFJustification, "printcheck");
-    const month = payment?.payout_metadata;
-    const salaryMonth = month?.months_included?.[0] || null;
-    
-    const totalDeductions = payoutMeta?.total_deductions || 0;
-    const lop = Number(monthlySalary) - Number(monthPayment) - Number(deductionPFAmount) || 0;
-  
-
-    // ❗ Validate critical data
-    if (!agent) throw new Error("Agent data not found");
-    if (isNaN(monthlySalary)) throw new Error("Invalid salary value");
-
-    // Calculate days in paid month dynamically
-   const monthYear = salaryMonth;
-
-
-    const formatDate = (date) =>
-      new Date(date).toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-
-    const amountInWords = numToWords(monthPayment);
-
-    // --- FORMAT 1 ---
-    const format1 = `
+      // --- FORMAT 1: Classic Professional ---
+      const format1 = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -129,8 +185,6 @@ console.info(deductionPFJustification, "printcheck");
               <div class="emp-item"><strong>Designation:</strong> ${agent?.designation_id?.title || "N/A"}</div>
               <div class="emp-item"><strong>Department:</strong> ${agent?.department || "N/A"}</div>
               <div class="emp-item"><strong>Pay Period:</strong> ${formatDate(fromDate)} to ${formatDate(toDate)}</div>
-            
-             
               <div class="emp-item"><strong>Payment Date:</strong> ${formatDate(payDate)}</div>
             </div>
           </div>
@@ -138,22 +192,29 @@ console.info(deductionPFJustification, "printcheck");
           <table class="salary-table">
             <thead><tr><th>EARNINGS</th><th>AMOUNT (₹)</th><th>DEDUCTIONS</th><th>AMOUNT (₹)</th></tr></thead>
             <tbody>
-              <tr><td>Basic Salary</td><td>₹${monthlySalary}</td><td>${deductionPFJustification}</td><td>₹${deductionPFAmount}</td></tr>
-              <tr><td>House Rent Allowance</td><td>₹${0}</td><td>LOP</td><td>₹${lop.toFixed(2)}</td></tr>
-              <tr><td>Special Allowance</td><td>₹${0}</td></tr>
-              <tr><td>Conveyance Allowance</td><td>₹0.00</td></tr>
+              <tr><td>Basic Salary</td><td>₹${monthlySalary.toFixed(2)}</td><td>EPF</td><td>₹${epf.toFixed(2)}</td></tr>
+              <tr><td>House Rent Allowance</td><td>₹${hra.toFixed(2)}</td><td>ESI</td><td>₹${esi.toFixed(2)}</td></tr>
+              <tr><td>Travel Allowance</td><td>₹${travelAllowance.toFixed(2)}</td><td>Professional Tax</td><td>₹${professionalTax.toFixed(2)}</td></tr>
+              <tr><td>Medical Allowance</td><td>₹${medicalAllowance.toFixed(2)}</td><td>Income Tax</td><td>₹${incomeTax.toFixed(2)}</td></tr>
+              <tr><td>Basket of Benefits</td><td>₹${basketOfBenefits.toFixed(2)}</td><td>Salary Advance</td><td>₹${salaryAdvance.toFixed(2)}</td></tr>
+              <tr><td>Performance Bonus</td><td>₹${performanceBonus.toFixed(2)}</td><td>LOP</td><td>₹${lop.toFixed(2)}</td></tr>
+              <tr><td>Other Allowances</td><td>₹${otherAllowances.toFixed(2)}</td></tr>
+              <tr><td>Conveyance</td><td>₹${conveyance.toFixed(2)}</td></tr>
+              ${additionalPayments.map(payment => 
+                `<tr><td>${payment.name}</td><td>₹${parseFloat(payment.value || 0).toFixed(2)}</td></tr>`
+              ).join('')}
               <tr class="total-row">
                 <td><strong>GROSS EARNINGS</strong></td>
-                <td><strong>₹${monthlySalary.toFixed(2)}</strong></td>
+                <td><strong>₹${totalEarnings.toFixed(2)}</strong></td>
                 <td><strong>TOTAL DEDUCTIONS</strong></td>
-                <td><strong>₹${totalDeductions}</strong></td>
+                <td><strong>₹${totalDeductions.toFixed(2)}</strong></td>
               </tr>
             </tbody>
           </table>
 
           <div class="net-section">
             <div>NET PAYABLE AMOUNT</div>
-            <div class="net-amount">₹${monthPayment.toFixed(2)}</div>
+            <div class="net-amount">₹${netPayable.toFixed(2)}</div>
             <div class="words">Amount in words: Indian Rupees ${amountInWords} Only</div>
           </div>
 
@@ -163,42 +224,36 @@ console.info(deductionPFJustification, "printcheck");
       </html>
     `;
 
-    // --- FORMAT 2 (Optional, same structure) ---
-    const format2 = `
+      // --- FORMAT 2: Modern Gradient (Fixed for Preview) ---
+      const format2 = `
 <!DOCTYPE html>
 <html>
 <head>
 <style>
-@page { 
-  size: A4; 
-  margin: 12mm; 
-}
-
-
-
+@page { size: A4; margin: 12mm; }
 body { 
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   margin: 0; 
   color: #1a202c; 
-  background: #f7fafc; 
+  background: #ffffff; 
   padding: 0;
-  width: 210mm;
-  height: 297mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .document { 
-  background: #fff; 
+  background: #ffffff; 
   margin: 0 auto; 
   width: 100%; 
-  height: auto; 
-  min-height: calc(297mm - 24mm);; /* A4 height minus margins */
+  min-height: 100vh;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-  padding: 0;
-  box-sizing: border-box;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  padding: 0; 
+  box-sizing: border-box; 
+  overflow: hidden; 
+  display: flex; 
+  flex-direction: column; 
 }
 .header-band { 
+  background: #667eea; 
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
   color: #fff; 
   padding: 20px; 
@@ -206,28 +261,34 @@ body {
 .header-content { 
   display: flex; 
   align-items: center; 
-  justify-content: space-between;
+  justify-content: space-between; 
   gap: 20px; 
 }
 .logo-circle { 
   width: 70px; 
   height: 70px; 
   background: rgba(255,255,255,0.2); 
-  border-radius: 6px;   /* ⬅️ small rounded box instead of circle */
+  border-radius: 6px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  backdrop-filter: blur(10px); 
 }
-
 .logo-circle img { 
   width: 50px; 
   height: 50px; 
-  border-radius: 4px;   /* ⬅️ box edges (adjust/remove if you want sharp corners) */
+  border-radius: 4px; 
 }
 .header-text { flex: 1; }
-.company-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-.company-subtitle { font-size: 11px; opacity: 0.9; line-height: 1.4; }
+.company-title { 
+  font-size: 22px; 
+  font-weight: 700; 
+  margin-bottom: 4px; 
+}
+.company-subtitle { 
+  font-size: 11px; 
+  opacity: 0.9; 
+  line-height: 1.4; 
+}
 .header-meta { 
   text-align: right; 
   background: rgba(255,255,255,0.15); 
@@ -238,8 +299,9 @@ body {
 .meta-line { margin: 2px 0; }
 .meta-value { font-weight: 400; }
 .content { 
-  flex: 1;
-  padding: 1px 1px; 
+  flex: 1; 
+  padding: 20px; 
+  background: #ffffff;
 }
 .payslip-title { 
   text-align: center; 
@@ -290,19 +352,8 @@ body {
   justify-content: space-between; 
   padding: 8px 0; 
   border-bottom: 1px solid #f7fafc; 
-  font-size: 12px;
+  font-size: 12px; 
 }
-
-@media print {
-  body {
-    background: #fff;
-  }
-  .document {
-    box-shadow: none;
-    page-break-after: avoid; /* 👈 prevent extra blank page */
-  }
-}
-
 .item-row:last-child { border-bottom: 2px solid #e2e8f0; }
 .item-name { color: #4a5568; }
 .item-amount { color: #2d3748; font-weight: 600; }
@@ -314,6 +365,7 @@ body {
   text-align: right; 
 }
 .net-section { 
+  background: #4299e1; 
   background: linear-gradient(135deg, #4299e1, #3182ce); 
   color: #fff; 
   padding: 20px; 
@@ -343,6 +395,10 @@ body {
   font-size: 9px; 
   margin: 25px 0; 
 }
+@media print { 
+  body { background: #fff; } 
+  .document { box-shadow: none; page-break-after: avoid; } 
+}
 </style>
 </head>
 <body>
@@ -358,7 +414,7 @@ body {
       </div>
       <div class="header-meta">
         <div class="meta-line">Payslip ID: <span class="meta-value">${payslipId}</span></div>
-        <div class="meta-line">Period: <span class="meta-value">${monthYear}</span></div>
+        <div class="meta-line">Period: <span class="meta-value">${salaryMonth} ${salaryYear}</span></div>
         <div class="meta-line">Date: <span class="meta-value">${formatDate(payDate)}</span></div>
       </div>
     </div>
@@ -374,7 +430,7 @@ body {
           <div class="info-pair"><span>Designation</span><span>${agent?.designation_id?.title || "N/A"}</span></div>
           <div class="info-pair"><span>Department</span><span>${agent?.department || "N/A"}</span></div>
           <div class="info-pair"><span>Pay Period</span><span>${formatDate(fromDate)} to ${formatDate(toDate)}</span></div>
-         
+          <div class="info-pair"><span>Payment Method</span><span>${payment.payment_method || "N/A"}</span></div>
         </div>
       </div>
     </div>
@@ -383,26 +439,35 @@ body {
         <div class="card-header" style="color: #48bb78;">Earnings</div>
         <div class="card-body">
           <div class="item-row"><div class="item-name">Basic Salary</div><div class="item-amount">₹${monthlySalary.toFixed(2)}</div></div>
-          <div class="item-row"><div class="item-name">HRA (40%)</div><div class="item-amount">₹${(0).toFixed(2)}</div></div>
-          <div class="item-row"><div class="item-name">Special Allowance</div><div class="item-amount">₹${(0).toFixed(2)}</div></div>
-          <div class="item-row"><div class="item-name">Conveyance</div><div class="item-amount">₹0.00</div></div>
-          <div class="total-amount">Total: ₹${monthlySalary.toFixed(2)}</div>
+          <div class="item-row"><div class="item-name">HRA</div><div class="item-amount">₹${hra.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Travel Allowance</div><div class="item-amount">₹${travelAllowance.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Medical Allowance</div><div class="item-amount">₹${medicalAllowance.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Basket of Benefits</div><div class="item-amount">₹${basketOfBenefits.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Performance Bonus</div><div class="item-amount">₹${performanceBonus.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Other Allowances</div><div class="item-amount">₹${otherAllowances.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Conveyance</div><div class="item-amount">₹${conveyance.toFixed(2)}</div></div>
+          ${additionalPayments.map(payment => 
+            `<div class="item-row"><div class="item-name">${payment.name}</div><div class="item-amount">₹${parseFloat(payment.value || 0).toFixed(2)}</div></div>`
+          ).join('')}
+          <div class="total-amount">Total: ₹${totalEarnings.toFixed(2)}</div>
         </div>
       </div>
       <div class="card deductions-card">
         <div class="card-header" style="color: #f56565;">Deductions</div>
         <div class="card-body">
           <div class="item-row"><div class="item-name">Loss of Pay</div><div class="item-amount">₹${lop.toFixed(2)}</div></div>
-          <div class="item-row"><div class="item-name">PF/ESI</div><div class="item-amount">₹${deductionPFAmount}</div></div>
-          
-          <div class="item-row"><div class="item-name">TDS</div><div class="item-amount">₹0.00</div></div>
-          <div class="total-amount">Total: ₹${(parseFloat(totalDeductions)).toFixed(2)}</div>
+          <div class="item-row"><div class="item-name">EPF</div><div class="item-amount">₹${epf.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">ESI</div><div class="item-amount">₹${esi.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Professional Tax</div><div class="item-amount">₹${professionalTax.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Income Tax</div><div class="item-amount">₹${incomeTax.toFixed(2)}</div></div>
+          <div class="item-row"><div class="item-name">Salary Advance</div><div class="item-amount">₹${salaryAdvance.toFixed(2)}</div></div>
+          <div class="total-amount">Total: ₹${totalDeductions.toFixed(2)}</div>
         </div>
       </div>
     </div>
     <div class="net-section">
       <div class="net-title">Net Payable Amount</div>
-      <div class="net-figure">₹${parseFloat(monthPayment).toFixed(2)}</div>
+      <div class="net-figure">₹${netPayable.toFixed(2)}</div>
       <div class="net-words">Amount in Words: Indian Rupees ${amountInWords} Only</div>
     </div>
     <div class="signature-section">
@@ -418,23 +483,89 @@ body {
 </body>
 </html>`;
 
+      return printFormat === "format1" ? format1 : format2;
+    } catch (err) {
+      console.error("Error generating salary slip content:", err);
+      return "<div>Error generating salary slip content</div>";
+    }
+  };
 
-    const htmlContent = printFormat === "format1" ? format1 : format2;
-    const fileName = `${agent?.name || "Employee"}_${monthYear} Slip`;
+  const handlePrint = () => {
+    try {
+      const htmlContent = generateSalarySlipContent();
+      const agent = payment.employee_id;
+      const salaryMonth = payment.salary_month;
+      const salaryYear = payment.salary_year;
+      const fileName = `${agent?.name || "Employee"}_${salaryMonth}_${salaryYear} Slip`;
 
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(htmlContent);
-    printWindow.document.title = fileName;
-    printWindow.document.close();
-    printWindow.print();
-  } catch (err) {
-    console.error("Error printing salary slip:", err);
-    alert("Failed to generate salary slip. Check console for details.");
-  }
-};
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(htmlContent);
+      printWindow.document.title = fileName;
+      printWindow.document.close();
+      printWindow.print();
+    } catch (err) {
+      console.error("Error printing salary slip:", err);
+      alert("Failed to generate salary slip. Check console for details.");
+    }
+  };
 
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloading(true);
+      const element = previewRef.current;
+      const agent = payment.employee_id;
+      const salaryMonth = payment.salary_month;
+      const salaryYear = payment.salary_year;
+      const fileName = `${agent?.name || "Employee"}_${salaryMonth}_${salaryYear}_Payslip.pdf`;
+
+      // Create canvas from preview element
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: element.scrollWidth,
+        height: element.scrollHeight
+      });
+
+      // Get image data
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add new page if content is longer than one page
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Save PDF
+      pdf.save(fileName);
+    } catch (err) {
+      console.error("Error downloading PDF:", err);
+      alert("Failed to download PDF. Check console for details.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const numToWords = (num) => {
+    if (isNaN(num) || num === 0) return "Zero";
+    
     const a = [
       "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
       "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
@@ -442,34 +573,101 @@ body {
     const b = [
       "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety",
     ];
+    
+    num = Math.round(num);
     if ((num = num.toString()).length > 9) return "Overflow";
+    
     const n = ("000000000" + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-    if (!n) return;
+    if (!n) return "";
+    
     let str = "";
     str += n[1] != 0 ? (a[Number(n[1])] || b[n[1][0]] + " " + a[n[1][1]]) + " Crore " : "";
     str += n[2] != 0 ? (a[Number(n[2])] || b[n[2][0]] + " " + a[n[2][1]]) + " Lakh " : "";
     str += n[3] != 0 ? (a[Number(n[3])] || b[n[3][0]] + " " + a[n[3][1]]) + " Thousand " : "";
     str += n[4] != 0 ? (a[Number(n[4])] || b[n[4][0]] + " " + a[n[4][1]]) + " Hundred " : "";
     str += n[5] != 0 ? (str != "" ? "and " : "") + (a[Number(n[5])] || b[n[5][0]] + " " + a[n[5][1]]) + " " : "";
-    return str.trim();
+    
+    return str.trim() || "Zero";
   };
 
+  const formatButtons = [
+    { key: 'format1', label: 'Classic Professional', description: 'Traditional formal style' },
+    { key: 'format2', label: 'Modern Gradient', description: 'Contemporary colorful design' }
+  ];
+
   return (
-    <div className="flex items-center gap-2">
-      <button
-        className="px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={handleSalaryPrint}
+    <div className="flex flex-col gap-6 p-6 bg-gray-50 min-h-screen">
+      {/* Format Selection Buttons */}
+      <Card className="shadow-lg border-0">
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Salary Slip Generator</h2>
+          <p className="text-gray-600">Select a format and preview your payslip</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {formatButtons.map((format) => (
+            <button
+              key={format.key}
+              onClick={() => setPrintFormat(format.key)}
+              className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                printFormat === format.key
+                  ? 'border-blue-500 bg-blue-50 shadow-md transform scale-105'
+                  : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-sm'
+              }`}
+            >
+              <div className="font-semibold text-lg mb-1">{format.label}</div>
+              <div className="text-sm text-gray-500">{format.description}</div>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Preview Section */}
+      <Card 
+        title={`Preview: ${formatButtons.find(f => f.key === printFormat)?.label}`}
+        className="shadow-lg border-0"
+        extra={
+          <div className="flex gap-3">
+            <Button 
+              type="primary" 
+              icon={<PrinterOutlined />}
+              onClick={handlePrint}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Print
+            </Button>
+            <Button 
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadPDF}
+              loading={downloading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Download PDF
+            </Button>
+          </div>
+        }
       >
-        Print Salary Slip
-      </button>
-      <Select
-        defaultValue="format1"
-        style={{ width: 120 }}
-        onChange={(value) => setPrintFormat(value)}
-      >
-        <Option value="format1">Format 1</Option>
-        <Option value="format2">Format 2</Option>
-      </Select>
+        <div className="bg-gray-100 rounded-lg p-4">
+          <div 
+            ref={previewRef}
+            className="bg-white rounded shadow-md overflow-auto"
+            style={{ 
+              height: '75vh', 
+              transform: 'scale(0.85)',
+              transformOrigin: 'top left',
+              width: '117.65%' // 100 / 0.85 to compensate for scaling
+            }}
+          >
+            {previewContent ? (
+              <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <Spin size="large" tip="Generating preview..." />
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
