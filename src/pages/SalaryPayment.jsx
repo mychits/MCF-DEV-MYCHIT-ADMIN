@@ -1601,7 +1601,7 @@ const SalaryPayment = () => {
               </Button>
             ),
           ]}
-          bodyStyle={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#fafafa' }}
+          style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#fafafa' }}
         >
           {existingSalaryRecord ? (
             <div className="space-y-6 text-sm">
@@ -1625,13 +1625,13 @@ const SalaryPayment = () => {
                   Attendance Summary
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-gray-700">
-                  <div><strong>Total Days:</strong> {existingSalaryRecord.total_days}</div>
-                  <div><strong>Paid Days:</strong> {existingSalaryRecord.paid_days}</div>
-                  <div><strong>LOP Days:</strong> {existingSalaryRecord.lop_days}</div>
-                  <div><strong>Present:</strong> {existingSalaryRecord.present_days}</div>
-                  <div><strong>Absent:</strong> {existingSalaryRecord.absent_days}</div>
-                  <div><strong>On Leave:</strong> {existingSalaryRecord.leave_days}</div>
-                  <div><strong>Half Days:</strong> {existingSalaryRecord.half_days}</div>
+                  <div><strong>Total Days:</strong> {existingSalaryRecord.total_days || 0}</div>
+                  <div><strong>Paid Days:</strong> {existingSalaryRecord.paid_days || 0}</div>
+                  <div><strong>LOP Days:</strong> {existingSalaryRecord.lop_days || 0}</div>
+                  <div><strong>Present:</strong> {existingSalaryRecord.present_days || 0}</div>
+                  <div><strong>Absent:</strong> {existingSalaryRecord.absent_days || 0}</div>
+                  <div><strong>On Leave:</strong> {existingSalaryRecord.leave_days || 0}</div>
+                  <div><strong>Half Days:</strong> {existingSalaryRecord.half_days || 0}</div>
                 </div>
               </section>
 
