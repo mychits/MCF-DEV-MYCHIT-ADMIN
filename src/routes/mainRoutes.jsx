@@ -137,6 +137,7 @@ import HRMenu from "../pages/HRMenu";
 import SalaryPayment from "../pages/SalaryPayment";
 import TransferMenu from "../pages/TransferMenu";
 import CollectionMenu from "../pages/CollectionMenu";
+import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -774,6 +775,11 @@ const mainRoutes = createBrowserRouter([
     path: "/print/:id",
 
     element: <Print />,
+  },
+   {
+    path: "/salary-slip-print/:id",
+
+    element: <SalarySlipPrint />,
   },
   {
     path: "/marketing",

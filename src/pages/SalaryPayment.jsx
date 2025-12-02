@@ -18,11 +18,14 @@ import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
 import { Select as AntSelect, Segmented, Button as AntButton } from "antd";
 import { IoMdMore } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate} from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
+
 import moment from "moment";
 
 const SalaryPayment = () => {
+  const navigate = useNavigate()
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
   const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -330,28 +333,33 @@ const SalaryPayment = () => {
       setUpdateLoading(false);
     }
   };
+  const handlePrint = (salaryPaymentId) => {
+    navigate("/salary-slip-print/"+salaryPaymentId);
+  }
 
-  const dropDownItems = (data) => {
+  const dropDownItems = (salaryPayment) => {
     const dropDownItemList = [
       {
         key: "1",
-        label: (
-          <Link
-            to={`/print/${data?._id}`}
-            className="text-blue-600"
-            key={data?._id}
+     
+       label: (
+          <div
+            key={salaryPayment?._id}
+            className="text-green-600"
+           onClick={() =>handlePrint(salaryPayment?._id)}
           >
-            Print
-          </Link>
+          Print
+          
+</div>
         ),
       },
       {
         key: "2",
         label: (
           <div
-            key={data?._id}
+            key={salaryPayment?._id}
             className="text-green-600"
-            onClick={() => handleEdit(data._id)}
+            onClick={() => handleEdit(salaryPayment._id)}
           >
             Edit
           </div>
@@ -361,10 +369,10 @@ const SalaryPayment = () => {
         key: "3",
         label: (
           <div
-            key={data?._id}
+            key={salaryPayment?._id}
             className="text-red-600"
             onClick={() => {
-              setDeleteId(data._id);
+              setDeleteId(salaryPayment?._id);
               setDeleteModalOpen(true);
             }}
           >

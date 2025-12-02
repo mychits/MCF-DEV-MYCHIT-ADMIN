@@ -48,6 +48,7 @@ const PigmySummaryReport = () => {
           slNo: index + 1,
           pigmyIds: pigmy?.pigme_id || "N/A",
           Duration: pigmy?.duration || "N/A",
+          amount: pigmy?.payable_amount || "N/A",
           referredType: pigmy?.referred_type || "N/A",
           referredBy: pigmy?.referred_employee
             ? pigmy?.referred_employee?.name
@@ -157,6 +158,7 @@ const PigmySummaryReport = () => {
     { key: "pigmyIds", header: "Pigmy ID" },
     { key: "pigmyStartDate", header: "Start Date" },
     { key: "Duration", header: "Duration (months)" },
+    {key: "amount", header: "Daily Pay"},
     { key: "referredType", header: "Referred Type" },
     { key: "referredBy", header: "Referred By" },
     { key: "totalpigmyAmount", header: "Total Paid Amount" },
