@@ -1,22 +1,44 @@
-import { DatePicker, Drawer, Dropdown, Modal } from "antd";
+import {
+  DatePicker,
+  Drawer,
+  Dropdown,
+  Modal,
+  Input,
+  Form,
+  Select,
+  Button,
+  message,
+  Popconfirm,
+} from "antd";
 import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
 import DataTable from "../components/layouts/Datatable";
 import { useEffect, useState } from "react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
-import { Select, Segmented, Button } from "antd";
+import { Select as AntSelect, Segmented, Button as AntButton } from "antd";
 import { IoMdMore } from "react-icons/io";
 import { Link } from "react-router-dom";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 
 const SalaryPayment = () => {
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
   const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [calculateLoading, setCalculateLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [employeeDetails, setEmployeeDetails] = useState({});
   const [allSalaryPayments, setAllSalarypayments] = useState([]);
   const [employeeDetailsLoading, setEmployeeDetailsLoading] = useState(false);
+  const [currentSalaryId, setCurrentSalaryId] = useState(null);
+  const [calculatedSalary, setCalculatedSalary] = useState(null);
+  const [showAdditionalPayments, setShowAdditionalPayments] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [form] = Form.useForm();
+  const [updateForm] = Form.useForm();
+
   const [updateFormData, setUpdateFormData] = useState({
     employee_id: "",
     month: "",
@@ -37,7 +59,9 @@ const SalaryPayment = () => {
       epf: 0,
       professional_tax: 0,
     },
+    additional_payments: [],
   });
+
   const thisYear = dayjs().format("YYYY");
   const earningsObject = {
     basic: 0,
@@ -68,6 +92,7 @@ const SalaryPayment = () => {
     { key: "paidAmount", header: "Paid Amount" },
     { key: "action", header: "Action" },
   ];
+
   const months = [
     { label: "January", value: "January", disabled: false },
     { label: "February", value: "February", disabled: false },
@@ -108,12 +133,14 @@ const SalaryPayment = () => {
       epf: 0,
       professional_tax: 0,
     },
+    additional_payments: [],
+    total_salary_payable: 0,
+    paid_amount: 0,
   });
 
   async function fetchEmployees() {
     try {
       const responseData = await API.get("/employee");
-
       const filteredEmployee = responseData?.data?.employee?.map((emp) => ({
         value: emp?._id,
         label: `${emp?.name} | ${emp?.phone_number}` || "Unknown Employee",
@@ -123,29 +150,124 @@ const SalaryPayment = () => {
       setEmployees([]);
     }
   }
+
   useEffect(() => {
     fetchEmployees();
   }, []);
-  async function getSalaryById() {
+
+  async function getSalaryById(id) {
     try {
-      const response = await API.get("/salary-payment/");
-    } catch (error) {}
+      const response = await API.get(`/salary-payment/${id}`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error fetching salary by ID:", error);
+      return null;
+    }
   }
-  const handleEdit = async () => {
+
+  const handleEdit = async (id) => {
     try {
       setUpdateLoading(true);
       setIsOpenUpdateModal(true);
-      await getSalaryById();
+      const salaryData = await getSalaryById(id);
+      if (salaryData) {
+        setCurrentSalaryId(id);
+
+        // Convert year string to dayjs object for the DatePicker
+        const yearAsDayjs = dayjs(salaryData.salary_year, "YYYY");
+
+        const formData = {
+          employee_id: salaryData.employee_id._id,
+          month: salaryData.salary_month,
+          year: yearAsDayjs, // Use dayjs object here
+          earnings: salaryData.earnings,
+          deductions: salaryData.deductions,
+          additional_payments: salaryData.additional_payments || [],
+          total_salary_payable: salaryData.total_salary_payable || 0,
+          paid_amount: salaryData.paid_amount || 0,
+        };
+
+        setUpdateFormData(formData);
+        updateForm.setFieldsValue(formData);
+      }
     } catch (error) {
+      message.error("Failed to fetch salary details");
     } finally {
       setUpdateLoading(false);
     }
   };
-  const handleDelete = () => {
+
+  const handleDeleteConfirm = async (id) => {
     try {
-    } catch (error) {}
+      setDeleteLoading(true);
+      await API.delete(`/salary-payment/${id}`);
+      message.success("Salary payment deleted successfully");
+      setDeleteModalOpen(false);
+      getAllSalary();
+    } catch (error) {
+      message.error("Failed to delete salary payment");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
-  const handleUpdateChange = (event) => {};
+
+  const handleUpdateChange = (changedValues, allValues) => {
+    // Handle the year field specifically
+    if (changedValues.year && dayjs.isDayjs(changedValues.year)) {
+      changedValues.year = changedValues.year.format("YYYY");
+    }
+    
+    setUpdateFormData({
+      ...updateFormData,
+      ...changedValues,
+      ...allValues,
+    });
+  };
+
+  const handleUpdateSubmit = async () => {
+    try {
+      setUpdateLoading(true);
+
+      // Calculate total earnings and deductions
+      const totalEarnings = Object.values(updateFormData.earnings).reduce(
+        (sum, value) => sum + Number(value),
+        0
+      );
+      const totalDeductions = Object.values(updateFormData.deductions).reduce(
+        (sum, value) => sum + Number(value),
+        0
+      );
+
+      // Calculate additional payments total
+      const additionalPaymentsTotal = updateFormData.additional_payments.reduce(
+        (sum, payment) => sum + Number(payment.value),
+        0
+      );
+
+      // Calculate net payable
+      const netPayable = totalEarnings - totalDeductions + additionalPaymentsTotal;
+
+      const updateData = {
+        ...updateFormData,
+        earnings: updateFormData.earnings, // Ensure this is an object
+        deductions: updateFormData.deductions, // Ensure this is an object
+        net_payable: netPayable,
+        total_salary_payable: updateFormData.total_salary_payable || netPayable,
+        remaining_balance: (updateFormData.total_salary_payable || netPayable) - (updateFormData.paid_amount || 0),
+      };
+
+      await API.put(`/salary-payment/${currentSalaryId}`, updateData);
+      message.success("Salary updated successfully");
+      setIsOpenUpdateModal(false);
+      getAllSalary();
+    } catch (error) {
+      console.error("Error updating salary:", error);
+      message.error("Failed to update salary");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   const dropDownItems = (data) => {
     const dropDownItemList = [
       {
@@ -160,11 +282,14 @@ const SalaryPayment = () => {
           </Link>
         ),
       },
-
       {
         key: "2",
         label: (
-          <div key={data?._id} className="text-green-600" onClick={handleEdit}>
+          <div
+            key={data?._id}
+            className="text-green-600"
+            onClick={() => handleEdit(data._id)}
+          >
             Edit
           </div>
         ),
@@ -172,7 +297,14 @@ const SalaryPayment = () => {
       {
         key: "3",
         label: (
-          <div key={data?._id} className="text-red-600" onClick={handleDelete}>
+          <div
+            key={data?._id}
+            className="text-red-600"
+            onClick={() => {
+              setDeleteId(data._id);
+              setDeleteModalOpen(true);
+            }}
+          >
             Delete
           </div>
         ),
@@ -181,6 +313,7 @@ const SalaryPayment = () => {
 
     return dropDownItemList;
   };
+
   async function fetchSalaryDetails() {
     try {
       setEmployeeDetailsLoading(true);
@@ -196,14 +329,17 @@ const SalaryPayment = () => {
       setEmployeeDetailsLoading(false);
     }
   }
+
   useEffect(() => {
-    fetchSalaryDetails();
+    if (formData.employee_id) {
+      fetchSalaryDetails();
+    }
   }, [formData?.employee_id]);
 
   const handleChange = (name, value) => {
-    // setEmployeeDetails({});
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleDeductionsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -211,6 +347,7 @@ const SalaryPayment = () => {
       deductions: { ...prev.deductions, [name]: value },
     }));
   };
+
   const handleEarningsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -218,11 +355,122 @@ const SalaryPayment = () => {
       deductions: { ...prev.deductions },
     }));
   };
+
+  const handleAdditionalPaymentChange = (index, field, value) => {
+    const updatedPayments = [...formData.additional_payments];
+    updatedPayments[index] = { ...updatedPayments[index], [field]: value };
+    setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
+  };
+
+  const addAdditionalPayment = () => {
+    setFormData((prev) => ({
+      ...prev,
+      additional_payments: [
+        ...prev.additional_payments,
+        { name: "", value: 0 },
+      ],
+    }));
+  };
+
+  const removeAdditionalPayment = (index) => {
+    const updatedPayments = formData.additional_payments.filter(
+      (_, i) => i !== index
+    );
+    setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
+  };
+
   async function handleCalculateSalary() {
     try {
-      console.log(formData, "this s");
-    } catch (error) {}
+      setCalculateLoading(true);
+      
+      // Send earnings and deductions as objects, not JSON strings
+      const response = await API.get("/salary-payment/calculate", {
+        params: {
+          employee_id: formData.employee_id,
+          month: formData.month,
+          year: formData.year,
+          earnings: formData.earnings,
+          deductions: formData.deductions,
+        },
+      });
+      
+      setCalculatedSalary(response.data.data);
+      setShowAdditionalPayments(true);
+      
+      // Set the total salary payable to the calculated salary
+      setFormData((prev) => ({
+        ...prev,
+        total_salary_payable: response.data.data.calculated_salary,
+      }));
+      
+      message.success("Salary calculated successfully");
+    } catch (error) {
+      console.error("Error calculating salary:", error);
+      message.error("Failed to calculate salary");
+    } finally {
+      setCalculateLoading(false);
+    }
   }
+
+  async function handleAddSalary() {
+    try {
+      // Calculate total earnings and deductions
+      const totalEarnings = Object.values(formData.earnings).reduce(
+        (sum, value) => sum + Number(value),
+        0
+      );
+      const totalDeductions = Object.values(formData.deductions).reduce(
+        (sum, value) => sum + Number(value),
+        0
+      );
+
+      // Calculate additional payments total
+      const additionalPaymentsTotal = formData.additional_payments.reduce(
+        (sum, payment) => sum + Number(payment.value),
+        0
+      );
+
+      // Calculate net payable (default to calculated salary if available)
+      const netPayable = calculatedSalary
+        ? calculatedSalary.calculated_salary
+        : totalEarnings - totalDeductions + additionalPaymentsTotal;
+
+      const salaryData = {
+        employee_id: formData.employee_id,
+        salary_from_date: calculatedSalary
+          ? calculatedSalary.salary_from_date
+          : new Date(),
+        salary_to_date: calculatedSalary
+          ? calculatedSalary.salary_to_date
+          : new Date(),
+        salary_month: formData.month,
+        salary_year: formData.year,
+        earnings: formData.earnings, // Ensure this is an object
+        deductions: formData.deductions, // Ensure this is an object
+        additional_payments: formData.additional_payments,
+        paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
+        lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
+        net_payable: netPayable,
+        paid_amount: formData.paid_amount || 0,
+        remaining_balance: (formData.total_salary_payable || netPayable) - (formData.paid_amount || 0),
+        total_salary_payable: formData.total_salary_payable || netPayable, // New field
+        payment_method: "Bank Transfer",
+        status: "Pending",
+        pay_date: new Date(),
+      };
+
+      await API.post("/salary-payment/", salaryData);
+      message.success("Salary added successfully");
+      setIsOpenAddModal(false);
+      setCalculatedSalary(null);
+      setShowAdditionalPayments(false);
+      getAllSalary();
+    } catch (error) {
+      console.error("Error adding salary:", error);
+      message.error("Failed to add salary");
+    }
+  }
+
   async function getAllSalary() {
     try {
       const response = await API.get("/salary-payment/all");
@@ -258,9 +506,11 @@ const SalaryPayment = () => {
       setAllSalarypayments([]);
     }
   }
+
   useEffect(() => {
     getAllSalary();
   }, []);
+
   return (
     <div>
       <div className="flex mt-20">
@@ -286,13 +536,28 @@ const SalaryPayment = () => {
           </div>
         </div>
 
+        {/* Add Salary Drawer */}
         <Drawer
           title="Add New Salary Payment"
           width={"87%"}
           className="payment-drawer"
           open={isOpenAddModal}
-          onClose={() => setIsOpenAddModal(false)}
+          onClose={() => {
+            setIsOpenAddModal(false);
+            setCalculatedSalary(null);
+            setShowAdditionalPayments(false);
+          }}
           closable={true}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setIsOpenAddModal(false)}>Cancel</Button>
+              {calculatedSalary && (
+                <Button type="primary" onClick={handleAddSalary}>
+                  Save Salary
+                </Button>
+              )}
+            </div>
+          }
         >
           <div className="space-y-6">
             <div className="form-group">
@@ -648,10 +913,203 @@ const SalaryPayment = () => {
                       onClick={handleCalculateSalary}
                       size="large"
                       className="px-8"
+                      loading={calculateLoading}
                     >
                       Calculate Salary
                     </Button>
                   </div>
+
+                  {/* Calculated Salary Display */}
+                  {calculatedSalary && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                        Calculated Salary Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Total Days
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.total_days}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Present Days
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.present_days}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Paid Days
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.paid_days}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Per Day Salary
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.per_day_salary}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Total Earnings
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.total_earnings}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Total Deductions
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.total_deductions}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Calculated Salary
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.calculated_salary}
+                            disabled
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Payment Details */}
+                      <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                        <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                          Payment Details
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="form-group">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Total Salary Payable
+                            </label>
+                            <input
+                              type="number"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              value={formData.total_salary_payable || 0}
+                              onChange={(e) =>
+                                handleChange(
+                                  "total_salary_payable",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Paid Amount
+                            </label>
+                            <input
+                              type="number"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              value={formData.paid_amount || 0}
+                              onChange={(e) =>
+                                handleChange("paid_amount", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Payments */}
+                  {showAdditionalPayments && (
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-purple-800">
+                          Additional Payments
+                        </h3>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={addAdditionalPayment}
+                        >
+                          Add Payment
+                        </Button>
+                      </div>
+                      {formData.additional_payments.map((payment, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                        >
+                          <div className="form-group">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Payment Name
+                            </label>
+                            <Input
+                              placeholder="Enter payment name"
+                              value={payment.name}
+                              onChange={(e) =>
+                                handleAdditionalPaymentChange(
+                                  index,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <div className="form-group flex items-end gap-2">
+                            <div className="flex-grow">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Amount
+                              </label>
+                              <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                value={payment.value}
+                                onChange={(e) =>
+                                  handleAdditionalPaymentChange(
+                                    index,
+                                    "value",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                            <Button
+                              type="primary"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => removeAdditionalPayment(index)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )
             ) : (
@@ -666,7 +1124,8 @@ const SalaryPayment = () => {
             )}
           </div>
         </Drawer>
-        {/* update Drawer */}
+
+        {/* Update Salary Drawer */}
         <Drawer
           title="Update Salary"
           width={"50%"}
@@ -674,132 +1133,250 @@ const SalaryPayment = () => {
           open={isOpenUpdateModal}
           onClose={() => setIsOpenUpdateModal(false)}
           closable={true}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setIsOpenUpdateModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleUpdateSubmit}
+                loading={updateLoading}
+              >
+                Update Salary
+              </Button>
+            </div>
+          }
         >
-          <input
-            type="text"
-            name="employee_name"
-            id="employee_name"
-            placeholder="Enter Employee Name"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="employee_phone"
-            id="employee_phone"
-            placeholder="Enter Employee Phone"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="salary_month"
-            id="salary_month"
-            placeholder="Enter Salary Month"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="salary_year"
-            id="salary_year"
-            placeholder="Enter Salary Year"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="pay_date"
-            id="pay_date"
-            placeholder="Enter Pay Date"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="net_payable"
-            id="net_payable"
-            placeholder="Enter Net Payable"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="paid_amount"
-            id="paid_amount"
-            placeholder="Enter Paid Amount"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="paid_days"
-            id="paid_days"
-            placeholder="Enter Salary Month"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="remaining_balance"
-            id="remaining_balance"
-            placeholder="Enter Salary Month"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="basic"
-            id="basic"
-            placeholder="Enter Basic Salary"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="hra"
-            id="hra"
-            placeholder="Enter HRA"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="travel_allowance"
-            id="travel_allowance"
-            placeholder="Enter Travel Allowance"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="medical_allowance"
-            id="medical_allowance"
-            placeholder="Enter Medical Allowance"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="basket_of_benifits"
-            id="basket_of_benifits"
-            placeholder="Enter Basket of Benifits"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="performance_bonus"
-            id="performance_bonus"
-            placeholder="Enter Performance Bonus"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="other_allowances"
-            id="other_allowances"
-            placeholder="Enter Other Allowance"
-            onChange={handleCalculateSalary}
-          />
-          <input
-            type="text"
-            name="conveyance"
-            id="conveyance"
-            placeholder="Enter Conveyance"
-            onChange={handleCalculateSalary}
-          />
-          <Button color="primary">Calculate Salary</Button>
-          <Button color="primary">Update Salary</Button>
+          <Form
+            form={updateForm}
+            layout="vertical"
+            initialValues={updateFormData}
+            onValuesChange={handleUpdateChange}
+          >
+            <Form.Item
+              name="employee_id"
+              label="Employee ID"
+              rules={[{ required: true, message: "Please select an employee" }]}
+            >
+              <Select
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                filterSort={(optionA, optionB) =>
+                  (optionA?.label ?? "")
+                    .toLowerCase()
+                    .localeCompare((optionB?.label ?? "").toLowerCase())
+                }
+                placeholder="Select Employee"
+                options={employees}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="month"
+              label="Month"
+              rules={[{ required: true, message: "Please select a month" }]}
+            >
+              <Select placeholder="Select Month">
+                {months.map((month) => (
+                  <Select.Option key={month.value} value={month.value}>
+                    {month.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="year"
+              label="Year"
+              rules={[{ required: true, message: "Please select a year" }]}
+              getValueFromEvent={(value) => (value ? value.format("YYYY") : "")}
+            >
+              <DatePicker picker="year" style={{ width: "100%" }} />
+            </Form.Item>
+
+            <div className="bg-green-50 p-4 rounded-lg mb-4">
+              <h3 className="text-lg font-semibold text-green-800 mb-4">
+                Earnings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item name={["earnings", "basic"]} label="Basic Salary">
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item name={["earnings", "hra"]} label="HRA">
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["earnings", "travel_allowance"]}
+                  label="Travel Allowance"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["earnings", "medical_allowance"]}
+                  label="Medical Allowance"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["earnings", "basket_of_benifits"]}
+                  label="Basket of Benefits"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["earnings", "performance_bonus"]}
+                  label="Performance Bonus"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["earnings", "other_allowances"]}
+                  label="Other Allowances"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item name={["earnings", "conveyance"]} label="Conveyance">
+                  <Input type="number" />
+                </Form.Item>
+              </div>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg mb-4">
+              <h3 className="text-lg font-semibold text-red-800 mb-4">
+                Deductions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item
+                  name={["deductions", "income_tax"]}
+                  label="Income Tax"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item name={["deductions", "esi"]} label="ESI">
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item name={["deductions", "epf"]} label="EPF">
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item
+                  name={["deductions", "professional_tax"]}
+                  label="Professional Tax"
+                >
+                  <Input type="number" />
+                </Form.Item>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-purple-800">
+                  Additional Payments
+                </h3>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    const currentPayments =
+                      updateForm.getFieldValue("additional_payments") || [];
+                    updateForm.setFieldsValue({
+                      additional_payments: [
+                        ...currentPayments,
+                        { name: "", value: 0 },
+                      ],
+                    });
+                  }}
+                >
+                  Add Payment
+                </Button>
+              </div>
+              <Form.List name="additional_payments">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <div
+                        key={key}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                      >
+                        <Form.Item
+                          {...restField}
+                          name={[name, "name"]}
+                          label="Payment Name"
+                        >
+                          <Input placeholder="Enter payment name" />
+                        </Form.Item>
+                        <div className="flex items-end gap-2">
+                          <div className="flex-grow">
+                            <Form.Item
+                              {...restField}
+                              name={[name, "value"]}
+                              label="Amount"
+                            >
+                              <Input type="number" placeholder="Enter amount" />
+                            </Form.Item>
+                          </div>
+                          <Button
+                            type="primary"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => remove(name)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </Form.List>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                Payment Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item
+                  name="total_salary_payable"
+                  label="Total Salary Payable"
+                >
+                  <Input type="number" />
+                </Form.Item>
+                <Form.Item name="paid_amount" label="Paid Amount">
+                  <Input type="number" />
+                </Form.Item>
+              </div>
+            </div>
+          </Form>
         </Drawer>
-        <Modal loading={updateLoading}>
-          Delete Salary Payment
-          <Button>Delete Payment</Button>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          title="Delete Salary Payment"
+          open={deleteModalOpen}
+          onCancel={() => setDeleteModalOpen(false)}
+          footer={[
+            <Button key="cancel" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>,
+            <Button
+              key="delete"
+              type="primary"
+              danger
+              loading={deleteLoading}
+              onClick={() => handleDeleteConfirm(deleteId)}
+            >
+              Delete
+            </Button>,
+          ]}
+        >
+          <p>
+            Are you sure you want to delete this salary payment? This action
+            cannot be undone.
+          </p>
         </Modal>
       </div>
     </div>
