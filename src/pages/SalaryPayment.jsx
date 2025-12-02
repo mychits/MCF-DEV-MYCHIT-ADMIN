@@ -41,7 +41,7 @@ const SalaryPayment = () => {
   const [updateForm] = Form.useForm();
 
   const [alreadyPaidModalOpen, setAlreadyPaidModalOpen] = useState(false);
-const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
+  const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
 
   const [updateFormData, setUpdateFormData] = useState({
     employee_id: "",
@@ -64,6 +64,8 @@ const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
       professional_tax: 0,
     },
     additional_payments: [],
+      payment_method: "Cash",       
+  transaction_id: "", 
   });
 
   const thisYear = dayjs().format("YYYY");
@@ -139,6 +141,8 @@ const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
     additional_payments: [],
     total_salary_payable: 0,
     paid_amount: 0,
+    payment_method: "Cash",
+    transaction_id: "",
   });
 
   async function fetchEmployees() {
@@ -199,24 +203,24 @@ const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
   };
 
 
-useEffect(() => {
-  if (formData.employee_id && formData.year && employeeDetails?.joining_date) {
-    const validMonths = getValidMonths(employeeDetails.joining_date, formData.year);
-    const currentMonthValid = validMonths.some(
-      (m) => m.value === formData.month && !m.disabled
-    );
+  useEffect(() => {
+    if (formData.employee_id && formData.year && employeeDetails?.joining_date) {
+      const validMonths = getValidMonths(employeeDetails.joining_date, formData.year);
+      const currentMonthValid = validMonths.some(
+        (m) => m.value === formData.month && !m.disabled
+      );
 
-    if (!currentMonthValid) {
-      const firstValid = validMonths.find((m) => !m.disabled);
-      if (firstValid) {
-        setFormData((prev) => ({
-          ...prev,
-          month: firstValid.value,
-        }));
+      if (!currentMonthValid) {
+        const firstValid = validMonths.find((m) => !m.disabled);
+        if (firstValid) {
+          setFormData((prev) => ({
+            ...prev,
+            month: firstValid.value,
+          }));
+        }
       }
     }
-  }
-}, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
+  }, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
 
   const handleEdit = async (id) => {
     try {
@@ -226,18 +230,20 @@ useEffect(() => {
       if (salaryData) {
         setCurrentSalaryId(id);
 
-    
+
         const yearAsDayjs = dayjs(salaryData.salary_year, "YYYY");
 
         const formData = {
           employee_id: salaryData.employee_id._id,
           month: salaryData.salary_month,
-          year: yearAsDayjs, 
+          year: yearAsDayjs,
           earnings: salaryData.earnings,
           deductions: salaryData.deductions,
           additional_payments: salaryData.additional_payments || [],
           total_salary_payable: salaryData.total_salary_payable || 0,
           paid_amount: salaryData.paid_amount || 0,
+           payment_method: salaryData.payment_method || "Cash",      
+  transaction_id: salaryData.transaction_id || "",  
         };
 
         setUpdateFormData(formData);
@@ -281,7 +287,7 @@ useEffect(() => {
     try {
       setUpdateLoading(true);
 
- 
+
       const totalEarnings = Object.values(updateFormData.earnings).reduce(
         (sum, value) => sum + Number(value),
         0
@@ -473,43 +479,43 @@ useEffect(() => {
   //   }
   // }
 
-async function handleCalculateSalary() {
-  try {
-    setCalculateLoading(true);
+  async function handleCalculateSalary() {
+    try {
+      setCalculateLoading(true);
 
-    const response = await API.get("/salary-payment/calculate", {
-      params: {
-        employee_id: formData.employee_id,
-        month: formData.month,
-        year: formData.year,
-        earnings: formData.earnings,
-        deductions: formData.deductions,
-      },
-    });
+      const response = await API.get("/salary-payment/calculate", {
+        params: {
+          employee_id: formData.employee_id,
+          month: formData.month,
+          year: formData.year,
+          earnings: formData.earnings,
+          deductions: formData.deductions,
+        },
+      });
 
-    setCalculatedSalary(response.data.data);
-    setShowAdditionalPayments(true);
-    setFormData((prev) => ({
-      ...prev,
-      total_salary_payable: response.data.data.calculated_salary,
-    }));
-    message.success("Salary calculated successfully");
-  } catch (error) {
-    const status = error?.response?.status;
-    const errorMsg = error?.response?.data?.message;
-    const existingData = error?.response?.data?.existing_salary;
+      setCalculatedSalary(response.data.data);
+      setShowAdditionalPayments(true);
+      setFormData((prev) => ({
+        ...prev,
+        total_salary_payable: response.data.data.calculated_salary,
+      }));
+      message.success("Salary calculated successfully");
+    } catch (error) {
+      const status = error?.response?.status;
+      const errorMsg = error?.response?.data?.message;
+      const existingData = error?.response?.data?.existing_salary;
 
-    if (status === 406 && errorMsg?.includes("already generated")) {
-      setExistingSalaryRecord(existingData);
-      setAlreadyPaidModalOpen(true);
-    } else {
-      console.error("Error calculating salary:", error);
-      message.error(errorMsg || "Failed to calculate salary");
+      if (status === 406 && errorMsg?.includes("already generated")) {
+        setExistingSalaryRecord(existingData);
+        setAlreadyPaidModalOpen(true);
+      } else {
+        console.error("Error calculating salary:", error);
+        message.error(errorMsg || "Failed to calculate salary");
+      }
+    } finally {
+      setCalculateLoading(false);
     }
-  } finally {
-    setCalculateLoading(false);
   }
-}
 
   async function handleAddSalary() {
     try {
@@ -534,29 +540,30 @@ async function handleCalculateSalary() {
         ? calculatedSalary.calculated_salary
         : totalEarnings - totalDeductions + additionalPaymentsTotal;
 
-      const salaryData = {
-        employee_id: formData.employee_id,
-        salary_from_date: calculatedSalary
-          ? calculatedSalary.salary_from_date
-          : new Date(),
-        salary_to_date: calculatedSalary
-          ? calculatedSalary.salary_to_date
-          : new Date(),
-        salary_month: formData.month,
-        salary_year: formData.year,
-        earnings: formData.earnings, // Ensure this is an object
-        deductions: formData.deductions, // Ensure this is an object
-        additional_payments: formData.additional_payments,
-        paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
-        lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
-        net_payable: netPayable,
-        paid_amount: formData.paid_amount || 0,
-        remaining_balance: (formData.total_salary_payable || netPayable) - (formData.paid_amount || 0),
-        total_salary_payable: formData.total_salary_payable || netPayable, // New field
-        payment_method: "Bank Transfer",
-        status: "Pending",
-        pay_date: new Date(),
-      };
+     const salaryData = {
+  employee_id: formData.employee_id,
+  salary_from_date: calculatedSalary
+    ? calculatedSalary.salary_from_date
+    : new Date(),
+  salary_to_date: calculatedSalary
+    ? calculatedSalary.salary_to_date
+    : new Date(),
+  salary_month: formData.month,
+  salary_year: formData.year,
+  earnings: formData.earnings,
+  deductions: formData.deductions,
+  additional_payments: formData.additional_payments,
+  paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
+  lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
+  net_payable: netPayable,
+  paid_amount: formData.paid_amount || 0,
+  remaining_balance: (formData.total_salary_payable || netPayable) - (formData.paid_amount || 0),
+  total_salary_payable: formData.total_salary_payable || netPayable,
+  payment_method: formData.payment_method, // ✅ dynamic
+  transaction_id: formData.payment_method === "Cash" ? null : (formData.transaction_id || null), // ✅ conditional
+  status: "Pending",
+  pay_date: new Date(),
+};
 
       await API.post("/salary-payment/", salaryData);
       message.success("Salary added successfully");
@@ -1016,7 +1023,7 @@ async function handleCalculateSalary() {
                       size="large"
                       className="px-8"
                       loading={calculateLoading}
-                       disabled={!formData.employee_id || !formData.month || !formData.year}
+                      disabled={!formData.employee_id || !formData.month || !formData.year}
                     >
                       Calculate Salary
                     </Button>
@@ -1059,6 +1066,17 @@ async function handleCalculateSalary() {
                             type="text"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
                             value={calculatedSalary.paid_days}
+                            disabled
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            LOP Days
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                            value={calculatedSalary.lop_days}
                             disabled
                           />
                         </div>
@@ -1113,7 +1131,7 @@ async function handleCalculateSalary() {
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">
                           Payment Details
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="form-group">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Total Salary Payable
@@ -1123,10 +1141,7 @@ async function handleCalculateSalary() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               value={formData.total_salary_payable || 0}
                               onChange={(e) =>
-                                handleChange(
-                                  "total_salary_payable",
-                                  e.target.value
-                                )
+                                handleChange("total_salary_payable", e.target.value)
                               }
                             />
                           </div>
@@ -1138,13 +1153,50 @@ async function handleCalculateSalary() {
                               type="number"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               value={formData.paid_amount || 0}
-                              onChange={(e) =>
-                                handleChange("paid_amount", e.target.value)
-                              }
+                              onChange={(e) => handleChange("paid_amount", e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Payment Mode <span className="text-red-600">*</span>
+                            </label>
+                            <Select
+                              style={{ width: "100%" }}
+                              placeholder="Select mode"
+                              value={formData.payment_method}
+                              onChange={(value) => handleChange("payment_method", value)}
+                              options={[
+                                { label: "Cash", value: "Cash" },
+                                { label: "Online / UPI", value: "Online/UPI" },
+                                { label: "Online / NEFT", value: "Online/NEFT" },
+                                { label: "Online / IMPS", value: "Online/IMPS" },
+                                { label: "Online / RTGS", value: "Online/RTGS" },
+
+                            
+                              ]}
                             />
                           </div>
                         </div>
+
+                        {/* Transaction ID (only if not Cash) */}
+                        {formData.payment_method !== "Cash" && (
+                          <div className="mt-4">
+                            <div className="form-group">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Transaction ID <span className="text-red-600">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter transaction id"
+                                value={formData.transaction_id || ""}
+                                onChange={(e) => handleChange("transaction_id", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
+
                     </div>
                   )}
 
@@ -1454,7 +1506,42 @@ async function handleCalculateSalary() {
                   <Input type="number" />
                 </Form.Item>
               </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Form.Item
+      name="payment_method"
+      label="Payment Mode"
+      rules={[{ required: true, message: "Please select payment mode" }]}
+    >
+      <Select
+        placeholder="Select payment mode"
+        options={[
+          { label: "Cash", value: "Cash" },
+          { label: "Online / UPI", value: "Online/UPI" },
+          { label: "Online / NEFT", value: "Online/NEFT" },
+          { label: "Online / IMPS", value: "Online/IMPS" },
+          { label: "Online / RTGS", value: "Online/RTGS" },
+          { label: "Bank Transfer", value: "Bank Transfer" },
+          { label: "Cheque", value: "Cheque" },
+          { label: "Direct Deposit", value: "Direct Deposit" },
+        ]}
+      />
+    </Form.Item>
+
+    {updateForm.getFieldValue("payment_method") !== "Cash" && (
+      <Form.Item
+        name="transaction_id"
+        label="Transaction ID"
+        rules={[
+          { required: updateForm.getFieldValue("payment_method") !== "Cash", message: "Transaction ID is required" }
+        ]}
+      >
+        <Input placeholder="Enter transaction reference" />
+      </Form.Item>
+    )}
+  </div>
             </div>
+
           </Form>
         </Drawer>
 
@@ -1484,141 +1571,164 @@ async function handleCalculateSalary() {
           </p>
         </Modal>
 
-{/* Already Paid – Full Details Modal */}
-<Modal
-  title={
-    <div className="flex items-center gap-3">
-      <span className="text-amber-600 text-lg font-bold">⚠️ Salary Already Processed</span>
-    </div>
-  }
-  open={alreadyPaidModalOpen}
-  onCancel={() => setAlreadyPaidModalOpen(false)}
-  width={920}
-  footer={[
-    <Button key="close" onClick={() => setAlreadyPaidModalOpen(false)}>
-      Close
-    </Button>,
-    existingSalaryRecord?.status === "Pending" && (
-      <Button
-        key="edit"
-        type="primary"
-        style={{ backgroundColor: '#D4AF37', borderColor: '#B8860B' }}
-        onClick={() => {
-          handleEdit(existingSalaryRecord._id);
-          setAlreadyPaidModalOpen(false);
-        }}
-      >
-        Edit Record
-      </Button>
-    ),
-  ]}
-  bodyStyle={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}
->
-  {existingSalaryRecord ? (
-    <div className="space-y-6 text-sm">
-      {/* Salary Period */}
-      <section className="border-l-4 border-amber-600 bg-white p-4 rounded shadow-sm">
-        <h4 className="font-bold text-gray-800 mb-2 text-base">📅 Salary Period</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-gray-700">
-          <div><strong>Month:</strong> {existingSalaryRecord.salary_month} {existingSalaryRecord.salary_year}</div>
-          <div><strong>From:</strong> {moment(existingSalaryRecord.salary_from_date).format("DD MMM YYYY")}</div>
-          <div><strong>To:</strong> {moment(existingSalaryRecord.salary_to_date).format("DD MMM YYYY")}</div>
-        </div>
-      </section>
+        {/* Already Paid – Full Details Modal */}
+        <Modal
+          title={
+            <div className="flex items-center gap-3">
+              <span className="text-amber-800 text-lg font-semibold flex items-center">
+                Salary Already Processed
+              </span>
+            </div>
+          }
+          open={alreadyPaidModalOpen}
+          onCancel={() => setAlreadyPaidModalOpen(false)}
+          width={920}
+          footer={[
+            <Button key="close" onClick={() => setAlreadyPaidModalOpen(false)}>
+              Close
+            </Button>,
+            existingSalaryRecord?.status === "Pending" && (
+              <Button
+                key="edit"
+                type="primary"
+                style={{ backgroundColor: '#D4AF37', borderColor: '#B8860B', color: '#000' }}
+                onClick={() => {
+                  handleEdit(existingSalaryRecord._id);
+                  setAlreadyPaidModalOpen(false);
+                }}
+              >
+                Edit Record
+              </Button>
+            ),
+          ]}
+          bodyStyle={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#fafafa' }}
+        >
+          {existingSalaryRecord ? (
+            <div className="space-y-6 text-sm">
+              {/* Salary Period */}
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
 
-      {/* Attendance Summary */}
-      <section className="border-l-4 border-emerald-600 bg-white p-4 rounded shadow-sm">
-        <h4 className="font-bold text-gray-800 mb-2 text-base">✅ Attendance Summary</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-gray-700">
-          <div><strong>Total Days:</strong> {existingSalaryRecord.total_days}</div>
-          <div><strong>Paid Days:</strong> {existingSalaryRecord.paid_days}</div>
-          <div><strong>LOP Days:</strong> {existingSalaryRecord.lop_days}</div>
-          <div><strong>Present:</strong> {existingSalaryRecord.present_days}</div>
-          <div><strong>Absent:</strong> {existingSalaryRecord.absent_days}</div>
-          <div><strong>On Leave:</strong> {existingSalaryRecord.leave_days}</div>
-          <div><strong>Half Days:</strong> {existingSalaryRecord.half_days}</div>
-        </div>
-      </section>
+                  Salary Period
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-gray-700">
+                  <div><strong>Month:</strong> {existingSalaryRecord.salary_month} {existingSalaryRecord.salary_year}</div>
+                  <div><strong>From:</strong> {moment(existingSalaryRecord.salary_from_date).format("DD MMM YYYY")}</div>
+                  <div><strong>To:</strong> {moment(existingSalaryRecord.salary_to_date).format("DD MMM YYYY")}</div>
+                </div>
+              </section>
 
-      {/* Earnings */}
-      <section className="border-l-4 border-emerald-600 bg-white p-4 rounded shadow-sm">
-        <h4 className="font-bold text-gray-800 mb-2 text-base">💰 Earnings</h4>
-        <ul className="space-y-1.5 text-gray-700">
-          {Object.entries(existingSalaryRecord.earnings || {}).map(([key, val]) => (
-            <li key={key} className="flex justify-between">
-              <span className="capitalize">{key.replace(/_/g, " ")}:</span>
-              <span className="font-medium">₹{Number(val).toFixed(2)}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+              {/* Attendance Summary */}
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
 
-      {/* Deductions */}
-      <section className="border-l-4 border-red-600 bg-white p-4 rounded shadow-sm">
-        <h4 className="font-bold text-gray-800 mb-2 text-base">💸 Deductions</h4>
-        <ul className="space-y-1.5 text-gray-700">
-          {Object.entries(existingSalaryRecord.deductions || {}).map(([key, val]) => (
-            <li key={key} className="flex justify-between">
-              <span className="capitalize">{key.replace(/_/g, " ")}:</span>
-              <span className="font-medium">₹{Number(val).toFixed(2)}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+                  Attendance Summary
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-gray-700">
+                  <div><strong>Total Days:</strong> {existingSalaryRecord.total_days}</div>
+                  <div><strong>Paid Days:</strong> {existingSalaryRecord.paid_days}</div>
+                  <div><strong>LOP Days:</strong> {existingSalaryRecord.lop_days}</div>
+                  <div><strong>Present:</strong> {existingSalaryRecord.present_days}</div>
+                  <div><strong>Absent:</strong> {existingSalaryRecord.absent_days}</div>
+                  <div><strong>On Leave:</strong> {existingSalaryRecord.leave_days}</div>
+                  <div><strong>Half Days:</strong> {existingSalaryRecord.half_days}</div>
+                </div>
+              </section>
 
-      {/* Additional Payments */}
-      {existingSalaryRecord.additional_payments?.length > 0 && (
-        <section className="border-l-4 border-purple-600 bg-white p-4 rounded shadow-sm">
-          <h4 className="font-bold text-gray-800 mb-2 text-base">🎁 Additional Payments</h4>
-          <ul className="space-y-1.5 text-gray-700">
-            {existingSalaryRecord.additional_payments.map((pay, i) => (
-              <li key={i} className="flex justify-between">
-                <span>{pay.name || "Payment"}:</span>
-                <span className="font-medium">₹{Number(pay.value).toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+              {/* Earnings */}
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
 
-      {/* Payment Summary */}
-      <section className="border-l-4 border-amber-700 bg-white p-4 rounded shadow-sm">
-        <h4 className="font-bold text-gray-800 mb-2 text-base">📊 Payment Summary</h4>
-        <div className="space-y-1.5 text-gray-700">
-          <p><strong>Total Earnings:</strong> ₹{Number(existingSalaryRecord.total_earnings).toFixed(2)}</p>
-          <p><strong>Total Deductions:</strong> ₹{Number(existingSalaryRecord.total_deductions).toFixed(2)}</p>
-          <p><strong>Net Payable:</strong> ₹{Number(existingSalaryRecord.net_payable).toFixed(2)}</p>
-          <p><strong>Paid Amount:</strong> ₹{Number(existingSalaryRecord.paid_amount).toFixed(2)}</p>
-          <p><strong>Remaining Balance:</strong> ₹{Number(existingSalaryRecord.remaining_balance).toFixed(2)}</p>
-          <p>
-            <strong>Status:</strong>{' '}
-            <span
-              className={
-                existingSalaryRecord.status === "Paid"
-                  ? "text-green-600 font-medium"
-                  : "text-orange-600 font-medium"
-              }
-            >
-              {existingSalaryRecord.status}
-            </span>
-          </p>
-          {existingSalaryRecord.transaction_id && (
-            <p><strong>Transaction ID:</strong> {existingSalaryRecord.transaction_id}</p>
+                  Earnings
+                </h4>
+                <ul className="space-y-2 text-gray-700">
+                  {Object.entries(existingSalaryRecord.earnings || {}).map(([key, val]) => (
+                    <li key={key} className="flex justify-between border-b border-gray-100 pb-1">
+                      <span className="capitalize">{key.replace(/_/g, " ")}</span>
+                      <span className="font-medium">₹{Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* Deductions */}
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+
+                  Deductions
+                </h4>
+                <ul className="space-y-2 text-gray-700">
+                  {Object.entries(existingSalaryRecord.deductions || {}).map(([key, val]) => (
+                    <li key={key} className="flex justify-between border-b border-gray-100 pb-1">
+                      <span className="capitalize">{key.replace(/_/g, " ")}</span>
+                      <span className="font-medium">₹{Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* Additional Payments */}
+              {existingSalaryRecord.additional_payments?.length > 0 && (
+                <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+
+                    Additional Payments
+                  </h4>
+                  <ul className="space-y-2 text-gray-700">
+                    {existingSalaryRecord.additional_payments.map((pay, i) => (
+                      <li key={i} className="flex justify-between border-b border-gray-100 pb-1">
+                        <span>{pay.name || "Payment"}</span>
+                        <span className="font-medium">₹{Number(pay.value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Payment Summary */}
+              <section className="bg-gradient-to-r from-amber-50 to-white border border-amber-200 p-5 rounded-lg shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+
+                  Payment Summary
+                </h4>
+                <div className="space-y-2 text-gray-800 font-medium">
+                  <div className="flex justify-between"><span>Total Earnings:</span> <span>₹{Number(existingSalaryRecord.total_earnings).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between"><span>Total Deductions:</span> <span>₹{Number(existingSalaryRecord.total_deductions).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-2">
+                    <span>Net Payable:</span>
+                    <span>₹{Number(existingSalaryRecord.net_payable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between"><span>Paid Amount:</span> <span>₹{Number(existingSalaryRecord.paid_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between">
+                    <span>Remaining Balance:</span>
+                    <span className={Number(existingSalaryRecord.remaining_balance) > 0 ? "text-red-600 font-bold" : "text-green-600"}>
+                      ₹{Number(existingSalaryRecord.remaining_balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Status:</span>
+                    <span className={existingSalaryRecord.status === "Paid" ? "text-green-700 font-bold" : "text-amber-700 font-bold"}>
+                      {existingSalaryRecord.status}
+                    </span>
+                  </div>
+
+                  {existingSalaryRecord.transaction_id && (
+                    <div className="flex justify-between"><span>Transaction ID:</span> <span>{existingSalaryRecord.transaction_id}</span></div>
+                  )}
+                  <div className="flex justify-between"><span>Payment Method:</span> <span>{existingSalaryRecord.payment_method || "—"} </span></div>
+                  <div className="flex justify-between"><span>Pay Date:</span> <span>{moment(existingSalaryRecord.pay_date).format("DD MMM YYYY")}</span></div>
+                </div>
+              </section>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              Loading salary details…
+            </div>
           )}
-          <p><strong>Payment Method:</strong> {existingSalaryRecord.payment_method || "—"} </p>
-          <p><strong>Pay Date:</strong> {moment(existingSalaryRecord.pay_date).format("DD MMM YYYY")}</p>
-        </div>
-      </section>
-    </div>
-  ) : (
-    <div className="flex items-center justify-center h-32">
-      <p className="text-gray-500">Loading salary details...</p>
-    </div>
-  )}
-</Modal>
+        </Modal>
 
       </div>
-      
+
     </div>
   );
 };
