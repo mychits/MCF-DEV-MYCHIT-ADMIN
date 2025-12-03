@@ -11,10 +11,9 @@ import filterOption from "../helpers/filterOption";
 import { fieldSize } from "../data/fieldSize";
 import CircularLoader from "../components/loaders/CircularLoader";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
+import { numberToIndianWords } from "../helpers/numberToIndianWords";
 const Payroll = () => {
-  const [users, setUsers] = useState([]);
   const [TableEmployees, setTableEmployees] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showModalDelete, setShowModalDelete] = useState(false);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
@@ -119,7 +118,7 @@ const Payroll = () => {
         setIsLoading(true);
         const response = await api.get("/employee/");
         const employeeData = response.data?.employee || [];
-        setUsers(employeeData);
+
         const formattedData = employeeData.map((group, index) => ({
           _id: group?._id,
           id: index + 1,
@@ -204,6 +203,7 @@ const Payroll = () => {
   };
 
   const handleChange = (name, value, earnings = false, deductions = false) => {
+    console.log(name, value, "this is name and value");
     // const basic = 1000;
     // const hra = 1000;
     // const travelAllowance = 1000;
@@ -255,26 +255,16 @@ const Payroll = () => {
       setFormData((prevData) => ({
         ...prevData,
         [name]: value,
-        earnings: { ...prevData.earnings, [name]: value },
+        earnings: { ...prevData.earnings },
         deductions: { ...prevData.deductions, [name]: value },
       }));
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
-         setErrors((prevData) => ({
-      ...prevData,
-      [name]: "",
-    }));
+      setErrors((prevData) => ({
+        ...prevData,
+        [name]: "",
+      }));
     }
-
- 
-  };
-
-  const handleAntInputDSelect = (field, value) => {
-    setUpdateFormData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }));
-    setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
   };
 
   const handleAntDSelectReportingManager = (reportingId) => {
@@ -372,7 +362,6 @@ const Payroll = () => {
       newErrors.designation_id = "Please Enter Designation";
     }
 
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -385,10 +374,10 @@ const Payroll = () => {
       );
       return;
     }
-    setFormState({
-      ...formState,
+    setFormState((prevState)=>({
+      ...prevState,
       emergency_contact_number: [...phones, ""],
-    });
+    }));
   };
   const handlePhoneChange = (formState, setFormState, index, e) => {
     const value = e.target.value;
@@ -594,8 +583,13 @@ const Payroll = () => {
       console.error("Error fetching user:", error);
     }
   };
- 
-  const handleInputChange = (name,value,earnings=false,deductions=false) => {
+
+  const handleInputChange = (
+    name,
+    value,
+    earnings = false,
+    deductions = false
+  ) => {
     // const basic = 1000;
     // const hra = 1000;
     // const travelAllowance = 1000;
@@ -647,15 +641,15 @@ const Payroll = () => {
       setUpdateFormData((prevData) => ({
         ...prevData,
         [name]: value,
-        earnings: { ...prevData.earnings, [name]: value },
+        earnings: { ...prevData.earnings },
         deductions: { ...prevData.deductions, [name]: value },
       }));
     } else {
       setUpdateFormData((prevData) => ({ ...prevData, [name]: value }));
-         setErrors((prevData) => ({
-      ...prevData,
-      [name]: "",
-    }));
+      setErrors((prevData) => ({
+        ...prevData,
+        [name]: "",
+      }));
     }
   };
   const handleDeleteUser = async () => {
@@ -1149,6 +1143,7 @@ const Payroll = () => {
                   </label>
                   <Input
                     type="number"
+                    onWheel={(e) => e.target.blur()}
                     name="salary"
                     value={formData.salary}
                     onChange={(e) =>
@@ -1159,6 +1154,9 @@ const Payroll = () => {
                     required
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
+                  <span className="ml-2 font-medium font-mono text-blue-600">
+                    {numberToIndianWords(formData.salary || 0)}
+                  </span>
                   {errors.salary && (
                     <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
                   )}
@@ -1201,6 +1199,7 @@ const Payroll = () => {
                   </label>
                   <Input
                     type="number"
+                    onWheel={(e) => e.target.blur()}
                     name="total_allocated_leaves"
                     value={formData.total_allocated_leaves}
                     onChange={(e) =>
@@ -1325,7 +1324,8 @@ const Payroll = () => {
                       Basic Salary
                     </label>
                     <Input
-                      type="Number"
+                      type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="basic"
                       value={
                         formData.earnings?.basic === 0
@@ -1333,12 +1333,15 @@ const Payroll = () => {
                           : formData.earnings?.basic
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value, true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="basic"
                       placeholder="Enter Employee Basic Salary"
-                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                      className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 `}
                     />
+                    <span className="ml-2 font-medium font-mono text-blue-600">
+                      {numberToIndianWords(formData.earnings?.basic || 0)}
+                    </span>
                   </div>
                   <div className="w-1/2">
                     <label
@@ -1349,6 +1352,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="hra"
                       value={
                         formData.earnings?.hra === 0
@@ -1356,7 +1360,7 @@ const Payroll = () => {
                           : formData.earnings?.hra
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="hra"
                       placeholder="Enter House Rent Allowance"
@@ -1374,6 +1378,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="travel_allowance"
                       value={
                         formData.earnings?.travel_allowance === 0
@@ -1381,7 +1386,7 @@ const Payroll = () => {
                           : formData.earnings?.travel_allowance
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value, true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
@@ -1397,6 +1402,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="medical_allowance"
                       value={
                         formData.earnings?.medical_allowance === 0
@@ -1404,7 +1410,7 @@ const Payroll = () => {
                           : formData.earnings?.medical_allowance
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="medical_allowance"
                       placeholder="Enter  Medical Allowance"
@@ -1422,6 +1428,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="basket_of_benifits"
                       value={
                         formData.earnings?.basket_of_benifits === 0
@@ -1429,7 +1436,7 @@ const Payroll = () => {
                           : formData.earnings?.basket_of_benifits
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
@@ -1445,6 +1452,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="performance_bonus"
                       value={
                         formData.earnings?.performance_bonus === 0
@@ -1452,7 +1460,7 @@ const Payroll = () => {
                           : formData.earnings?.performance_bonus
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="performance_bonus"
                       placeholder="Enter Performance Bonus"
@@ -1470,6 +1478,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="other_allowances"
                       value={
                         formData.earnings?.other_allowances === 0
@@ -1477,7 +1486,7 @@ const Payroll = () => {
                           : formData.earnings?.other_allowances
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="other_allowances"
                       placeholder="Enter Other Allowance"
@@ -1493,6 +1502,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="conveyance"
                       value={
                         formData.earnings?.conveyance === 0
@@ -1500,7 +1510,7 @@ const Payroll = () => {
                           : formData.earnings?.conveyance
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,true,false)
+                        handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="conveyance"
                       placeholder="Enter Conveyance"
@@ -1527,6 +1537,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="income_tax"
                       value={
                         formData.deductions?.income_tax === 0
@@ -1534,7 +1545,7 @@ const Payroll = () => {
                           : formData.deductions?.income_tax
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,false,true)
+                        handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="income_tax"
                       placeholder="Enter Employee Income Tax"
@@ -1550,6 +1561,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="esi"
                       value={
                         formData.deductions?.esi === 0
@@ -1557,7 +1569,7 @@ const Payroll = () => {
                           : formData.deductions?.esi
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,false,true)
+                        handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="esi"
                       placeholder="Enter Employees' State Insurance"
@@ -1575,6 +1587,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="epf"
                       value={
                         formData.deductions?.epf === 0
@@ -1582,7 +1595,7 @@ const Payroll = () => {
                           : formData.deductions?.epf
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,false,true)
+                        handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="epf"
                       placeholder="Enter Employees' Provident Fund"
@@ -1598,6 +1611,7 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="professional_tax"
                       value={
                         formData.deductions?.professional_tax === 0
@@ -1605,7 +1619,7 @@ const Payroll = () => {
                           : formData.deductions?.professional_tax
                       }
                       onChange={(e) =>
-                        handleChange(e.target.name, e.target.value,false,true)
+                        handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="professional_tax"
                       placeholder="Enter Employees' Professional Tax"
@@ -1647,7 +1661,9 @@ const Payroll = () => {
                   type="text"
                   name="name"
                   value={updateFormData.name}
-                  onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(e.target.name, e.target.value)
+                  }
                   id="update_name"
                   placeholder="Enter the Full Name"
                   required
@@ -1669,7 +1685,9 @@ const Payroll = () => {
                     type="email"
                     name="email"
                     value={updateFormData.email}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_email"
                     placeholder="Enter Email"
                     required
@@ -1690,7 +1708,9 @@ const Payroll = () => {
                     type="tel"
                     name="phone_number"
                     value={updateFormData.phone_number}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_phone_number"
                     placeholder="Enter Phone Number"
                     required
@@ -1715,7 +1735,9 @@ const Payroll = () => {
                     type="text"
                     name="password"
                     value={updateFormData.password}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_password"
                     placeholder="Enter Password"
                     required
@@ -1738,7 +1760,9 @@ const Payroll = () => {
                     type="text"
                     name="pincode"
                     value={updateFormData.pincode}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_pincode"
                     placeholder="Enter Pincode"
                     required
@@ -1763,7 +1787,9 @@ const Payroll = () => {
                     type="text"
                     name="adhaar_no"
                     value={updateFormData.adhaar_no}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_adhaar_no"
                     placeholder="Enter Adhaar Number"
                     required
@@ -1786,7 +1812,9 @@ const Payroll = () => {
                     type="text"
                     name="pan_no"
                     value={updateFormData.pan_no}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_pan_no"
                     placeholder="Enter Pan Number"
                     required
@@ -1808,7 +1836,9 @@ const Payroll = () => {
                   type="text"
                   name="address"
                   value={updateFormData.address}
-                 onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(e.target.name, e.target.value)
+                  }
                   id="update_address"
                   placeholder="Enter the Address"
                   required
@@ -1898,7 +1928,9 @@ const Payroll = () => {
                     type="date"
                     name="joining_date"
                     value={updateFormData.joining_date}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_joining_date"
                     placeholder="Enter Employee Joining Date"
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -1926,7 +1958,9 @@ const Payroll = () => {
                             .split("T")[0]
                         : ""
                     }
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_leaving_date"
                     placeholder="Enter Leaving Date"
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -1951,7 +1985,9 @@ const Payroll = () => {
                             .split("T")[0]
                         : ""
                     }
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_dob"
                     placeholder="Enter Employee Date of Birth"
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2002,9 +2038,12 @@ const Payroll = () => {
                   </label>
                   <Input
                     type="number"
+                    onWheel={(e) => e.target.blur()}
                     name="salary"
                     value={updateFormData.salary}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_salary"
                     placeholder="Enter Salary"
                     required
@@ -2026,7 +2065,9 @@ const Payroll = () => {
                     type="tel"
                     name="alternate_number"
                     value={updateFormData.alternate_number}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_alternate_number"
                     placeholder="Enter Alternate Phone Number"
                     required
@@ -2049,9 +2090,12 @@ const Payroll = () => {
                   </label>
                   <Input
                     type="number"
+                    onWheel={(e) => e.target.blur()}
                     name="total_allocated_leaves"
                     value={updateFormData.total_allocated_leaves}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_total_allocated_leaves"
                     placeholder="Enter total leaves"
                     required
@@ -2075,7 +2119,9 @@ const Payroll = () => {
                     type="text"
                     name="emergency_contact_person"
                     value={updateFormData?.emergency_contact_person}
-                    onChange={(e)=>handleInputChange(e.target.name,e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
                     id="update_emergency_contact_person"
                     placeholder="Enter Emergency Contact Person Name"
                     required
@@ -2182,14 +2228,22 @@ const Payroll = () => {
                       Basic Salary
                     </label>
                     <Input
-                      type="Number"
+                      type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="basic"
                       value={
                         updateFormData.earnings?.basic === 0
                           ? ""
                           : updateFormData.earnings?.basic
                       }
-                      onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_basic"
                       placeholder="Enter Employee Basic Salary"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2204,13 +2258,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="hra"
                       value={
                         updateFormData.earnings?.hra === 0
                           ? ""
                           : updateFormData.earnings?.hra
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_hra"
                       placeholder="Enter House Rent Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2227,13 +2289,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="travel_allowance"
                       value={
                         updateFormData.earnings?.travel_allowance === 0
                           ? ""
                           : updateFormData.earnings?.travel_allowance
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_travel_allowance"
                       placeholder="Enter Employee Travel Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2248,13 +2318,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="medical_allowance"
                       value={
                         updateFormData.earnings?.medical_allowance === 0
                           ? ""
                           : updateFormData.earnings?.medical_allowance
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_medical_allowance"
                       placeholder="Enter  Medical Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2271,13 +2349,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="basket_of_benifits"
                       value={
                         updateFormData.earnings?.basket_of_benifits === 0
                           ? ""
                           : updateFormData.earnings?.basket_of_benifits
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_basket_of_benifits"
                       placeholder="Enter Employee Basket of Benifits"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2292,13 +2378,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="performance_bonus"
                       value={
                         updateFormData.earnings?.performance_bonus === 0
                           ? ""
                           : updateFormData.earnings?.performance_bonus
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_performance_bonus"
                       placeholder="Enter Performance Bonus"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2315,13 +2409,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="other_allowances"
                       value={
                         updateFormData.earnings?.other_allowances === 0
                           ? ""
                           : updateFormData.earnings?.other_allowances
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_other_allowances"
                       placeholder="Enter Other Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2336,13 +2438,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="conveyance"
                       value={
                         updateFormData.earnings?.conveyance === 0
                           ? ""
                           : updateFormData.earnings?.conveyance
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,true,false)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          true,
+                          false
+                        )
+                      }
                       id="update_conveyance"
                       placeholder="Enter Conveyance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2368,13 +2478,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="income_tax"
                       value={
                         updateFormData.deductions?.income_tax === 0
                           ? ""
                           : updateFormData.deductions?.income_tax
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,false,true)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          false,
+                          true
+                        )
+                      }
                       id="update_income_tax"
                       placeholder="Enter Employee Income Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2389,13 +2507,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="esi"
                       value={
                         updateFormData.deductions?.esi === 0
                           ? ""
                           : updateFormData.deductions?.esi
                       }
-                       onChange={(e)=>handleInputChange(e.target.name,e.target.value,false,true)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          false,
+                          true
+                        )
+                      }
                       id="update_esi"
                       placeholder="Enter Employees' State Insurance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2412,13 +2538,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="epf"
                       value={
                         updateFormData.deductions?.epf === 0
                           ? ""
                           : updateFormData.deductions?.epf
                       }
-                      onChange={(e)=>handleInputChange(e.target.name,e.target.value,false,true)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          false,
+                          true
+                        )
+                      }
                       id="update_epf"
                       placeholder="Enter Employees' Provident Fund"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
@@ -2433,13 +2567,21 @@ const Payroll = () => {
                     </label>
                     <Input
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       name="professional_tax"
                       value={
                         updateFormData.deductions?.professional_tax === 0
                           ? ""
                           : updateFormData.deductions?.professional_tax
                       }
-                      onChange={(e)=>handleInputChange(e.target.name,e.target.value,false,true)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.name,
+                          e.target.value,
+                          false,
+                          true
+                        )
+                      }
                       id="update_professional_tax"
                       placeholder="Enter Employees' Professional Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
