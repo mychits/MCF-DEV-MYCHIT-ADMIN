@@ -418,7 +418,7 @@ const PenaltySettings = () => {
       ),
     },
     {
-      title: "Days Late Threshold",
+      title: "Grace days (Late Fee)",
       dataIndex: "days_late_threshold",
       align: 'center',
       render: (v) => (
@@ -427,16 +427,16 @@ const PenaltySettings = () => {
         </Tag>
       ),
     },
-    {
-      title: "Grace Days",
-      dataIndex: "grace_days",
-      align: 'center',
-      render: (v) => (
-        <Tag color="green" style={{ fontWeight: '600', fontSize: '13px' }}>
-          {v} days
-        </Tag>
-      ),
-    },
+    // {
+    //   title: "Grace Days",
+    //   dataIndex: "grace_days",
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tag color="green" style={{ fontWeight: '600', fontSize: '13px' }}>
+    //       {v} days
+    //     </Tag>
+    //   ),
+    // },
     {
       title: "Actions",
       align: "center",

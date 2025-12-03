@@ -116,7 +116,7 @@ const Payroll = () => {
     const fetchEmployeeProfile = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get("/employee/");
+        const response = await api.get("/employee");
         const employeeData = response.data?.employee || [];
 
         const formattedData = employeeData.map((group, index) => ({
@@ -424,7 +424,7 @@ const Payroll = () => {
           designation_id: selectedManagerId,
           reporting_manager_id: selectedReportingManagerId,
         };
-        const response = await api.post("/employee", dataToSend, {
+        const response = await api.post("/employee/payroll", dataToSend, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -1104,33 +1104,7 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="salary"
-                  >
-                    Fixed Salary <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    onWheel={(e) => e.target.blur()}
-                    name="salary"
-                    value={formData.salary}
-                    onChange={(e) =>
-                      handleChange(e.target.name, e.target.value)
-                    }
-                    id="salary"
-                    placeholder="Enter Your Salary"
-                    required
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                  <span className="ml-2 font-medium font-mono text-blue-600">
-                    {numberToIndianWords(formData.salary || 0)}
-                  </span>
-                  {errors.salary && (
-                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-                  )}
-                </div>
+              
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -1157,9 +1131,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
+                   <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="total_allocated_leaves"
@@ -1186,6 +1158,9 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+             
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -1212,9 +1187,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
+                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="emergency_contact_number"
@@ -1277,6 +1250,36 @@ const Payroll = () => {
                   </button>
                 </div>
               </div>
+              <div className="flex flex-row justify-between space-x-4">
+               
+                  <div className="w-1/2">
+                  <label
+                    className="block  text-sm font-medium text-gray-900"
+                    htmlFor="salary"
+                  >
+                    Fixed Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    onWheel={(e) => e.target.blur()}
+                    name="salary"
+                    value={formData.salary}
+                    onChange={(e) =>
+                      handleChange(e.target.name, e.target.value)
+                    }
+                    id="salary"
+                    placeholder="Enter Your Salary"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  <span className="ml-2 font-medium font-mono text-blue-600">
+                    {numberToIndianWords(formData.salary || 0)}
+                  </span>
+                  {errors.salary && (
+                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
+                  )}
+                </div>
+              </div>
               <div>
                 <label
                   className="block mb-4 text-3xl font-bold text-gray-900"
@@ -1291,7 +1294,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="basic"
                     >
-                      Basic Salary
+                      Fixed Basic Salary
                     </label>
                     <Input
                       type="number"
@@ -1306,7 +1309,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="basic"
-                      placeholder="Enter Employee Basic Salary"
+                      placeholder="Enter Fixed Employee Basic Salary"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 `}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1318,7 +1321,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="hra"
                     >
-                      House Rent Allowance
+                       Fixed House Rent Allowance
                     </label>
                     <Input
                       type="number"
@@ -1333,7 +1336,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="hra"
-                      placeholder="Enter House Rent Allowance"
+                      placeholder="Enter Fixed House Rent Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1347,7 +1350,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="travel_allowance"
                     >
-                      Travel Allowance
+                     Fixed Travel Allowance
                     </label>
                     <Input
                       type="number"
@@ -1362,7 +1365,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="travel_allowance"
-                      placeholder="Enter Employee Travel Allowance"
+                      placeholder="Enter Fixed Employee Travel Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1376,7 +1379,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="medical_allowance"
                     >
-                      Medical Allowance
+                     Fixed Medical Allowance
                     </label>
                     <Input
                       type="number"
@@ -1391,7 +1394,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="medical_allowance"
-                      placeholder="Enter  Medical Allowance"
+                      placeholder="Enter Fixed Medical Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1407,7 +1410,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="basket_of_benifits"
                     >
-                      Basket of Benifits
+                     Fixed Basket of Benifits
                     </label>
                     <Input
                       type="number"
@@ -1422,7 +1425,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="basket_of_benifits"
-                      placeholder="Enter Employee Basket of Benifits"
+                      placeholder="Enter Fixed Employee Basket of Benifits"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1436,7 +1439,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="performance_bonus"
                     >
-                      Performance Bonus
+                     Fixed Performance Bonus
                     </label>
                     <Input
                       type="number"
@@ -1451,7 +1454,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="performance_bonus"
-                      placeholder="Enter Performance Bonus"
+                      placeholder="Enter Fixed Performance Bonus"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1467,7 +1470,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="other_allowances"
                     >
-                      Other Allowance
+                     Fixed Other Allowance
                     </label>
                     <Input
                       type="number"
@@ -1482,7 +1485,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="other_allowances"
-                      placeholder="Enter Other Allowance"
+                      placeholder="Enter Fixed Other Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1496,7 +1499,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="conveyance"
                     >
-                      Conveyance
+                     Fixed Conveyance
                     </label>
                     <Input
                       type="number"
@@ -1511,7 +1514,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, true, false)
                       }
                       id="conveyance"
-                      placeholder="Enter Conveyance"
+                      placeholder="Enter Fixed Conveyance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1534,7 +1537,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="income_tax"
                     >
-                      Income Tax
+                    Fixed Income Tax
                     </label>
                     <Input
                       type="number"
@@ -1549,7 +1552,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="income_tax"
-                      placeholder="Enter Employee Income Tax"
+                      placeholder="Enter Fixed Employee Income Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1563,7 +1566,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="esi"
                     >
-                      Employees' State Insurance
+                     Fixed Employees' State Insurance
                     </label>
                     <Input
                       type="number"
@@ -1578,7 +1581,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="esi"
-                      placeholder="Enter Employees' State Insurance"
+                      placeholder="Enter Fixed Employees' State Insurance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1592,7 +1595,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="epf"
                     >
-                      Employees' Provident Fund
+                     Fixed Employees' Provident Fund
                     </label>
                     <Input
                       type="number"
@@ -1607,7 +1610,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="epf"
-                      placeholder="Enter Employees' Provident Fund"
+                      placeholder="Enter Fixed Employees' Provident Fund"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1619,7 +1622,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="professional_tax"
                     >
-                      Professional Tax
+                     Fixed Professional Tax
                     </label>
                     <Input
                       type="number"
@@ -1634,7 +1637,7 @@ const Payroll = () => {
                         handleChange(e.target.name, e.target.value, false, true)
                       }
                       id="professional_tax"
-                      placeholder="Enter Employees' Professional Tax"
+                      placeholder="Enter Fixed Employees' Professional Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2046,33 +2049,7 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900"
-                    htmlFor="update_salary"
-                  >
-                    Fixed Salary <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    onWheel={(e) => e.target.blur()}
-                    name="salary"
-                    value={updateFormData.salary}
-                    onChange={(e) =>
-                      handleInputChange(e.target.name, e.target.value)
-                    }
-                    id="update_salary"
-                    placeholder="Enter Salary"
-                    required
-                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-                  />
-                  <span className="ml-2 font-medium font-mono text-blue-600">
-                    {numberToIndianWords(updateFormData.salary || 0)}
-                  </span>
-                  {errors.salary && (
-                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
-                  )}
-                </div>
+          
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -2100,9 +2077,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
-                <div className="w-1/2">
+                     <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="update_total_allocated_leaves"
@@ -2128,6 +2103,9 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+           
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -2154,8 +2132,6 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-              </div>
-              <div className="flex flex-row justify-between space-x-4">
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -2231,6 +2207,36 @@ const Payroll = () => {
                   </button>
                 </div>
               </div>
+              <div className="flex flex-row justify-between space-x-4">
+                
+                      <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="update_salary"
+                  >
+                    Fixed Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    onWheel={(e) => e.target.blur()}
+                    name="salary"
+                    value={updateFormData.salary}
+                    onChange={(e) =>
+                      handleInputChange(e.target.name, e.target.value)
+                    }
+                    id="update_salary"
+                    placeholder="Enter Salary"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  <span className="ml-2 font-medium font-mono text-blue-600">
+                    {numberToIndianWords(updateFormData.salary || 0)}
+                  </span>
+                  {errors.salary && (
+                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
+                  )}
+                </div>
+              </div>
 
               <div>
                 <label
@@ -2246,7 +2252,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basic"
                     >
-                      Basic Salary
+                     Fixed Basic Salary
                     </label>
                     <Input
                       type="number"
@@ -2266,7 +2272,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_basic"
-                      placeholder="Enter Employee Basic Salary"
+                      placeholder="Enter Employee Fixed Basic Salary"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2278,7 +2284,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_hra"
                     >
-                      House Rent Allowance
+                     Fixed House Rent Allowance
                     </label>
                     <Input
                       type="number"
@@ -2298,7 +2304,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_hra"
-                      placeholder="Enter House Rent Allowance"
+                      placeholder="Enter Fixed House Rent Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2312,7 +2318,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_travel_allowance"
                     >
-                      Travel Allowance
+                     Fixed Travel Allowance
                     </label>
                     <Input
                       type="number"
@@ -2332,7 +2338,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_travel_allowance"
-                      placeholder="Enter Employee Travel Allowance"
+                      placeholder="Enter Fixed Employee Travel Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2346,7 +2352,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_medical_allowance"
                     >
-                      Medical Allowance
+                     Fixed Medical Allowance
                     </label>
                     <Input
                       type="number"
@@ -2366,7 +2372,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_medical_allowance"
-                      placeholder="Enter  Medical Allowance"
+                      placeholder="Enter Fixed Medical Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2382,7 +2388,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basket_of_benifits"
                     >
-                      Basket of Benifits
+                     Fixed Basket of Benifits
                     </label>
                     <Input
                       type="number"
@@ -2402,7 +2408,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_basket_of_benifits"
-                      placeholder="Enter Employee Basket of Benifits"
+                      placeholder="Enter Fixed Employee Basket of Benifits"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2416,7 +2422,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_performance_bonus"
                     >
-                      Performance Bonus
+                     Fixed Performance Bonus
                     </label>
                     <Input
                       type="number"
@@ -2436,7 +2442,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_performance_bonus"
-                      placeholder="Enter Performance Bonus"
+                      placeholder="Enter Fixed Performance Bonus"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2452,7 +2458,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_other_allowances"
                     >
-                      Other Allowance
+                     Fixed Other Allowance
                     </label>
                     <Input
                       type="number"
@@ -2472,7 +2478,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_other_allowances"
-                      placeholder="Enter Other Allowance"
+                      placeholder="Enter Fixed Other Allowance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2486,7 +2492,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_conveyance"
                     >
-                      Conveyance
+                     Fixed Conveyance
                     </label>
                     <Input
                       type="number"
@@ -2506,7 +2512,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_conveyance"
-                      placeholder="Enter Conveyance"
+                      placeholder="Enter Fixed Conveyance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2531,7 +2537,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_income_tax"
                     >
-                      Income Tax
+                     Fixed Income Tax
                     </label>
                     <Input
                       type="number"
@@ -2551,7 +2557,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_income_tax"
-                      placeholder="Enter Employee Income Tax"
+                      placeholder="Enter Fixed Employee Income Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2565,7 +2571,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_esi"
                     >
-                      Employees' State Insurance
+                     Fixed Employees' State Insurance
                     </label>
                     <Input
                       type="number"
@@ -2585,7 +2591,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_esi"
-                      placeholder="Enter Employees' State Insurance"
+                      placeholder="Enter Fixed Employees' State Insurance"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2599,7 +2605,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_epf"
                     >
-                      Employees' Provident Fund
+                     Fixed Employees' Provident Fund
                     </label>
                     <Input
                       type="number"
@@ -2619,7 +2625,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_epf"
-                      placeholder="Enter Employees' Provident Fund"
+                      placeholder="Enter Fixed Employees' Provident Fund"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
@@ -2631,7 +2637,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_professional_tax"
                     >
-                      Professional Tax
+                     Fixed Professional Tax
                     </label>
                     <Input
                       type="number"
@@ -2651,7 +2657,7 @@ const Payroll = () => {
                         )
                       }
                       id="update_professional_tax"
-                      placeholder="Enter Employees' Professional Tax"
+                      placeholder="Enter Fixed Employees' Professional Tax"
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
