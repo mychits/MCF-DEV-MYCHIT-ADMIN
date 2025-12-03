@@ -205,21 +205,6 @@ const Payroll = () => {
   };
 
   const handleChange = (name, value, earnings = false, deductions = false) => {
-     if(name ==="salary"){
-    let basic = 0.6 * value;
-    let hra = basic * 0.4;
-    let travelAllowance = 1000;
-    let medicalAllowance = 1250;
-    let basketOfBenifits = 1000;
-    let performanceBonus = 1000;
-    let otherAllowances = 1000;
-    let conveyance = 1000;
-    let incomeTax = 1000;
-    let esi = 1000;
-    let epf = 1000;
-    let professionalTax = 1000;
-    let salaryAdvance = 1000;
-    }
     if (earnings) {
       setFormData((prevData) => ({
         ...prevData,
@@ -231,10 +216,25 @@ const Payroll = () => {
         deductions: { ...prevData.deductions, [name]: value },
       }));
     } else {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: value,
-      }));
+      if (name === "salary") {
+        let basic = (0.6 * (Number(value) || 0)).toFixed(2);
+        let hra = (basic * 0.4).toFixed(2);
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+          earnings: {
+            ...prevData.earnings,
+            basic,
+            hra,
+          },
+        }));
+      } else {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+        }));
+      }
+
       setErrors((prev) => ({
         ...prev,
         [name]: "",
@@ -388,7 +388,8 @@ const Payroll = () => {
     e.preventDefault();
     const isValidate = validateForm("addEmployee");
     try {
-      const sanitizeNumber = (val) => (val === "" || val == null ? 0 : Number(val));
+      const sanitizeNumber = (val) =>
+        val === "" || val == null ? 0 : Number(val);
       if (isValidate) {
         const dataToSend = {
           ...formData,
@@ -715,7 +716,7 @@ const Payroll = () => {
                   }}
                   className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
                 >
-                  + Add Employee 
+                  + Add Employee
                 </button>
               </div>
             </div>
@@ -1104,7 +1105,6 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-              
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -1131,7 +1131,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-                   <div className="w-1/2">
+                <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="total_allocated_leaves"
@@ -1160,7 +1160,6 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-             
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -1187,7 +1186,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-                 <div className="w-1/2">
+                <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="emergency_contact_number"
@@ -1251,8 +1250,7 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-               
-                  <div className="w-1/2">
+                <div className="w-1/2">
                   <label
                     className="block  text-sm font-medium text-gray-900"
                     htmlFor="salary"
@@ -1321,7 +1319,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="hra"
                     >
-                       Fixed House Rent Allowance
+                      Fixed House Rent Allowance
                     </label>
                     <Input
                       type="number"
@@ -1350,7 +1348,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="travel_allowance"
                     >
-                     Fixed Travel Allowance
+                      Fixed Travel Allowance
                     </label>
                     <Input
                       type="number"
@@ -1379,7 +1377,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="medical_allowance"
                     >
-                     Fixed Medical Allowance
+                      Fixed Medical Allowance
                     </label>
                     <Input
                       type="number"
@@ -1410,7 +1408,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="basket_of_benifits"
                     >
-                     Fixed Basket of Benifits
+                      Fixed Basket of Benifits
                     </label>
                     <Input
                       type="number"
@@ -1439,7 +1437,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="performance_bonus"
                     >
-                     Fixed Performance Bonus
+                      Fixed Performance Bonus
                     </label>
                     <Input
                       type="number"
@@ -1470,7 +1468,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="other_allowances"
                     >
-                     Fixed Other Allowance
+                      Fixed Other Allowance
                     </label>
                     <Input
                       type="number"
@@ -1499,7 +1497,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="conveyance"
                     >
-                     Fixed Conveyance
+                      Fixed Conveyance
                     </label>
                     <Input
                       type="number"
@@ -1537,7 +1535,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="income_tax"
                     >
-                    Fixed Income Tax
+                      Fixed Income Tax
                     </label>
                     <Input
                       type="number"
@@ -1566,7 +1564,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="esi"
                     >
-                     Fixed Employees' State Insurance
+                      Fixed Employees' State Insurance
                     </label>
                     <Input
                       type="number"
@@ -1595,7 +1593,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="epf"
                     >
-                     Fixed Employees' Provident Fund
+                      Fixed Employees' Provident Fund
                     </label>
                     <Input
                       type="number"
@@ -1622,7 +1620,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="professional_tax"
                     >
-                     Fixed Professional Tax
+                      Fixed Professional Tax
                     </label>
                     <Input
                       type="number"
@@ -2049,7 +2047,6 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-          
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -2077,7 +2074,7 @@ const Payroll = () => {
                     </p>
                   )}
                 </div>
-                     <div className="w-1/2">
+                <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="update_total_allocated_leaves"
@@ -2105,7 +2102,6 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-           
                 <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
@@ -2208,8 +2204,7 @@ const Payroll = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-between space-x-4">
-                
-                      <div className="w-1/2">
+                <div className="w-1/2">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900"
                     htmlFor="update_salary"
@@ -2252,7 +2247,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basic"
                     >
-                     Fixed Basic Salary
+                      Fixed Basic Salary
                     </label>
                     <Input
                       type="number"
@@ -2284,7 +2279,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_hra"
                     >
-                     Fixed House Rent Allowance
+                      Fixed House Rent Allowance
                     </label>
                     <Input
                       type="number"
@@ -2318,7 +2313,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_travel_allowance"
                     >
-                     Fixed Travel Allowance
+                      Fixed Travel Allowance
                     </label>
                     <Input
                       type="number"
@@ -2352,7 +2347,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_medical_allowance"
                     >
-                     Fixed Medical Allowance
+                      Fixed Medical Allowance
                     </label>
                     <Input
                       type="number"
@@ -2388,7 +2383,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_basket_of_benifits"
                     >
-                     Fixed Basket of Benifits
+                      Fixed Basket of Benifits
                     </label>
                     <Input
                       type="number"
@@ -2422,7 +2417,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_performance_bonus"
                     >
-                     Fixed Performance Bonus
+                      Fixed Performance Bonus
                     </label>
                     <Input
                       type="number"
@@ -2458,7 +2453,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_other_allowances"
                     >
-                     Fixed Other Allowance
+                      Fixed Other Allowance
                     </label>
                     <Input
                       type="number"
@@ -2492,7 +2487,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_conveyance"
                     >
-                     Fixed Conveyance
+                      Fixed Conveyance
                     </label>
                     <Input
                       type="number"
@@ -2537,7 +2532,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_income_tax"
                     >
-                     Fixed Income Tax
+                      Fixed Income Tax
                     </label>
                     <Input
                       type="number"
@@ -2571,7 +2566,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_esi"
                     >
-                     Fixed Employees' State Insurance
+                      Fixed Employees' State Insurance
                     </label>
                     <Input
                       type="number"
@@ -2605,7 +2600,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_epf"
                     >
-                     Fixed Employees' Provident Fund
+                      Fixed Employees' Provident Fund
                     </label>
                     <Input
                       type="number"
@@ -2637,7 +2632,7 @@ const Payroll = () => {
                       className="block mb-2 text-sm font-medium text-gray-900"
                       htmlFor="update_professional_tax"
                     >
-                     Fixed Professional Tax
+                      Fixed Professional Tax
                     </label>
                     <Input
                       type="number"
