@@ -615,14 +615,14 @@ const Payroll = () => {
     if (earnings) {
       setUpdateFormData((prevData) => ({
         ...prevData,
-        [name]: value,
+       
         earnings: { ...prevData.earnings, [name]: value },
         deductions: { ...prevData.deductions },
       }));
     } else if (deductions) {
       setUpdateFormData((prevData) => ({
         ...prevData,
-        [name]: value,
+      
         earnings: { ...prevData.earnings },
         deductions: { ...prevData.deductions, [name]: value },
       }));
@@ -630,7 +630,7 @@ const Payroll = () => {
       setUpdateFormData((prevData) => ({
         ...prevData,
         earnings: { ...prevData.earnings },
-        deductions: { ...prevData.deductions, [name]: value },
+        deductions: { ...prevData.deductions},
         [name]: value,
       }));
       setErrors((prevData) => ({
