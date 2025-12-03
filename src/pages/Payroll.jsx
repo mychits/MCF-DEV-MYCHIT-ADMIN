@@ -192,8 +192,8 @@ const Payroll = () => {
     setSelectedManagerTitle(title);
     setFormData((prev) => ({
       ...prev,
-      deductions:{...prev.deductions},
-      earnings:{...prev.earnings},
+      deductions: { ...prev.deductions },
+      earnings: { ...prev.earnings },
       managerId,
       managerTitle: title,
     }));
@@ -205,7 +205,6 @@ const Payroll = () => {
   };
 
   const handleChange = (name, value, earnings = false, deductions = false) => {
- 
     // const basic = 1000;
     // const hra = 1000;
     // const travelAllowance = 1000;
@@ -246,6 +245,7 @@ const Payroll = () => {
     // } else {
     //   setFormData((prevData) => ({ ...prevData, [name]: value }));
     // }
+   
     if (earnings) {
       setFormData((prevData) => ({
         ...prevData,
@@ -261,11 +261,17 @@ const Payroll = () => {
         deductions: { ...prevData.deductions, [name]: value },
       }));
     } else {
-      setFormData((prevData) => ({ ...prevData, [name]: value }));
+      setFormData((prevData) => ({
+        ...prevData,
+        earnings: { ...prevData.earnings },
+        deductions: { ...prevData.deductions },
+        [name]: value,
+      }));
       setErrors((prevData) => ({
         ...prevData,
         [name]: "",
       }));
+      
     }
   };
 
@@ -376,7 +382,7 @@ const Payroll = () => {
       );
       return;
     }
-    setFormState((prevState)=>({
+    setFormState((prevState) => ({
       ...prevState,
       emergency_contact_number: [...phones, ""],
     }));
@@ -418,6 +424,8 @@ const Payroll = () => {
       if (isValidate) {
         const dataToSend = {
           ...formData,
+          earnings:{...formData.earnings},
+          deductions:{...formData.deductions},
           designation_id: selectedManagerId,
           reporting_manager_id: selectedReportingManagerId,
         };
@@ -647,7 +655,12 @@ const Payroll = () => {
         deductions: { ...prevData.deductions, [name]: value },
       }));
     } else {
-      setUpdateFormData((prevData) => ({ ...prevData, earnings: { ...prevData.earnings },deductions: { ...prevData.deductions, [name]: value }, [name]: value }));
+      setUpdateFormData((prevData) => ({
+        ...prevData,
+        earnings: { ...prevData.earnings },
+        deductions: { ...prevData.deductions, [name]: value },
+        [name]: value,
+      }));
       setErrors((prevData) => ({
         ...prevData,
         [name]: "",
@@ -1398,7 +1411,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.earnings?.travel_allowance || 0)}
+                      {numberToIndianWords(
+                        formData.earnings?.travel_allowance || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -1425,7 +1440,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.earnings?.medical_allowance || 0)}
+                      {numberToIndianWords(
+                        formData.earnings?.medical_allowance || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1454,7 +1471,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.earnings?.basket_of_benifits || 0)}
+                      {numberToIndianWords(
+                        formData.earnings?.basket_of_benifits || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -1481,7 +1500,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.earnings?.performance_bonus || 0)}
+                      {numberToIndianWords(
+                        formData.earnings?.performance_bonus || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1510,7 +1531,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.earnings?.other_allowances || 0)}
+                      {numberToIndianWords(
+                        formData.earnings?.other_allowances || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -1575,7 +1598,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.deductions?.income_tax || 0)}
+                      {numberToIndianWords(
+                        formData.deductions?.income_tax || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -1658,7 +1683,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(formData.deductions?.professional_tax || 0)}
+                      {numberToIndianWords(
+                        formData.deductions?.professional_tax || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -2085,8 +2112,8 @@ const Payroll = () => {
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
                   <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.salary || 0)}
-                    </span>
+                    {numberToIndianWords(updateFormData.salary || 0)}
+                  </span>
                   {errors.salary && (
                     <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
                   )}
@@ -2111,7 +2138,7 @@ const Payroll = () => {
                     required
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
-                  
+
                   {errors.alternate_number && (
                     <p className="mt-2 text-sm text-red-600">
                       {errors.alternate_number}
@@ -2354,7 +2381,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.travel_allowance || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.travel_allowance || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -2386,7 +2415,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.medical_allowance || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.medical_allowance || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -2420,7 +2451,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.basket_of_benifits || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.basket_of_benifits || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -2452,7 +2485,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.performance_bonus || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.performance_bonus || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -2486,7 +2521,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.other_allowances || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.other_allowances || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -2518,7 +2555,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.earnings?.conveyance || 0)}
+                      {numberToIndianWords(
+                        updateFormData.earnings?.conveyance || 0
+                      )}
                     </span>
                   </div>
                 </div>
@@ -2561,7 +2600,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.deductions?.income_tax || 0)}
+                      {numberToIndianWords(
+                        updateFormData.deductions?.income_tax || 0
+                      )}
                     </span>
                   </div>
                   <div className="w-1/2">
@@ -2659,7 +2700,9 @@ const Payroll = () => {
                       className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                     />
                     <span className="ml-2 font-medium font-mono text-blue-600">
-                      {numberToIndianWords(updateFormData.deductions?.professional_tax || 0)}
+                      {numberToIndianWords(
+                        updateFormData.deductions?.professional_tax || 0
+                      )}
                     </span>
                   </div>
                 </div>
