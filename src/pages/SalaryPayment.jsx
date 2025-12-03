@@ -1361,7 +1361,7 @@ const SalaryPayment = () => {
                           </label>
                           <input
                             type="number"
-                            onW
+                            onWheel={(e) => e.target.blur()}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={
                               (formData?.total_salary_payable || 0).toFixed(
@@ -1387,6 +1387,7 @@ const SalaryPayment = () => {
                           </label>
                           <input
                             type="number"
+                            onWheel={(e) => e.target.blur()}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={formData.paid_amount.toFixed(2) || 0}
                             onChange={(e) =>
@@ -1705,7 +1706,7 @@ const SalaryPayment = () => {
                 </Form.Item>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                 <Form.Item
                   name="payment_method"
                   label="Payment Mode"
