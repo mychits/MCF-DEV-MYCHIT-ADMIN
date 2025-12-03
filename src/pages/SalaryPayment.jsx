@@ -395,17 +395,33 @@ const SalaryPayment = () => {
     try {
       setEmployeeDetailsLoading(true);
       const responseData = await API.get(`/employee/${formData.employee_id}`);
-      const filteredEmployeeDetails = responseData?.data?.data;
-      const { deductions = deductionsObject, earnings = earningsObject } =
-        filteredEmployeeDetails;
-      setEmployeeDetails(filteredEmployeeDetails);
-      setFormData((prev) => ({ ...prev, deductions, earnings }));
+      const emp = responseData?.data?.data;
+
+      const updatedEarnings = {
+        ...earningsObject,
+        ...emp?.earnings,
+        salary: emp?.salary || 0,
+      };
+
+      const updatedDeductions = {
+        ...deductionsObject,
+        ...emp?.deductions,
+      };
+
+      setEmployeeDetails(emp);
+
+      setFormData((prev) => ({
+        ...prev,
+        earnings: updatedEarnings,
+        deductions: updatedDeductions,
+      }));
     } catch (error) {
       setEmployeeDetails({});
     } finally {
       setEmployeeDetailsLoading(false);
     }
   }
+
 
   useEffect(() => {
     if (formData.employee_id) {
@@ -834,6 +850,20 @@ const SalaryPayment = () => {
                       Earnings
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                      <div className="form-group">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Fixed Salary
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                          value={formData?.earnings?.salary || 0}
+                          disabled
+                        />
+                      </div>
+
+
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Basic Salary <span className="text-red-600">*</span>
