@@ -668,7 +668,7 @@ const SalaryPayment = () => {
           closable={true}
           footer={
             <div className="flex justify-end gap-2">
-              <Button onClick={() => setIsOpenAddModal(false)}>Cancel</Button>
+              <Button onClick={() => setIsOpenAddModal(false)} className="bg-red-600 hover:bg-red-700 text-white">Cancel</Button>
               {calculatedSalary && (
                 <Button type="primary" onClick={handleAddSalary}>
                   Save Salary
