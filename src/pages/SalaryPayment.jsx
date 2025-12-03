@@ -21,7 +21,7 @@ import { IoMdMore } from "react-icons/io";
 import { Link, useNavigate} from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
-
+import {numberToIndianWords} from "../helpers/numberToIndianWords";
 import moment from "moment";
 
 const SalaryPayment = () => {
@@ -827,6 +827,7 @@ const SalaryPayment = () => {
                           id="basic"
                           value={formData?.earnings?.basic}
                         />
+                        <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.basic)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -843,6 +844,7 @@ const SalaryPayment = () => {
                           id="hra"
                           value={formData?.earnings?.hra}
                         />
+                         <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.hra)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -859,6 +861,7 @@ const SalaryPayment = () => {
                           id="travel_allowance"
                           value={formData?.earnings?.travel_allowance}
                         />
+                         <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.travel_allowance)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -875,6 +878,7 @@ const SalaryPayment = () => {
                           id="medical_allowance"
                           value={formData?.earnings?.medical_allowance}
                         />
+                         <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.medical_allowance)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -891,6 +895,7 @@ const SalaryPayment = () => {
                           id="basket_of_benifits"
                           value={formData?.earnings?.basket_of_benifits}
                         />
+                        <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.basket_of_benifits)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -907,6 +912,7 @@ const SalaryPayment = () => {
                           id="performance_bonus"
                           value={formData?.earnings?.performance_bonus}
                         />
+                         <span className="ml-2 font-medium font-mono text-blue-600">{numberToIndianWords(formData?.earnings?.performance_bonus)}</span>
                       </div>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
