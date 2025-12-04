@@ -179,6 +179,35 @@ const SalaryPayment = () => {
     }
   }
 
+  const fetchEmployeeTarget = async (employeeId, start_date, end_date) => {
+    try {
+      const response = await API.get(
+        `/target/employees/${employeeId}`,
+        { params: { start_date, end_date } }
+      );
+      return response.data?.total_target || 0;
+    } catch (err) {
+      console.error("Failed to fetch target:", err);
+      return 0;
+    }
+  };
+
+ 
+  const fetchEmployeeIncentive = async (employeeId, start_date, end_date) => {
+    try {
+      const response = await API.get(
+        `/enroll/employee/${employeeId}/incentive`,
+        { params: { start_date, end_date } }
+      );
+
+      return response.data?.incentiveSummary?.total_incentive_value || 0;
+    } catch (err) {
+      console.error("Failed to fetch incentive:", err);
+      return 0;
+    }
+  };
+
+
   // Helper: Get valid months for a given year, based on joining date and today
   const getValidMonths = (joiningDateStr, selectedYear) => {
     if (!joiningDateStr || !selectedYear) {
@@ -430,6 +459,51 @@ const SalaryPayment = () => {
     }
   }
 
+  useEffect(() => {
+    if (formData.employee_id && formData.month && formData.year) {
+      loadTargetAndIncentive();
+    }
+  }, [formData.employee_id, formData.month, formData.year]);
+
+  const loadTargetAndIncentive = async () => {
+    try {
+      const monthIndex = moment().month(formData.month).month();
+      const year = formData.year;
+
+      const start_date = moment()
+        .year(year)
+        .month(monthIndex)
+        .startOf("month")
+        .format("YYYY-MM-DD");
+
+      const end_date = moment()
+        .year(year)
+        .month(monthIndex)
+        .endOf("month")
+        .format("YYYY-MM-DD");
+
+      const targetValue = await fetchEmployeeTarget(
+        formData.employee_id,
+        start_date,
+        end_date
+      );
+
+      const incentiveValue = await fetchEmployeeIncentive(
+        formData.employee_id,
+        start_date,
+        end_date
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        target: targetValue,
+        incentive: incentiveValue,
+      }));
+    } catch (err) {
+      console.error("Failed to auto-load target & incentive", err);
+    }
+  };
+
 
   useEffect(() => {
     if (formData.employee_id) {
@@ -508,6 +582,7 @@ const SalaryPayment = () => {
     setFormData((prev) => ({ ...prev, additional_deductions: updatedDeductions }));
   };
 
+
   // async function handleCalculateSalary() {
   //   try {
   //     setCalculateLoading(true);
@@ -541,43 +616,69 @@ const SalaryPayment = () => {
   //   }
   // }
 
-  async function handleCalculateSalary() {
+  const handleCalculateSalary = async () => {
     try {
-      setCalculateLoading(true);
+      if (!formData.employee_id || !formData.month || !formData.year) {
+        return message.warning("Select employee, month, and year first");
+      }
 
-      const response = await API.get("/salary-payment/calculate", {
-        params: {
-          employee_id: formData.employee_id,
-          month: formData.month,
-          year: formData.year,
-          earnings: formData.earnings,
-          deductions: formData.deductions,
-        },
+      setLoading(true);
+
+      // Convert month name -> month index
+      const monthIndex = moment().month(formData.month).month();
+      const year = formData.year;
+
+      // Generate date range for selected month
+      const start_date = moment().year(year).month(monthIndex).startOf("month").format("YYYY-MM-DD");
+      const end_date = moment().year(year).month(monthIndex).endOf("month").format("YYYY-MM-DD");
+
+      // ---------------- CALCULATE SALARY CALL ----------------
+      const response = await api.post("/salary/calculate", {
+        employee_id: formData.employee_id,
+        month: formData.month,
+        year: formData.year,
       });
 
-      setCalculatedSalary(response.data.data);
-      setShowAdditionalPayments(true);
+      const salaryCalculated = response.data.data;
+      setCalculatedSalary(salaryCalculated);
+
+      // ---------------- FETCH TARGET ----------------
+      const targetValue = await fetchEmployeeTarget(
+        formData.employee_id,
+        start_date,
+        end_date
+      );
+
+      // ---------------- FETCH INCENTIVE ----------------
+      const incentiveValue = await fetchEmployeeIncentive(
+        formData.employee_id,
+        start_date,
+        end_date
+      );
+
+      // ---------------- UPDATE FORM STATE ----------------
       setFormData((prev) => ({
         ...prev,
-        total_salary_payable: response.data.data.calculated_salary,
+        total_salary_payable: salaryCalculated.calculated_salary,
+        target: targetValue,
+        incentive: incentiveValue,
+        paid_days: salaryCalculated.paid_days,
+        lop_days: salaryCalculated.lop_days,
       }));
-      message.success("Salary calculated successfully");
-    } catch (error) {
-      const status = error?.response?.status;
-      const errorMsg = error?.response?.data?.message;
-      const existingData = error?.response?.data?.existing_salary;
 
-      if (status === 406 && errorMsg?.includes("already generated")) {
-        setExistingSalaryRecord(existingData);
-        setAlreadyPaidModalOpen(true);
-      } else {
-        console.error("Error calculating salary:", error);
-        message.error(errorMsg || "Failed to calculate salary");
-      }
+      // SHOW additional deductions section AFTER calculate
+      setShowAdditionalPayments(true);
+
+      message.success("Salary calculated!");
+
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to calculate salary");
     } finally {
-      setCalculateLoading(false);
+      setLoading(false);
     }
-  }
+  };
+
 
   async function handleAddSalary() {
     try {
@@ -619,7 +720,7 @@ const SalaryPayment = () => {
         salary_year: formData.year,
         earnings: formData.earnings,
         deductions: formData.deductions,
-         additional_deductions: formData.additional_deductions,
+        additional_deductions: formData.additional_deductions,
         additional_payments: formData.additional_payments,
         paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
         lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
@@ -881,6 +982,38 @@ const SalaryPayment = () => {
                       </div>
                     </div>
                   </div>
+
+
+     
+                  <div className="mt-6 border p-4 rounded bg-gray-50">
+                    <h3 className="font-semibold text-lg mb-3">Monthly Target & Incentive</h3>
+
+                    <div className="flex gap-6">
+
+                      <div className="flex flex-col">
+                        <label className="font-medium">Total Target</label>
+                        <input
+                          type="number"
+                          value={formData.target || 0}
+                          readOnly
+                          className="border px-3 py-1 rounded w-48 bg-white"
+                        />
+                      </div>
+
+                      <div className="flex flex-col">
+                        <label className="font-medium">Incentive Earned</label>
+                        <input
+                          type="number"
+                          value={formData.incentive || 0}
+                          readOnly
+                          className="border px-3 py-1 rounded w-48 bg-white"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+
 
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold text-green-800 mb-4">
@@ -1420,7 +1553,7 @@ const SalaryPayment = () => {
                   )}
 
                   {/* Additional Deductions */}
-                  { showAdditionalPayments && (
+                  {showAdditionalPayments && (
                     <div className="bg-orange-50 p-4 rounded-lg">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold text-orange-800">
