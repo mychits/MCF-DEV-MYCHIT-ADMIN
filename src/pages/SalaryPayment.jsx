@@ -281,6 +281,7 @@ const SalaryPayment = () => {
           earnings: salaryData.earnings,
           deductions: salaryData.deductions,
           additional_payments: salaryData.additional_payments || [],
+          additional_deductions: salaryData.additional_deductions || [],
           total_salary_payable: salaryData.total_salary_payable || 0,
           paid_amount: salaryData.paid_amount || 0,
           payment_method: salaryData.payment_method || "Cash",
@@ -535,6 +536,24 @@ const SalaryPayment = () => {
       deductions: { ...prev.deductions },
     }));
   };
+
+
+  const updateTotalEarnings = useMemo(() => {
+    const earnings = updateFormData?.earnings || {};
+    return Object.values(earnings).reduce((sum, v) => sum + Number(v || 0), 0);
+  }, [updateFormData]);
+
+  const updateTotalDeductions = useMemo(() => {
+    const deductions = updateFormData?.deductions || {};
+    const additional = updateFormData?.additional_deductions || [];
+
+    const base = Object.values(deductions).reduce((sum, v) => sum + Number(v || 0), 0);
+    const extra = additional.reduce((sum, d) => sum + Number(d.value || 0), 0);
+
+    return base + extra;
+  }, [updateFormData]);
+
+
 
   const handleAdditionalPaymentChange = (index, field, value) => {
     const updatedPayments = [...formData.additional_payments];
@@ -1691,7 +1710,7 @@ const SalaryPayment = () => {
                               <Input
                                 type="number"
                                 placeholder="Enter amount"
-                                value={deduction.value}
+                                value={deduction.value.toFixed(2)}
                                 onChange={(e) =>
                                   handleAdditionalDeductionChange(index, "value", e.target.value)
                                 }
@@ -1925,6 +1944,7 @@ const SalaryPayment = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item name={["earnings", "basic"]} label="Basic Salary">
+
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item name={["earnings", "hra"]} label="HRA">
@@ -1964,6 +1984,17 @@ const SalaryPayment = () => {
                   <Input type="number" />
                 </Form.Item>
               </div>
+              <div className="form-group mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Earnings
+                </label>
+                <Input
+                  value={updateTotalEarnings.toFixed(2)}
+                  disabled
+                  className="bg-gray-100"
+                />
+              </div>
+
             </div>
 
             <div className="bg-red-50 p-4 rounded-lg mb-4">
@@ -1990,6 +2021,17 @@ const SalaryPayment = () => {
                   <Input type="number" />
                 </Form.Item>
               </div>
+              <div className="form-group mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Deductions
+                </label>
+                <Input
+                  value={updateTotalDeductions.toFixed(2)}
+                  disabled
+                  className="bg-gray-100"
+                />
+              </div>
+
             </div>
 
             <div className="bg-purple-50 p-4 rounded-lg mb-4">
@@ -2052,31 +2094,71 @@ const SalaryPayment = () => {
                 )}
               </Form.List>
             </div>
-            {/* Additional Deductions */}
-            {existingSalaryRecord?.additional_deductions?.length > 0 && (
-              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+            <div className="bg-orange-50 p-4 rounded-lg mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-orange-800">
                   Additional Deductions
-                </h4>
-                <ul className="space-y-2 text-gray-700">
-                  {existingSalaryRecord.additional_deductions.map((ded, i) => (
-                    <li
-                      key={i}
-                      className="flex justify-between border-b border-gray-100 pb-1"
-                    >
-                      <span>{ded.name || "Deduction"}</span>
-                      <span className="font-medium text-red-600">
-                        ₹
-                        {Number(ded.value).toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+                </h3>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    const currentDeductions =
+                      updateForm.getFieldValue("additional_deductions") || [];
+                    updateForm.setFieldsValue({
+                      additional_deductions: [
+                        ...currentDeductions,
+                        { name: "", value: 0 },
+                      ],
+                    });
+                  }}
+                >
+                  Add Deduction
+                </Button>
+              </div>
+              <Form.List name="additional_deductions">
+                {(fields, { remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <div
+                        key={key}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                      >
+                        <Form.Item
+                          {...restField}
+                          name={[name, "name"]}
+                          label="Deduction Name"
+                        >
+                          <Input placeholder="Enter deduction name" />
+                        </Form.Item>
+                        <div className="flex items-end gap-2">
+                          <div className="flex-grow">
+                            <Form.Item
+                              {...restField}
+                              name={[name, "value"]}
+                              label="Amount"
+                            >
+                              <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                min={0}
+                              />
+                            </Form.Item>
+                          </div>
+                          <Button
+                            type="primary"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => remove(name)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </Form.List>
+            </div>
             <div className="bg-blue-50 p-4 rounded-lg mb-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-4">
                 Payment Details
