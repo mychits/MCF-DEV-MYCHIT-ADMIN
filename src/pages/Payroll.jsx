@@ -215,20 +215,22 @@ const Payroll = () => {
         ...prevData,
         deductions: { ...prevData.deductions, [name]: value },
       }));
-    } else {
+    } 
+    else {
       if (name === "salary") {
-        let basic = (0.6 * (Number(value) || 0)).toFixed(2);
-        let hra = (basic * 0.4).toFixed(2);
+        // let basic = (0.6 * (Number(value) || 0)).toFixed(2);
+        // let hra = (basic * 0.4).toFixed(2);
         setFormData((prevData) => ({
           ...prevData,
           [name]: value,
-          earnings: {
-            ...prevData.earnings,
-            basic,
-            hra,
-          },
+          // earnings: {
+          //   ...prevData.earnings,
+          //   basic,
+          //   hra,
+          // },
         }));
-      } else {
+      } 
+      else {
         setFormData((prevData) => ({
           ...prevData,
           [name]: value,
