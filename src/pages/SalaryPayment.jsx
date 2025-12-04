@@ -13,7 +13,7 @@ import {
 import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
 import DataTable from "../components/layouts/Datatable";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
 import { Select as AntSelect, Segmented, Button as AntButton } from "antd";
@@ -192,7 +192,7 @@ const SalaryPayment = () => {
     }
   };
 
- 
+
   const fetchEmployeeIncentive = async (employeeId, start_date, end_date) => {
     try {
       const response = await API.get(
@@ -520,34 +520,6 @@ const SalaryPayment = () => {
     }
   };
 
-  const handleMonthChange = async (value) => {
-  setFormData((prev) => ({
-    ...prev,
-    month: value,
-  }));
-
-  // Only check if employee is selected
-  if (!formData.employee_id) return;
-
-  try {
-    const res = await API.get("/salary-payment/check-paid", {
-      params: {
-        employee_id: formData.employee_id,
-        month: value,
-        year: formData.year,
-      },
-    });
-
-    if (res.data?.alreadyPaid) {
-      setAlreadyPaidModal(true);   // <-- SHOWS THE MODAL
-      return;
-    }
-  } catch (err) {
-    console.error("Error checking if salary is paid:", err);
-  }
-};
-
-
   const handleDeductionsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -611,73 +583,80 @@ const SalaryPayment = () => {
   };
 
 
-async function handleCalculateSalary() {
-  try {
-    setCalculateLoading(true);
+  async function handleCalculateSalary() {
+    try {
+      setCalculateLoading(true);
 
-    const response = await API.get("/salary-payment/calculate", {
-      params: {
-        employee_id: formData.employee_id,
-        month: formData.month,
-        year: formData.year,
-        earnings: formData.earnings,
-        deductions: formData.deductions,
-      },
-    });
+      const response = await API.get("/salary-payment/calculate", {
+        params: {
+          employee_id: formData.employee_id,
+          month: formData.month,
+          year: formData.year,
+          earnings: formData.earnings,
+          deductions: formData.deductions,
+        },
+      });
 
-    const calculated = response.data.data;
-    setCalculatedSalary(calculated);
+      const calculated = response.data.data;
+      setCalculatedSalary(calculated);
 
-    // -------------------------------
-    // ⭐ INCENTIVE VS FIXED SALARY LOGIC (ONLY WHEN TARGET > 0)
-    // -------------------------------
-    let autoAdditionalPayments = [];
-    let autoAdditionalDeductions = [];
-
-    const target = Number(formData?.target || 0);
-
-    if (target > 0) {
-      const fixedSalary = Number(formData?.earnings?.salary || 0);
-      const incentive = Number(formData?.incentive || 0);
-      const diff = incentive - fixedSalary;
-
-      if (diff > 0) {
-        autoAdditionalPayments = [{ name: "Others", value: diff }];
-      } else if (diff < 0) {
-        autoAdditionalDeductions = [{ name: "Others", value: Math.abs(diff) }];
+      // -------------------------------
+      // ⭐ INCENTIVE VS FIXED SALARY LOGIC (ONLY WHEN TARGET > 0)
+      // -------------------------------
+      let autoAdditionalPayments = [];
+      let autoAdditionalDeductions = [];
+      const target = Number(formData?.target || 0);
+      if (target > 0) {
+        const fixedSalary = Number(formData?.earnings?.salary || 0);
+        const incentive = Number(formData?.incentive || 0);
+        const diff = incentive - fixedSalary;
+        if (diff > 0) {
+          autoAdditionalPayments = [{ name: "Others", value: diff }];
+        } else if (diff < 0) {
+          autoAdditionalDeductions = [{ name: "Others", value: Math.abs(diff) }];
+        }
       }
+
+      const fixedSalary2 = Number(formData?.earnings?.salary || 0);
+      const calcSalary2 = Number(calculated.calculated_salary || 0);
+      const rawDefaultDifference = fixedSalary2 - calcSalary2;
+      autoAdditionalDeductions.push({
+        name: "Absence Adjustment",
+        value: rawDefaultDifference,
+      });
+
+      // -------------------------------
+      // ⭐ UPDATE FORM WITH AUTO VALUES
+      // -------------------------------
+      setFormData((prev) => ({
+        ...prev,
+        total_salary_payable: calculated.calculated_salary,
+        additional_payments: autoAdditionalPayments,
+        additional_deductions: autoAdditionalDeductions,
+      }));
+      setShowAdditionalPayments(true);
+      message.success("Salary calculated successfully");
+    } catch (error) {
+      console.error("Error calculating salary:", error);
+
+      // 🔍 Check if it's the "already paid" case (406 with existing_salary)
+      if (
+        error.response?.status === 406 &&
+        error.response?.data?.existing_salary
+      ) {
+        setExistingSalaryRecord(error.response.data.existing_salary);
+        setAlreadyPaidModalOpen(true);
+        setCalculatedSalary(null);
+        setShowAdditionalPayments(false);
+        return;
+      }
+
+      // ❌ Generic error fallback
+      message.error(error.response?.data?.message || "Failed to calculate salary");
+    } finally {
+      setCalculateLoading(false);
     }
-
-       const fixedSalary2 = Number(formData?.earnings?.salary || 0);
-    const calcSalary2 = Number(calculated.calculated_salary || 0);
-
-    const rawDefaultDifference = fixedSalary2 - calcSalary2;
-
-    autoAdditionalDeductions.push({
-      name: "Absenteeism Deduction",
-      value: rawDefaultDifference, // could be positive or negative
-    });
-
-    // -------------------------------
-    // ⭐ UPDATE FORM WITH AUTO VALUES
-    // -------------------------------
-    setFormData((prev) => ({
-      ...prev,
-      total_salary_payable: calculated.calculated_salary,
-      additional_payments: autoAdditionalPayments,
-      additional_deductions: autoAdditionalDeductions,
-    }));
-
-    setShowAdditionalPayments(true);
-
-    message.success("Salary calculated successfully");
-  } catch (error) {
-    console.error("Error calculating salary:", error);
-    message.error("Failed to calculate salary");
-  } finally {
-    setCalculateLoading(false);
   }
-}
 
 
   // const handleCalculateSalary = async () => {
@@ -856,6 +835,31 @@ async function handleCalculateSalary() {
   useEffect(() => {
     getAllSalary();
   }, []);
+
+  // Helper: Sum all earnings except 'salary'
+  const totalEarningsExcludingSalary = useMemo(() => {
+    const earnings = formData.earnings || {};
+    return Object.keys(earnings)
+      .filter(key => key !== 'salary')
+      .reduce((sum, key) => sum + (Number(earnings[key]) || 0), 0);
+  }, [formData.earnings]);
+
+  const totalDeductions = useMemo(() => {
+    const baseDeductions = formData.deductions || {};
+    const additionalDeductions = formData.additional_deductions || [];
+
+    const baseTotal = Object.values(baseDeductions).reduce(
+      (sum, val) => sum + (Number(val) || 0),
+      0
+    );
+
+    const additionalTotal = additionalDeductions.reduce(
+      (sum, item) => sum + (Number(item?.value) || 0),
+      0
+    );
+
+    return baseTotal + additionalTotal;
+  }, [formData.deductions, formData.additional_deductions]);
 
   return (
     <div>
@@ -1050,7 +1054,7 @@ async function handleCalculateSalary() {
                   </div>
 
 
-     
+
                   <div className="mt-6 border p-4 rounded bg-gray-50">
                     <h3 className="font-semibold text-lg mb-3">Monthly Target & Incentive</h3>
 
@@ -1270,6 +1274,20 @@ async function handleCalculateSalary() {
                           )}
                         </span>
                       </div>
+                      <div className="form-group mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Total Earnings
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                          value={totalEarningsExcludingSalary.toFixed(2)}
+                          disabled
+                        />
+                        <span className="ml-2 font-medium font-mono text-blue-600">
+                          {numberToIndianWords(totalEarningsExcludingSalary)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -1372,6 +1390,20 @@ async function handleCalculateSalary() {
                           {numberToIndianWords(
                             formData?.deductions?.professional_tax || 0
                           )}
+                        </span>
+                      </div>
+                      <div className="form-group mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Total Deductions
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                          value={totalDeductions.toFixed(2)}
+                          disabled
+                        />
+                        <span className="ml-2 font-medium font-mono text-blue-600">
+                          {numberToIndianWords(totalDeductions)}
                         </span>
                       </div>
                     </div>
