@@ -1585,13 +1585,13 @@ const TargetCommission = () => {
                     <FileTextOutlined className="text-blue-600 group-hover:scale-110 transition-transform text-lg" />
                     <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive Report</span>
                   </Link>
-                  <Link
+                  {/* <Link
                     to="/target-commission-incentive"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
                     <MdPayments className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
                     <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive / Commission Payout</span>
-                  </Link>
+                  </Link> */}
                   <Link
                     to="/payment-menu/payment-in-out-menu/payment-out/salary-payment"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
@@ -1664,13 +1664,34 @@ const TargetCommission = () => {
                               />
                             </div>
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Address</label>
-                            <input
-                              value={selectedEmployeeDetails.address || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Address
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.address || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Joining Date
+                              </label>
+                              <input
+                                value={
+                                  selectedEmployeeDetails?.joining_date
+                                    ? selectedEmployeeDetails.joining_date.split(
+                                        "T"
+                                      )[0]
+                                    : "-"
+                                }
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
                           </div>
                           <hr className="my-6" />
                         </>

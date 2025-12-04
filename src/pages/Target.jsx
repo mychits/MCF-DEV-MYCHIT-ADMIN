@@ -518,16 +518,16 @@ const Target = () => {
                             Incentive Report
                           </Link>
 
-                          <Link
+                          {/* <Link
                             to="/target-commission-incentive"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
                             <MdPayments className="text-blue-500" size={30} />
                             Commission or Incentive Payout
-                          </Link>
+                          </Link> */}
 
                           <Link
-                            to="/target-payout-salary"
+                            to="/payment-menu/payment-in-out-menu/payment-out/salary-payment"
                             className="flex text-base items-center gap-2 border  border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
                           >
                             <FaMoneyBill className="text-blue-500" size={30} />

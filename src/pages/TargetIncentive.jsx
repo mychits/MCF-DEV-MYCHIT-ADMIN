@@ -219,7 +219,7 @@ const TargetIncentive = () => {
           params,
         }
       );
-      const incentiveData = res.data?.grossIncentiveInfo?.map(enrollment => ({
+      const incentiveData = res.data?.grossIncentiveInfo?.map((enrollment) => ({
         user_name: enrollment?.user_id?.full_name || "N/A",
         phone_number: enrollment?.user_id?.phone_number || "N/A",
         group_name: enrollment?.group_id?.group_name || "N/A",
@@ -228,23 +228,24 @@ const TargetIncentive = () => {
         group_ticket: enrollment?.tickets || "N/A",
         enrollment_date: enrollment?.createdAt?.split("T")?.[0],
         total_paid_amount: enrollment?.total_paid_amount || "0",
-        group_monthly_installment: enrollment?.group_id?.monthly_installment || "N/A",
-
-
+        group_monthly_installment:
+          enrollment?.group_id?.monthly_installment || "N/A",
       }));
       setGrossIncentiveData(incentiveData || []);
-      setGrossIncentiveSummary(res.data.grossIncentiveSummary || {
-        total_gross_incentive_value: 0,
-        total_gross_group_value: 0,
-        total_gross_enrollments: 0
-      });
+      setGrossIncentiveSummary(
+        res.data.grossIncentiveSummary || {
+          total_gross_incentive_value: 0,
+          total_gross_group_value: 0,
+          total_gross_enrollments: 0,
+        }
+      );
     } catch (err) {
       console.error("Error fetching gross incentive report:", err);
       setGrossIncentiveData([]);
       setGrossIncentiveSummary({
         total_gross_incentive_value: 0,
         total_gross_group_value: 0,
-        total_gross_enrollments: 0
+        total_gross_enrollments: 0,
       });
     }
   };
@@ -260,18 +261,20 @@ const TargetIncentive = () => {
         params,
       });
       setGrossIncentiveData(res.data.grossIncentiveInfo || []);
-      setGrossIncentiveSummary(res.data.grossIncentiveSummary || {
-        total_gross_incentive_value: 0,
-        total_gross_group_value: 0,
-        total_gross_enrollments: 0
-      });
+      setGrossIncentiveSummary(
+        res.data.grossIncentiveSummary || {
+          total_gross_incentive_value: 0,
+          total_gross_group_value: 0,
+          total_gross_enrollments: 0,
+        }
+      );
     } catch (err) {
       console.error("Error fetching all gross incentive report:", err);
       setGrossIncentiveData([]);
       setGrossIncentiveSummary({
         total_gross_incentive_value: 0,
         total_gross_group_value: 0,
-        total_gross_enrollments: 0
+        total_gross_enrollments: 0,
       });
     }
   };
@@ -293,7 +296,7 @@ const TargetIncentive = () => {
     setGrossIncentiveSummary({
       total_gross_incentive_value: 0,
       total_gross_group_value: 0,
-      total_gross_enrollments: 0
+      total_gross_enrollments: 0,
     });
   };
 
@@ -332,7 +335,6 @@ const TargetIncentive = () => {
 
       const lastDay = new Date(year, month, 0).getDate();
       endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
-
 
       setFromDate(startDate);
       setToDate(endDate);
@@ -418,8 +420,7 @@ const TargetIncentive = () => {
     user_name: item.user_id?.full_name || "N/A",
     phone_number: item.user_id?.phone_number || "N/A",
     group_name: item.group_id?.group_name || "N/A",
-    enrollment_date: item.createdAt?.split("T")?.[0]
-      || "N/A",
+    enrollment_date: item.createdAt?.split("T")?.[0] || "N/A",
   }));
 
   const columns = [
@@ -436,7 +437,6 @@ const TargetIncentive = () => {
     { key: "incentive_released", header: "Incentive Released" },
   ];
 
-
   const grossIncentiveColumns = [
     { key: "user_name", header: "Customer Name" },
     { key: "phone_number", header: "Phone Number" },
@@ -447,7 +447,6 @@ const TargetIncentive = () => {
     { key: "group_monthly_installment", header: "First Installment Amount" },
     { key: "group_incentive", header: "Incentive Percentage" },
     { key: "total_paid_amount", header: "Total Paid" },
-
   ];
 
   const today = new Date();
@@ -465,12 +464,16 @@ const TargetIncentive = () => {
             <h1 className="text-4xl font-bold text-gray-900">
               Incentive Reports
             </h1>
-            <p className="text-gray-600 mt-2">Track and manage employee incentives and commissions</p>
+            <p className="text-gray-600 mt-2">
+              Track and manage employee incentives and commissions
+            </p>
           </div>
 
           {/* Filter Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
-            <h2 className="text-lg font-semibold text-gray-800 mb-6">Report Filters</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-6">
+              Report Filters
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {/* Employee Select */}
               <div className="flex flex-col">
@@ -509,8 +512,12 @@ const TargetIncentive = () => {
                     value={dateSelectionMode}
                     onChange={(e) => setDateSelectionMode(e.target.value)}
                   >
-                    <Radio value="month" className="text-sm">Month</Radio>
-                    <Radio value="date-range" className="text-sm">Range</Radio>
+                    <Radio value="month" className="text-sm">
+                      Month
+                    </Radio>
+                    <Radio value="date-range" className="text-sm">
+                      Range
+                    </Radio>
                   </Radio.Group>
                 </div>
               </div>
@@ -582,29 +589,46 @@ const TargetIncentive = () => {
                     to="/target-menu/target"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
-                    <FiTarget className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Set Target</span>
+                    <FiTarget
+                      className="text-blue-600 group-hover:scale-110 transition-transform"
+                      size={24}
+                    />
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Set Target
+                    </span>
                   </Link>
                   <Link
                     to="/reports/target-commission"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
                     <DollarOutlined className="text-blue-600 group-hover:scale-110 transition-transform text-lg" />
-                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive Report</span>
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Incentive Report
+                    </span>
                   </Link>
-                  <Link
+                  {/* <Link
                     to="/target-commission-incentive"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
-                    <MdPayments className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive / Commission Payout</span>
-                  </Link>
+                    <MdPayments
+                      className="text-blue-600 group-hover:scale-110 transition-transform"
+                      size={24}
+                    />
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Incentive / Commission Payout
+                    </span>
+                  </Link> */}
                   <Link
                     to="/payment-menu/payment-in-out-menu/payment-out/salary-payment"
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
-                    <FaMoneyBill className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Salary Payout</span>
+                    <FaMoneyBill
+                      className="text-blue-600 group-hover:scale-110 transition-transform"
+                      size={24}
+                    />
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Salary Payout
+                    </span>
                   </Link>
                 </div>
               </div>
@@ -615,77 +639,132 @@ const TargetIncentive = () => {
                   (dateSelectionMode === "date-range" && fromDate && toDate)) &&
                 (selectedEmployeeId === "ALL" || selectedEmployeeDetails) && (
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                    {selectedEmployeeId !== "ALL" && selectedEmployeeDetails && (
-                      <>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Employee Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Name</label>
-                            <input
-                              value={selectedEmployeeDetails.name || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
+                    {selectedEmployeeId !== "ALL" &&
+                      selectedEmployeeDetails && (
+                        <>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                            Employee Information
+                          </h3>
+
+                          {/* Row 1 */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Name
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.name || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Email
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.email || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Phone
+                              </label>
+                              <input
+                                value={
+                                  selectedEmployeeDetails?.phone_number || "-"
+                                }
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Email</label>
-                            <input
-                              value={selectedEmployeeDetails.email || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
+
+                          {/* Row 2 */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Adhaar
+                              </label>
+                              <input
+                                value={
+                                  selectedEmployeeDetails?.adhaar_no || "-"
+                                }
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                PAN
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.pan_no || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Pincode
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.pincode || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Phone</label>
-                            <input
-                              value={selectedEmployeeDetails.phone_number || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
+
+                          {/* Row 3 */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Address
+                              </label>
+                              <input
+                                value={selectedEmployeeDetails?.address || "-"}
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 uppercase">
+                                Joining Date
+                              </label>
+                              <input
+                                value={
+                                  selectedEmployeeDetails?.joining_date
+                                    ? selectedEmployeeDetails.joining_date.split(
+                                        "T"
+                                      )[0]
+                                    : "-"
+                                }
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Adhaar</label>
-                            <input
-                              value={selectedEmployeeDetails.adhaar_no || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">PAN</label>
-                            <input
-                              value={selectedEmployeeDetails.pan_no || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Pincode</label>
-                            <input
-                              value={selectedEmployeeDetails.pincode || "-"}
-                              readOnly
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase">Address</label>
-                          <input
-                            value={selectedEmployeeDetails.address || "-"}
-                            readOnly
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 text-gray-900 font-medium mt-1"
-                          />
-                        </div>
-                        <hr className="my-6" />
-                      </>
-                    )}
+
+                          <hr className="my-6" />
+                        </>
+                      )}
                     {/* Summary Section */}
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Commission Summary</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Commission Summary
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
-                        <label className="text-xs font-semibold text-gray-600 uppercase">Net Business</label>
+                        <label className="text-xs font-semibold text-gray-600 uppercase">
+                          Net Business
+                        </label>
                         <input
                           value={commissionTotalDetails?.actual_business || "-"}
                           readOnly
@@ -693,7 +772,9 @@ const TargetIncentive = () => {
                         />
                       </div>
                       <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-                        <label className="text-xs font-semibold text-gray-600 uppercase">Net Incentive (1% each)</label>
+                        <label className="text-xs font-semibold text-gray-600 uppercase">
+                          Net Incentive (1% each)
+                        </label>
                         <input
                           value={commissionTotalDetails?.total_actual || "-"}
                           readOnly
@@ -701,7 +782,9 @@ const TargetIncentive = () => {
                         />
                       </div>
                       <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
-                        <label className="text-xs font-semibold text-gray-600 uppercase">Net Customers</label>
+                        <label className="text-xs font-semibold text-gray-600 uppercase">
+                          Net Customers
+                        </label>
                         <input
                           value={commissionTotalDetails?.total_customers || "-"}
                           readOnly
@@ -727,67 +810,100 @@ const TargetIncentive = () => {
                   {/* Target Details */}
                   {isFiltering &&
                     ((dateSelectionMode === "month" && selectedMonth) ||
-                      (dateSelectionMode === "date-range" && fromDate && toDate)) &&
+                      (dateSelectionMode === "date-range" &&
+                        fromDate &&
+                        toDate)) &&
                     selectedEmployeeId &&
                     selectedEmployeeId !== "ALL" && (
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
                         <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-lg font-semibold text-gray-800">Target Performance</h3>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Target Performance
+                          </h3>
                           {targetData.achieved >= targetData.target && (
                             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 border border-green-300">
-                              <GiPartyPopper size={24} className="text-green-600" />
-                              <span className="text-green-700 font-semibold">Target Achieved! </span>
+                              <GiPartyPopper
+                                size={24}
+                                className="text-green-600"
+                              />
+                              <span className="text-green-700 font-semibold">
+                                Target Achieved!{" "}
+                              </span>
                             </div>
                           )}
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                           <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Target Set</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Target Set
+                            </label>
                             <p className="text-2xl font-bold text-blue-700 mt-2">
                               {`${targetData.target?.toLocaleString("en-IN")}`}
                             </p>
                           </div>
                           <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Achieved</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Achieved
+                            </label>
                             <p className="text-2xl font-bold text-green-700 mt-2">
-                              {`${targetData.achieved?.toLocaleString("en-IN")}`}
+                              {`${targetData.achieved?.toLocaleString(
+                                "en-IN"
+                              )}`}
                             </p>
                           </div>
                           <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Difference</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Difference
+                            </label>
                             <p className="text-2xl font-bold text-amber-700 mt-2">
-                              {`${(targetData?.difference ?? "0").toLocaleString("en-IN")}`}
+                              {`${(
+                                targetData?.difference ?? "0"
+                              ).toLocaleString("en-IN")}`}
                             </p>
                           </div>
                           <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Total Payable</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Total Payable
+                            </label>
                             <p className="text-2xl font-bold text-emerald-700 mt-2">
-                              {`${targetData.incentiveAmount.toLocaleString("en-IN", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}`}
+                              {`${targetData.incentiveAmount.toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}`}
                             </p>
                           </div>
                         </div>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
-                          <p className="text-sm font-semibold text-blue-800 mb-3">Incentive Breakdown</p>
+                          <p className="text-sm font-semibold text-blue-800 mb-3">
+                            Incentive Breakdown
+                          </p>
                           <ul className="space-y-2">
                             <li className="text-sm text-gray-700 flex items-center gap-2">
                               <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                              <span>Up to target (0%): <span className="font-semibold">0.00</span></span>
+                              <span>
+                                Up to target (0%):{" "}
+                                <span className="font-semibold">0.00</span>
+                              </span>
                             </li>
                             {targetData.achieved > targetData.target && (
                               <li className="text-sm text-gray-700 flex items-center gap-2">
                                 <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-                                <span>Beyond target (1%): <span className="font-semibold">
-                                  {(
-                                    (targetData.achieved - targetData.target) *
-                                    0.01
-                                  ).toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span></span>
+                                <span>
+                                  Beyond target (1%):{" "}
+                                  <span className="font-semibold">
+                                    {(
+                                      (targetData.achieved -
+                                        targetData.target) *
+                                      0.01
+                                    ).toLocaleString("en-IN", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                </span>
                               </li>
                             )}
                           </ul>
@@ -828,60 +944,80 @@ const TargetIncentive = () => {
                             ? "-"
                             : selectedEmployeeDetails?.phone_number || "-",
                           (dateSelectionMode === "month" && selectedMonth) ||
-                            (dateSelectionMode === "date-range" && fromDate && toDate)
+                          (dateSelectionMode === "date-range" &&
+                            fromDate &&
+                            toDate)
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                "default",
-                                {
-                                  month: "long",
-                                  year: "numeric",
-                                }
-                              )
+                                  "default",
+                                  {
+                                    month: "long",
+                                    year: "numeric",
+                                  }
+                                )
                               : `${new Date(
-                                fromDate
-                              ).toLocaleDateString()} - ${new Date(
-                                toDate
-                              ).toLocaleDateString()}`
+                                  fromDate
+                                ).toLocaleDateString()} - ${new Date(
+                                  toDate
+                                ).toLocaleDateString()}`
                             : "-",
-                          `${targetData?.target?.toLocaleString("en-IN") || "0"}`,
-                          `${targetData?.achieved?.toLocaleString("en-IN") || "0"}`,
-                          `${targetData?.remaining?.toLocaleString("en-IN") || "0"
+                          `${
+                            targetData?.target?.toLocaleString("en-IN") || "0"
                           }`,
-                          `${targetData?.incentiveAmount?.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }) || "0.00"
+                          `${
+                            targetData?.achieved?.toLocaleString("en-IN") || "0"
                           }`,
-                          `${commissionTotalDetails?.actual_business?.toLocaleString(
-                            "en-IN"
-                          ) || "0"
+                          `${
+                            targetData?.remaining?.toLocaleString("en-IN") ||
+                            "0"
                           }`,
-                          `${commissionTotalDetails?.total_actual?.toLocaleString(
-                            "en-IN"
-                          ) || "0"
+                          `${
+                            targetData?.incentiveAmount?.toLocaleString(
+                              "en-IN",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            ) || "0.00"
                           }`,
-                          `${commissionTotalDetails?.expected_business?.toLocaleString(
-                            "en-IN"
-                          ) || "0"
+                          `${
+                            commissionTotalDetails?.actual_business?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
                           }`,
-                          `${commissionTotalDetails?.total_estimated?.toLocaleString(
-                            "en-IN"
-                          ) || "0"
+                          `${
+                            commissionTotalDetails?.total_actual?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
+                          }`,
+                          `${
+                            commissionTotalDetails?.expected_business?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
+                          }`,
+                          `${
+                            commissionTotalDetails?.total_estimated?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
                           }`,
                           commissionTotalDetails?.total_customers || "0",
                           commissionTotalDetails?.total_groups || "0",
                         ]}
-                        exportedFileName={`IncentiveReport-${selectedEmployeeDetails?.name || "all"
-                          }-${dateSelectionMode === "month"
+                        exportedFileName={`IncentiveReport-${
+                          selectedEmployeeDetails?.name || "all"
+                        }-${
+                          dateSelectionMode === "month"
                             ? selectedMonth
                             : `${fromDate}_to_${toDate}`
-                          }.csv`}
+                        }.csv`}
                       />
                     </div>
                   ) : (
                     isFiltering &&
                     ((dateSelectionMode === "month" && selectedMonth) ||
-                      (dateSelectionMode === "date-range" && fromDate && toDate)) &&
+                      (dateSelectionMode === "date-range" &&
+                        fromDate &&
+                        toDate)) &&
                     selectedEmployeeDetails?.name && (
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                         <p className="text-gray-500 text-lg font-medium">
@@ -896,31 +1032,53 @@ const TargetIncentive = () => {
                   {/* Gross Incentive Summary Section */}
                   {isFiltering &&
                     ((dateSelectionMode === "month" && selectedMonth) ||
-                      (dateSelectionMode === "date-range" && fromDate && toDate)) &&
-                    (selectedEmployeeId === "ALL" || selectedEmployeeDetails) && (
+                      (dateSelectionMode === "date-range" &&
+                        fromDate &&
+                        toDate)) &&
+                    (selectedEmployeeId === "ALL" ||
+                      selectedEmployeeDetails) && (
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Gross Incentive Summary</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                          Gross Incentive Summary
+                        </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Gross Group Value</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Gross Group Value
+                            </label>
                             <input
-                              value={grossIncentiveSummary.total_gross_group_value?.toLocaleString("en-IN") || "-"}
+                              value={
+                                grossIncentiveSummary.total_gross_group_value?.toLocaleString(
+                                  "en-IN"
+                                ) || "-"
+                              }
                               readOnly
                               className="w-full bg-transparent text-2xl font-bold text-green-700 mt-2 border-0"
                             />
                           </div>
                           <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Gross Incentive Value</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Gross Incentive Value
+                            </label>
                             <input
-                              value={grossIncentiveSummary.total_gross_incentive_value?.toLocaleString("en-IN") || "-"}
+                              value={
+                                grossIncentiveSummary.total_gross_incentive_value?.toLocaleString(
+                                  "en-IN"
+                                ) || "-"
+                              }
                               readOnly
                               className="w-full bg-transparent text-2xl font-bold text-blue-700 mt-2 border-0"
                             />
                           </div>
                           <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Gross Enrollments</label>
+                            <label className="text-xs font-semibold text-gray-600 uppercase">
+                              Gross Enrollments
+                            </label>
                             <input
-                              value={grossIncentiveSummary.total_gross_enrollments || "-"}
+                              value={
+                                grossIncentiveSummary.total_gross_enrollments ||
+                                "-"
+                              }
                               readOnly
                               className="w-full bg-transparent text-2xl font-bold text-purple-700 mt-2 border-0"
                             />
@@ -955,36 +1113,52 @@ const TargetIncentive = () => {
                             ? "-"
                             : selectedEmployeeDetails?.phone_number || "-",
                           (dateSelectionMode === "month" && selectedMonth) ||
-                            (dateSelectionMode === "date-range" && fromDate && toDate)
+                          (dateSelectionMode === "date-range" &&
+                            fromDate &&
+                            toDate)
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                "default",
-                                {
-                                  month: "long",
-                                  year: "numeric",
-                                }
-                              )
+                                  "default",
+                                  {
+                                    month: "long",
+                                    year: "numeric",
+                                  }
+                                )
                               : `${new Date(
-                                fromDate
-                              ).toLocaleDateString()} - ${new Date(
-                                toDate
-                              ).toLocaleDateString()}`
+                                  fromDate
+                                ).toLocaleDateString()} - ${new Date(
+                                  toDate
+                                ).toLocaleDateString()}`
                             : "-",
-                          `${grossIncentiveSummary.total_gross_group_value?.toLocaleString("en-IN") || "0"}`,
-                          `${grossIncentiveSummary.total_gross_incentive_value?.toLocaleString("en-IN") || "0"}`,
-                          `${grossIncentiveSummary.total_gross_enrollments || "0"}`,
+                          `${
+                            grossIncentiveSummary.total_gross_group_value?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
+                          }`,
+                          `${
+                            grossIncentiveSummary.total_gross_incentive_value?.toLocaleString(
+                              "en-IN"
+                            ) || "0"
+                          }`,
+                          `${
+                            grossIncentiveSummary.total_gross_enrollments || "0"
+                          }`,
                         ]}
-                        exportedFileName={`GrossIncentiveReport-${selectedEmployeeDetails?.name || "all"
-                          }-${dateSelectionMode === "month"
+                        exportedFileName={`GrossIncentiveReport-${
+                          selectedEmployeeDetails?.name || "all"
+                        }-${
+                          dateSelectionMode === "month"
                             ? selectedMonth
                             : `${fromDate}_to_${toDate}`
-                          }.csv`}
+                        }.csv`}
                       />
                     </div>
                   ) : (
                     isFiltering &&
                     ((dateSelectionMode === "month" && selectedMonth) ||
-                      (dateSelectionMode === "date-range" && fromDate && toDate)) &&
+                      (dateSelectionMode === "date-range" &&
+                        fromDate &&
+                        toDate)) &&
                     selectedEmployeeDetails?.name && (
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                         <p className="text-gray-500 text-lg font-medium">
@@ -997,8 +1171,6 @@ const TargetIncentive = () => {
               </Tabs>
             </>
           )}
-
-
         </div>
       </div>
     </div>
