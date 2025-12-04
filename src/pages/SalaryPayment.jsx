@@ -67,6 +67,7 @@ const SalaryPayment = () => {
       professional_tax: 0,
     },
     additional_payments: [],
+    additional_deductions: [],
     pay_date: moment(),
     payment_method: "Cash",
     transaction_id: "",
@@ -143,6 +144,7 @@ const SalaryPayment = () => {
       professional_tax: 0,
     },
     additional_payments: [],
+    additional_deductions: [],
     total_salary_payable: 0,
     paid_amount: 0,
     pay_date: moment(),
@@ -314,9 +316,14 @@ const SalaryPayment = () => {
         0
       );
 
+      const additionalDeductionsTotal = updateFormData.additional_deductions.reduce(
+        (sum, deduction) => sum + Number(deduction.value),
+        0
+      );
+
       // Calculate net payable
       const netPayable =
-        totalEarnings - totalDeductions + additionalPaymentsTotal;
+        totalEarnings - totalDeductions + additionalPaymentsTotal - additionalDeductionsTotal;
 
       const updateData = {
         ...updateFormData,
@@ -328,6 +335,7 @@ const SalaryPayment = () => {
           (updateFormData.total_salary_payable || netPayable) -
           (updateFormData.paid_amount || 0),
       };
+
 
       await API.put(`/salary-payment/${currentSalaryId}`, updateData);
       message.success("Salary updated successfully");
@@ -477,6 +485,29 @@ const SalaryPayment = () => {
     setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
   };
 
+  const handleAdditionalDeductionChange = (index, field, value) => {
+    const updatedDeductions = [...formData.additional_deductions];
+    updatedDeductions[index] = { ...updatedDeductions[index], [field]: value };
+    setFormData((prev) => ({ ...prev, additional_deductions: updatedDeductions }));
+  };
+
+  const addAdditionalDeduction = () => {
+    setFormData((prev) => ({
+      ...prev,
+      additional_deductions: [
+        ...prev.additional_deductions,
+        { name: "", value: 0 },
+      ],
+    }));
+  };
+
+  const removeAdditionalDeduction = (index) => {
+    const updatedDeductions = formData.additional_deductions.filter(
+      (_, i) => i !== index
+    );
+    setFormData((prev) => ({ ...prev, additional_deductions: updatedDeductions }));
+  };
+
   // async function handleCalculateSalary() {
   //   try {
   //     setCalculateLoading(true);
@@ -566,10 +597,15 @@ const SalaryPayment = () => {
         0
       );
 
+      const additionalDeductionsTotal = formData.additional_deductions.reduce(
+        (sum, deduction) => sum + Number(deduction.value),
+        0
+      );
+
       // Calculate net payable (default to calculated salary if available)
       const netPayable = calculatedSalary
         ? calculatedSalary.calculated_salary
-        : totalEarnings - totalDeductions + additionalPaymentsTotal;
+        : totalEarnings - totalDeductions + additionalPaymentsTotal - additionalDeductionsTotal
 
       const salaryData = {
         employee_id: formData.employee_id,
@@ -583,6 +619,7 @@ const SalaryPayment = () => {
         salary_year: formData.year,
         earnings: formData.earnings,
         deductions: formData.deductions,
+         additional_deductions: formData.additional_deductions,
         additional_payments: formData.additional_payments,
         paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
         lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
@@ -1154,6 +1191,9 @@ const SalaryPayment = () => {
                         !formData.month ||
                         !formData.year
                       }
+                      style={{
+                        backgroundColor: "#16a34a",
+                      }}
                     >
                       Calculate Salary
                     </Button>
@@ -1372,6 +1412,68 @@ const SalaryPayment = () => {
                               danger
                               icon={<DeleteOutlined />}
                               onClick={() => removeAdditionalPayment(index)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Additional Deductions */}
+                  { showAdditionalPayments && (
+                    <div className="bg-orange-50 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-orange-800">
+                          Additional Deductions
+                        </h3>
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<PlusOutlined />}
+                          onClick={addAdditionalDeduction}
+                        >
+                          Add Deduction
+                        </Button>
+                      </div>
+                      {formData.additional_deductions.map((deduction, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                        >
+                          <div className="form-group">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Deduction Name
+                            </label>
+                            <Input
+                              placeholder="Enter deduction name"
+                              value={deduction.name}
+                              onChange={(e) =>
+                                handleAdditionalDeductionChange(index, "name", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="form-group flex items-end gap-2">
+                            <div className="flex-grow">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Amount
+                              </label>
+                              <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                value={deduction.value}
+                                onChange={(e) =>
+                                  handleAdditionalDeductionChange(index, "value", e.target.value)
+                                }
+                              />
+                              <span className="ml-2 font-medium font-mono text-red-600">
+                                {numberToIndianWords(deduction.value || 0)}
+                              </span>
+                            </div>
+                            <Button
+                              type="primary"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => removeAdditionalDeduction(index)}
                             />
                           </div>
                         </div>
@@ -1719,7 +1821,31 @@ const SalaryPayment = () => {
                 )}
               </Form.List>
             </div>
-
+            {/* Additional Deductions */}
+            {existingSalaryRecord?.additional_deductions?.length > 0 && (
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+                  Additional Deductions
+                </h4>
+                <ul className="space-y-2 text-gray-700">
+                  {existingSalaryRecord.additional_deductions.map((ded, i) => (
+                    <li
+                      key={i}
+                      className="flex justify-between border-b border-gray-100 pb-1"
+                    >
+                      <span>{ded.name || "Deduction"}</span>
+                      <span className="font-medium text-red-600">
+                        ₹
+                        {Number(ded.value).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             <div className="bg-blue-50 p-4 rounded-lg mb-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-4">
                 Payment Details
@@ -2012,6 +2138,32 @@ const SalaryPayment = () => {
                 </section>
               )}
 
+              {/* Additional Deductions */}
+              {existingSalaryRecord.additional_deductions?.length > 0 && (
+                <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+                    Additional Deductions
+                  </h4>
+                  <ul className="space-y-2 text-gray-700">
+                    {existingSalaryRecord.additional_deductions.map((ded, i) => (
+                      <li
+                        key={i}
+                        className="flex justify-between border-b border-gray-100 pb-1"
+                      >
+                        <span>{ded.name || "Deduction"}</span>
+                        <span className="font-medium text-red-600">
+                          ₹
+                          {Number(ded.value).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               {/* Payment Summary */}
               <section className="bg-gradient-to-r from-amber-50 to-white border border-amber-200 p-5 rounded-lg shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
@@ -2022,46 +2174,84 @@ const SalaryPayment = () => {
                     <span>Total Earnings:</span>{" "}
                     <span>
                       ₹
-                      {Number(
-                        existingSalaryRecord.total_earnings
-                      ).toLocaleString("en-IN", {
+                      {Number(existingSalaryRecord.total_earnings).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
+
+                  {/* Additional Payments Total (if any) */}
+                  {existingSalaryRecord.additional_payments?.length > 0 && (
+                    <div className="flex justify-between">
+                      <span>Additional Payments:</span>{" "}
+                      <span>
+                        ₹
+                        {Number(
+                          existingSalaryRecord.additional_payments.reduce(
+                            (sum, p) => sum + Number(p.value),
+                            0
+                          )
+                        ).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between">
-                    <span>Total Deductions:</span>{" "}
+                    <span>Total Base Deductions:</span>{" "}
                     <span>
                       ₹
-                      {Number(
-                        existingSalaryRecord.total_deductions
-                      ).toLocaleString("en-IN", {
+                      {Number(existingSalaryRecord.total_deductions).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
+
+                  {/* Additional Deductions Total (if any) */}
+                  {existingSalaryRecord?.additional_deductions?.length > 0 && (
+                    <div className="flex justify-between">
+                      <span>Additional Deductions:</span>{" "}
+                      <span className="text-red-600">
+                        ₹
+                        {Number(
+                          existingSalaryRecord.additional_deductions.reduce(
+                            (sum, d) => sum + Number(d.value),
+                            0
+                          )
+                        ).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-2">
                     <span>Net Payable:</span>
                     <span>
                       ₹
-                      {Number(existingSalaryRecord.net_payable).toLocaleString(
-                        "en-IN",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                      )}
+                      {Number(existingSalaryRecord.net_payable).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
+
                   <div className="flex justify-between">
                     <span>Paid Amount:</span>{" "}
                     <span>
                       ₹
-                      {Number(existingSalaryRecord.paid_amount).toLocaleString(
-                        "en-IN",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                      )}
+                      {Number(existingSalaryRecord.paid_amount).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
+
                   <div className="flex justify-between">
                     <span>Remaining Balance:</span>
                     <span
@@ -2072,14 +2262,13 @@ const SalaryPayment = () => {
                       }
                     >
                       ₹
-                      {Number(
-                        existingSalaryRecord.remaining_balance
-                      ).toLocaleString("en-IN", {
+                      {Number(existingSalaryRecord.remaining_balance).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
+
                   <div className="flex justify-between">
                     <span>Status:</span>
                     <span
@@ -2095,21 +2284,17 @@ const SalaryPayment = () => {
 
                   {existingSalaryRecord.transaction_id && (
                     <div className="flex justify-between">
-                      <span>Transaction ID:</span>{" "}
-                      <span>{existingSalaryRecord.transaction_id}</span>
+                      <span>Transaction ID:</span> <span>{existingSalaryRecord.transaction_id}</span>
                     </div>
                   )}
+
                   <div className="flex justify-between">
-                    <span>Payment Method:</span>{" "}
-                    <span>{existingSalaryRecord.payment_method || "—"} </span>
+                    <span>Payment Method:</span> <span>{existingSalaryRecord.payment_method || "—"} </span>
                   </div>
+
                   <div className="flex justify-between">
                     <span>Pay Date:</span>{" "}
-                    <span>
-                      {moment(existingSalaryRecord.pay_date).format(
-                        "DD MMM YYYY"
-                      )}
-                    </span>
+                    <span>{moment(existingSalaryRecord.pay_date).format("DD MMM YYYY")}</span>
                   </div>
                 </div>
               </section>
