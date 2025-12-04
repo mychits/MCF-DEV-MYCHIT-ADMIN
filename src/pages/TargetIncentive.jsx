@@ -70,7 +70,8 @@ const TargetIncentive = () => {
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
     const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
-    const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
+    const lastday1 = new Date(year, month, 0).getDate();
+    const lastDay = `${year}-${month}-${String(lastday1).padStart(2, "0")}`;
     setTempFromDate(firstDay);
     setTempToDate(lastDay);
     setFromDate(firstDay);
@@ -218,20 +219,20 @@ const TargetIncentive = () => {
           params,
         }
       );
-      const incentiveData =res.data?.grossIncentiveInfo?.map(enrollment=>({
-        user_name:enrollment?.user_id?.full_name || "N/A",
-        phone_number:enrollment?.user_id?.phone_number || "N/A",
-        group_name:enrollment?.group_id?.group_name || "N/A",
-        group_value:enrollment?.group_id?.group_value || "N/A",
-        group_incentive:enrollment?.group_id?.incentives || "N/A",
-        group_ticket:enrollment?.tickets || "N/A",
-        enrollment_date:enrollment?.createdAt?.split("T")?.[0], 
-        total_paid_amount:enrollment?.total_paid_amount || "0",
-        group_monthly_installment:enrollment?.group_id?.monthly_installment || "N/A",
+      const incentiveData = res.data?.grossIncentiveInfo?.map(enrollment => ({
+        user_name: enrollment?.user_id?.full_name || "N/A",
+        phone_number: enrollment?.user_id?.phone_number || "N/A",
+        group_name: enrollment?.group_id?.group_name || "N/A",
+        group_value: enrollment?.group_id?.group_value || "N/A",
+        group_incentive: enrollment?.group_id?.incentives || "N/A",
+        group_ticket: enrollment?.tickets || "N/A",
+        enrollment_date: enrollment?.createdAt?.split("T")?.[0],
+        total_paid_amount: enrollment?.total_paid_amount || "0",
+        group_monthly_installment: enrollment?.group_id?.monthly_installment || "N/A",
 
 
       }));
-      setGrossIncentiveData( incentiveData|| []);
+      setGrossIncentiveData(incentiveData || []);
       setGrossIncentiveSummary(res.data.grossIncentiveSummary || {
         total_gross_incentive_value: 0,
         total_gross_group_value: 0,
@@ -302,7 +303,8 @@ const TargetIncentive = () => {
     if (selectedMonth) {
       const [year, month] = selectedMonth.split("-");
       const firstDay = `${year}-${month}-01`;
-      const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
+      const lastday1 = new Date(year, month, 0).getDate();
+      const lastDay = `${year}-${month}-${String(lastday1).padStart(2, "0")}`;
       setTempFromDate(firstDay);
       setTempToDate(lastDay);
     }
@@ -328,8 +330,8 @@ const TargetIncentive = () => {
       const [year, month] = tempSelectedMonth.split("-");
       startDate = `${year}-${month}-01`;
 
-    const lastDay = new Date(year, month, 0).getDate();
-endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+      const lastDay = new Date(year, month, 0).getDate();
+      endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
 
 
       setFromDate(startDate);
@@ -417,7 +419,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
     phone_number: item.user_id?.phone_number || "N/A",
     group_name: item.group_id?.group_name || "N/A",
     enrollment_date: item.createdAt?.split("T")?.[0]
-      ||"N/A",
+      || "N/A",
   }));
 
   const columns = [
@@ -433,8 +435,8 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
     { key: "required_installment_digits", header: "First Installment Amount" },
     { key: "incentive_released", header: "Incentive Released" },
   ];
- 
-        
+
+
   const grossIncentiveColumns = [
     { key: "user_name", header: "Customer Name" },
     { key: "phone_number", header: "Phone Number" },
@@ -445,7 +447,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
     { key: "group_monthly_installment", header: "First Installment Amount" },
     { key: "group_incentive", header: "Incentive Percentage" },
     { key: "total_paid_amount", header: "Total Paid" },
-    
+
   ];
 
   const today = new Date();
@@ -465,7 +467,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
             </h1>
             <p className="text-gray-600 mt-2">Track and manage employee incentives and commissions</p>
           </div>
-          
+
           {/* Filter Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-lg font-semibold text-gray-800 mb-6">Report Filters</h2>
@@ -566,7 +568,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
               </button>
             </div>
           </div>
-          
+
           {agentLoading ? (
             <div className="flex justify-center py-20">
               <CircularLoader isLoading={true} />
@@ -595,7 +597,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                     className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
                   >
                     <MdPayments className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive / Commission Payout</span> 
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">Incentive / Commission Payout</span>
                   </Link>
                   <Link
                     to="/payment-menu/payment-in-out-menu/payment-out/salary-payment"
@@ -606,7 +608,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                   </Link>
                 </div>
               </div>
-              
+
               {/* Employee Details */}
               {isFiltering &&
                 ((dateSelectionMode === "month" && selectedMonth) ||
@@ -717,7 +719,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                     </div>
                   </div>
                 )}
-              
+
               {/* Tabbed View for Reports */}
               <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 {/* Commission Report Tab */}
@@ -754,7 +756,7 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                           <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-4">
                             <label className="text-xs font-semibold text-gray-600 uppercase">Difference</label>
                             <p className="text-2xl font-bold text-amber-700 mt-2">
-                              {`${(targetData?.difference?? "0").toLocaleString("en-IN")}`} 
+                              {`${(targetData?.difference ?? "0").toLocaleString("en-IN")}`}
                             </p>
                           </div>
                           <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-4">
@@ -826,62 +828,54 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                             ? "-"
                             : selectedEmployeeDetails?.phone_number || "-",
                           (dateSelectionMode === "month" && selectedMonth) ||
-                          (dateSelectionMode === "date-range" && fromDate && toDate)
+                            (dateSelectionMode === "date-range" && fromDate && toDate)
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                  "default",
-                                  {
-                                    month: "long",
-                                    year: "numeric",
-                                  }
-                                )
+                                "default",
+                                {
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )
                               : `${new Date(
-                                  fromDate
-                                ).toLocaleDateString()} - ${new Date(
-                                  toDate
-                                ).toLocaleDateString()}`
+                                fromDate
+                              ).toLocaleDateString()} - ${new Date(
+                                toDate
+                              ).toLocaleDateString()}`
                             : "-",
                           `${targetData?.target?.toLocaleString("en-IN") || "0"}`,
                           `${targetData?.achieved?.toLocaleString("en-IN") || "0"}`,
-                          `${
-                            targetData?.remaining?.toLocaleString("en-IN") || "0"
+                          `${targetData?.remaining?.toLocaleString("en-IN") || "0"
                           }`,
-                          `${
-                            targetData?.incentiveAmount?.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }) || "0.00"
+                          `${targetData?.incentiveAmount?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) || "0.00"
                           }`,
-                          `${
-                            commissionTotalDetails?.actual_business?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.actual_business?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.total_actual?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.total_actual?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.expected_business?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.expected_business?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.total_estimated?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.total_estimated?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
                           commissionTotalDetails?.total_customers || "0",
                           commissionTotalDetails?.total_groups || "0",
                         ]}
-                        exportedFileName={`IncentiveReport-${
-                          selectedEmployeeDetails?.name || "all"
-                        }-${
-                          dateSelectionMode === "month"
+                        exportedFileName={`IncentiveReport-${selectedEmployeeDetails?.name || "all"
+                          }-${dateSelectionMode === "month"
                             ? selectedMonth
                             : `${fromDate}_to_${toDate}`
-                        }.csv`}
+                          }.csv`}
                       />
                     </div>
                   ) : (
@@ -961,32 +955,30 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
                             ? "-"
                             : selectedEmployeeDetails?.phone_number || "-",
                           (dateSelectionMode === "month" && selectedMonth) ||
-                          (dateSelectionMode === "date-range" && fromDate && toDate)
+                            (dateSelectionMode === "date-range" && fromDate && toDate)
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                  "default",
-                                  {
-                                    month: "long",
-                                    year: "numeric",
-                                  }
-                                )
+                                "default",
+                                {
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )
                               : `${new Date(
-                                  fromDate
-                                ).toLocaleDateString()} - ${new Date(
-                                  toDate
-                                ).toLocaleDateString()}`
+                                fromDate
+                              ).toLocaleDateString()} - ${new Date(
+                                toDate
+                              ).toLocaleDateString()}`
                             : "-",
                           `${grossIncentiveSummary.total_gross_group_value?.toLocaleString("en-IN") || "0"}`,
                           `${grossIncentiveSummary.total_gross_incentive_value?.toLocaleString("en-IN") || "0"}`,
                           `${grossIncentiveSummary.total_gross_enrollments || "0"}`,
                         ]}
-                        exportedFileName={`GrossIncentiveReport-${
-                          selectedEmployeeDetails?.name || "all"
-                        }-${
-                          dateSelectionMode === "month"
+                        exportedFileName={`GrossIncentiveReport-${selectedEmployeeDetails?.name || "all"
+                          }-${dateSelectionMode === "month"
                             ? selectedMonth
                             : `${fromDate}_to_${toDate}`
-                        }.csv`}
+                          }.csv`}
                       />
                     </div>
                   ) : (
@@ -1005,8 +997,8 @@ endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
               </Tabs>
             </>
           )}
-          
-         
+
+
         </div>
       </div>
     </div>

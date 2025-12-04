@@ -1033,7 +1033,8 @@ const TargetCommission = () => {
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
     const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
-    const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
+    const lastday1 = new Date(year, month, 0).getDate();
+    const lastDay = `${year}-${month}-${String(lastday1).padStart(2, "0")}`;
     setTempFromDate(firstDay);
     setTempToDate(lastDay);
   }, []);
@@ -1298,7 +1299,8 @@ const TargetCommission = () => {
     if (selectedMonth) {
       const [year, month] = selectedMonth.split("-");
       const firstDay = `${year}-${month}-01`;
-      const lastDay = new Date(year, month, 0).toISOString().split("T")[0];
+      const lastday1 = new Date(year, month, 0).getDate();
+      const lastDay = `${year}-${month}-${String(lastday1).padStart(2, "0")}`;
       setTempFromDate(firstDay);
       setTempToDate(lastDay);
     }
