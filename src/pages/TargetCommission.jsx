@@ -407,7 +407,7 @@
 //           {/* Filter Card */}
 //           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
 //             <h2 className="text-lg font-semibold text-gray-800 mb-6">Report Filters</h2>
-            
+
 //             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
 //               {/* Agent Select */}
 //               <div className="flex flex-col">
@@ -627,7 +627,7 @@
 //                       <hr className="my-6" />
 //                     </>
 //                   )}
-                  
+
 //                   {/* Summary Section */}
 //                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Commission Summary</h3>
 //                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1104,20 +1104,20 @@ const TargetCommission = () => {
           params,
         }
       );
-        const commissionData =res.data?.grossCommissionInfo?.map(enrollment=>({
-        user_name:enrollment?.user_id?.full_name || "N/A",
-        phone_number:enrollment?.user_id?.phone_number || "N/A",
-        group_name:enrollment?.group_id?.group_name || "N/A",
-        group_value:enrollment?.group_id?.group_value || "N/A",
-        group_commission:enrollment?.group_id?.commission || "N/A",
-        group_ticket:enrollment?.tickets || "N/A",
-        enrollment_date:enrollment?.createdAt?.split("T")?.[0], 
-        total_paid_amount:enrollment?.total_paid_amount || "0",
-        group_monthly_installment:enrollment?.group_id?.monthly_installment || "N/A",
+      const commissionData = res.data?.grossCommissionInfo?.map(enrollment => ({
+        user_name: enrollment?.user_id?.full_name || "N/A",
+        phone_number: enrollment?.user_id?.phone_number || "N/A",
+        group_name: enrollment?.group_id?.group_name || "N/A",
+        group_value: enrollment?.group_id?.group_value || "N/A",
+        group_commission: enrollment?.group_id?.commission || "N/A",
+        group_ticket: enrollment?.tickets || "N/A",
+        enrollment_date: enrollment?.createdAt?.split("T")?.[0],
+        total_paid_amount: enrollment?.total_paid_amount || "0",
+        group_monthly_installment: enrollment?.group_id?.monthly_installment || "N/A",
 
 
       }));
-      setGrossCommissionData( commissionData|| []);
+      setGrossCommissionData(commissionData || []);
       setGrossCommissionSummary(res.data.grossCommissionSummary || {
         total_gross_commission_value: 0,
         total_gross_group_value: 0,
@@ -1322,7 +1322,10 @@ const TargetCommission = () => {
       setSelectedMonth(tempSelectedMonth);
       const [year, month] = tempSelectedMonth.split("-");
       startDate = `${year}-${month}-01`;
-      endDate = new Date(year, month, 0).toISOString().split("T")[0];
+
+      const lastDay = new Date(year, month, 0).getDate();
+      endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+
     } else {
       startDate = tempFromDate;
       endDate = tempToDate;
@@ -1330,7 +1333,7 @@ const TargetCommission = () => {
     setAgentLoading(true);
     setLoading(true);
     setIsFilterApplied(true);
-    
+
     try {
       // Always fetch both reports regardless of active tab
       if (selectedEmployeeId === "ALL") {
@@ -1406,7 +1409,7 @@ const TargetCommission = () => {
     phone_number: item.user_id?.phone_number || "N/A",
     group_name: item.group_id?.group_name || "N/A",
     enollment_date: item.createdAt?.split("T")?.[0]
-   || "N/A",
+      || "N/A",
   }));
 
   const columns = [
@@ -1423,7 +1426,7 @@ const TargetCommission = () => {
     { key: "commission_released", header: "Commission Released" },
   ];
 
-         
+
   const grossCommissionColumns = [
     { key: "user_name", header: "Customer Name" },
     { key: "phone_number", header: "Phone Number" },
@@ -1434,7 +1437,7 @@ const TargetCommission = () => {
     { key: "group_monthly_installment", header: "First Installment Amount" },
     { key: "group_commission", header: "Commission Percentage" },
     { key: "total_paid_amount", header: "Total Paid" },
-    
+
   ];
 
 
@@ -1455,7 +1458,7 @@ const TargetCommission = () => {
             </h1>
             <p className="text-gray-600 mt-2">Track and manage agent commissions and performance</p>
           </div>
-          
+
           {/* Filter Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-lg font-semibold text-gray-800 mb-6">Report Filters</h2>
@@ -1556,7 +1559,7 @@ const TargetCommission = () => {
               </button>
             </div>
           </div>
-          
+
           {agentLoading ? (
             <div className="flex justify-center py-20">
               <CircularLoader isLoading={true} />
@@ -1596,7 +1599,7 @@ const TargetCommission = () => {
                   </Link>
                 </div>
               </div>
-              
+
               {/* Tabbed View for Reports */}
               <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 {/* Commission Report Tab */}
@@ -1738,7 +1741,7 @@ const TargetCommission = () => {
                           <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-4">
                             <label className="text-xs font-semibold text-gray-600 uppercase">Difference</label>
                             <p className="text-2xl font-bold text-amber-700 mt-2">
-                              {`${(targetData.difference?? "0")?.toLocaleString("en-IN")}`}
+                              {`${(targetData.difference ?? "0")?.toLocaleString("en-IN")}`}
                             </p>
                           </div>
                           <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-4">
@@ -1810,61 +1813,53 @@ const TargetCommission = () => {
                           isFilterApplied
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                  "default",
-                                  {
-                                    month: "long",
-                                    year: "numeric",
-                                  }
-                                )
+                                "default",
+                                {
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )
                               : `${new Date(
-                                  tempFromDate
-                                ).toLocaleDateString()} - ${new Date(
-                                  tempToDate
-                                ).toLocaleDateString()}`
+                                tempFromDate
+                              ).toLocaleDateString()} - ${new Date(
+                                tempToDate
+                              ).toLocaleDateString()}`
                             : "-",
                           `${targetData?.target?.toLocaleString("en-IN") || "0"}`,
                           `${targetData?.achieved?.toLocaleString("en-IN") || "0"}`,
-                          `${
-                            targetData?.remaining?.toLocaleString("en-IN") || "0"
+                          `${targetData?.remaining?.toLocaleString("en-IN") || "0"
                           }`,
-                          `${
-                            targetData?.targetCommission?.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }) || "0.00"
+                          `${targetData?.targetCommission?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) || "0.00"
                           }`,
-                          `${
-                            commissionTotalDetails?.actual_business?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.actual_business?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.total_actual?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.total_actual?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.expected_business?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.expected_business?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
-                          `${
-                            commissionTotalDetails?.total_estimated?.toLocaleString(
-                              "en-IN"
-                            ) || "0"
+                          `${commissionTotalDetails?.total_estimated?.toLocaleString(
+                            "en-IN"
+                          ) || "0"
                           }`,
                           commissionTotalDetails?.total_customers || "0",
                           commissionTotalDetails?.total_groups || "0",
                         ]}
-                        exportedFileName={`CommissionReport-${
-                          selectedEmployeeDetails?.name || "all"
-                        }-${
-                          isFilterApplied
+                        exportedFileName={`CommissionReport-${selectedEmployeeDetails?.name || "all"
+                          }-${isFilterApplied
                             ? dateSelectionMode === "month"
                               ? selectedMonth
                               : `${tempFromDate}_to_${tempToDate}`
                             : "unfiltered"
-                        }.csv`}
+                          }.csv`}
                       />
                     </div>
                   ) : (
@@ -1878,7 +1873,7 @@ const TargetCommission = () => {
                     )
                   )}
                 </TabPane>
-                
+
                 {/* Gross Incentive Report Tab */}
                 <TabPane tab="Gross Commission Report" key="gross-incentive">
                   {/* Gross Incentive Summary Section */}
@@ -1913,7 +1908,7 @@ const TargetCommission = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Data Table */}
                   {loading ? (
                     <div className="flex justify-center py-20">
@@ -1943,31 +1938,29 @@ const TargetCommission = () => {
                           isFilterApplied
                             ? dateSelectionMode === "month"
                               ? new Date(`${selectedMonth}-01`).toLocaleString(
-                                  "default",
-                                  {
-                                    month: "long",
-                                    year: "numeric",
-                                  }
-                                )
+                                "default",
+                                {
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )
                               : `${new Date(
-                                  tempFromDate
-                                ).toLocaleDateString()} - ${new Date(
-                                  tempToDate
-                                ).toLocaleDateString()}`
+                                tempFromDate
+                              ).toLocaleDateString()} - ${new Date(
+                                tempToDate
+                              ).toLocaleDateString()}`
                             : "-",
                           `${grossCommissionSummary.total_gross_group_value?.toLocaleString("en-IN") || "0"}`,
                           `${grossCommissionSummary.total_gross_incentive_value?.toLocaleString("en-IN") || "0"}`,
                           `${grossCommissionSummary.total_gross_enrollments || "0"}`,
                         ]}
-                        exportedFileName={`GrossIncentiveReport-${
-                          selectedEmployeeDetails?.name || "all"
-                        }-${
-                          isFilterApplied
+                        exportedFileName={`GrossIncentiveReport-${selectedEmployeeDetails?.name || "all"
+                          }-${isFilterApplied
                             ? dateSelectionMode === "month"
                               ? selectedMonth
                               : `${tempFromDate}_to_${tempToDate}`
                             : "unfiltered"
-                        }.csv`}
+                          }.csv`}
                       />
                     </div>
                   ) : (
@@ -1984,8 +1977,8 @@ const TargetCommission = () => {
               </Tabs>
             </>
           )}
-          
-        
+
+
         </div>
       </div>
     </div>

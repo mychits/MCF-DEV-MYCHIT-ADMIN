@@ -327,7 +327,11 @@ const TargetIncentive = () => {
       setSelectedMonth(tempSelectedMonth);
       const [year, month] = tempSelectedMonth.split("-");
       startDate = `${year}-${month}-01`;
-      endDate = new Date(year, month, 0).toISOString().split("T")[0];
+
+    const lastDay = new Date(year, month, 0).getDate();
+endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+
+
       setFromDate(startDate);
       setToDate(endDate);
     } else {
