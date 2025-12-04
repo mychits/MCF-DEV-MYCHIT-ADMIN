@@ -520,6 +520,34 @@ const SalaryPayment = () => {
     }
   };
 
+  const handleMonthChange = async (value) => {
+  setFormData((prev) => ({
+    ...prev,
+    month: value,
+  }));
+
+  // Only check if employee is selected
+  if (!formData.employee_id) return;
+
+  try {
+    const res = await API.get("/salary-payment/check-paid", {
+      params: {
+        employee_id: formData.employee_id,
+        month: value,
+        year: formData.year,
+      },
+    });
+
+    if (res.data?.alreadyPaid) {
+      setAlreadyPaidModal(true);   // <-- SHOWS THE MODAL
+      return;
+    }
+  } catch (err) {
+    console.error("Error checking if salary is paid:", err);
+  }
+};
+
+
   const handleDeductionsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -583,101 +611,139 @@ const SalaryPayment = () => {
   };
 
 
-  // async function handleCalculateSalary() {
-  //   try {
-  //     setCalculateLoading(true);
+async function handleCalculateSalary() {
+  try {
+    setCalculateLoading(true);
 
-  //     // Send earnings and deductions as objects, not JSON strings
-  //     const response = await API.get("/salary-payment/calculate", {
-  //       params: {
-  //         employee_id: formData.employee_id,
-  //         month: formData.month,
-  //         year: formData.year,
-  //         earnings: formData.earnings,
-  //         deductions: formData.deductions,
-  //       },
-  //     });
-
-  //     setCalculatedSalary(response.data.data);
-  //     setShowAdditionalPayments(true);
-
-  //     // Set the total salary payable to the calculated salary
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       total_salary_payable: response.data.data.calculated_salary,
-  //     }));
-
-  //     message.success("Salary calculated successfully");
-  //   } catch (error) {
-  //     console.error("Error calculating salary:", error);
-  //     message.error("Failed to calculate salary");
-  //   } finally {
-  //     setCalculateLoading(false);
-  //   }
-  // }
-
-  const handleCalculateSalary = async () => {
-    try {
-      if (!formData.employee_id || !formData.month || !formData.year) {
-        return message.warning("Select employee, month, and year first");
-      }
-
-      setLoading(true);
-
-      // Convert month name -> month index
-      const monthIndex = moment().month(formData.month).month();
-      const year = formData.year;
-
-      // Generate date range for selected month
-      const start_date = moment().year(year).month(monthIndex).startOf("month").format("YYYY-MM-DD");
-      const end_date = moment().year(year).month(monthIndex).endOf("month").format("YYYY-MM-DD");
-
-      // ---------------- CALCULATE SALARY CALL ----------------
-      const response = await api.post("/salary/calculate", {
+    const response = await API.get("/salary-payment/calculate", {
+      params: {
         employee_id: formData.employee_id,
         month: formData.month,
         year: formData.year,
-      });
+        earnings: formData.earnings,
+        deductions: formData.deductions,
+      },
+    });
 
-      const salaryCalculated = response.data.data;
-      setCalculatedSalary(salaryCalculated);
+    const calculated = response.data.data;
+    setCalculatedSalary(calculated);
 
-      // ---------------- FETCH TARGET ----------------
-      const targetValue = await fetchEmployeeTarget(
-        formData.employee_id,
-        start_date,
-        end_date
-      );
+    // -------------------------------
+    // ⭐ INCENTIVE VS FIXED SALARY LOGIC (ONLY WHEN TARGET > 0)
+    // -------------------------------
+    let autoAdditionalPayments = [];
+    let autoAdditionalDeductions = [];
 
-      // ---------------- FETCH INCENTIVE ----------------
-      const incentiveValue = await fetchEmployeeIncentive(
-        formData.employee_id,
-        start_date,
-        end_date
-      );
+    const target = Number(formData?.target || 0);
 
-      // ---------------- UPDATE FORM STATE ----------------
-      setFormData((prev) => ({
-        ...prev,
-        total_salary_payable: salaryCalculated.calculated_salary,
-        target: targetValue,
-        incentive: incentiveValue,
-        paid_days: salaryCalculated.paid_days,
-        lop_days: salaryCalculated.lop_days,
-      }));
+    if (target > 0) {
+      const fixedSalary = Number(formData?.earnings?.salary || 0);
+      const incentive = Number(formData?.incentive || 0);
+      const diff = incentive - fixedSalary;
 
-      // SHOW additional deductions section AFTER calculate
-      setShowAdditionalPayments(true);
-
-      message.success("Salary calculated!");
-
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to calculate salary");
-    } finally {
-      setLoading(false);
+      if (diff > 0) {
+        autoAdditionalPayments = [{ name: "Others", value: diff }];
+      } else if (diff < 0) {
+        autoAdditionalDeductions = [{ name: "Others", value: Math.abs(diff) }];
+      }
     }
-  };
+
+       const fixedSalary2 = Number(formData?.earnings?.salary || 0);
+    const calcSalary2 = Number(calculated.calculated_salary || 0);
+
+    const rawDefaultDifference = fixedSalary2 - calcSalary2;
+
+    autoAdditionalDeductions.push({
+      name: "Absenteeism Deduction",
+      value: rawDefaultDifference, // could be positive or negative
+    });
+
+    // -------------------------------
+    // ⭐ UPDATE FORM WITH AUTO VALUES
+    // -------------------------------
+    setFormData((prev) => ({
+      ...prev,
+      total_salary_payable: calculated.calculated_salary,
+      additional_payments: autoAdditionalPayments,
+      additional_deductions: autoAdditionalDeductions,
+    }));
+
+    setShowAdditionalPayments(true);
+
+    message.success("Salary calculated successfully");
+  } catch (error) {
+    console.error("Error calculating salary:", error);
+    message.error("Failed to calculate salary");
+  } finally {
+    setCalculateLoading(false);
+  }
+}
+
+
+  // const handleCalculateSalary = async () => {
+  //   try {
+  //     if (!formData.employee_id || !formData.month || !formData.year) {
+  //       return message.warning("Select employee, month, and year first");
+  //     }
+
+  //     setLoading(true);
+
+  //     // Convert month name -> month index
+  //     const monthIndex = moment().month(formData.month).month();
+  //     const year = formData.year;
+
+  //     // Generate date range for selected month
+  //     const start_date = moment().year(year).month(monthIndex).startOf("month").format("YYYY-MM-DD");
+  //     const end_date = moment().year(year).month(monthIndex).endOf("month").format("YYYY-MM-DD");
+
+  //     // ---------------- CALCULATE SALARY CALL ----------------
+  //     const response = await API.post("/salary-payment/calculate", {
+  //       employee_id: formData.employee_id,
+  //       month: formData.month,
+  //       year: formData.year,
+  //       earnings: formData.earnings,
+  //      deductions: formData.deductions,
+  //     });
+
+  //     const salaryCalculated = response.data.data;
+  //     setCalculatedSalary(salaryCalculated);
+
+  //     // ---------------- FETCH TARGET ----------------
+  //     const targetValue = await fetchEmployeeTarget(
+  //       formData.employee_id,
+  //       start_date,
+  //       end_date
+  //     );
+
+  //     // ---------------- FETCH INCENTIVE ----------------
+  //     const incentiveValue = await fetchEmployeeIncentive(
+  //       formData.employee_id,
+  //       start_date,
+  //       end_date
+  //     );
+
+  //     // ---------------- UPDATE FORM STATE ----------------
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       total_salary_payable: salaryCalculated.calculated_salary,
+  //       target: targetValue,
+  //       incentive: incentiveValue,
+  //       paid_days: salaryCalculated.paid_days,
+  //       lop_days: salaryCalculated.lop_days,
+  //     }));
+
+  //     // SHOW additional deductions section AFTER calculate
+  //     setShowAdditionalPayments(true);
+
+  //     message.success("Salary calculated!");
+
+  //   } catch (error) {
+  //     console.error(error);
+  //     message.error("Failed to calculate salary");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
 
   async function handleAddSalary() {
@@ -1598,7 +1664,7 @@ const SalaryPayment = () => {
                                   handleAdditionalDeductionChange(index, "value", e.target.value)
                                 }
                               />
-                              <span className="ml-2 font-medium font-mono text-red-600">
+                              <span className="ml-2 font-medium font-mono text-green-600">
                                 {numberToIndianWords(deduction.value || 0)}
                               </span>
                             </div>
