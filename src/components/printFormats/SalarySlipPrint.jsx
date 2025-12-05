@@ -2810,10 +2810,23 @@ const SalarySlipPrint = () => {
       <td>LOP</td><td>₹${lop.toFixed(2)}</td>
     </tr>
 
-    <tr>
-      <td>Other Allowances</td><td>₹${otherAllowances.toFixed(2)}</td>
-      <td></td><td></td>
-    </tr>
+   <tr>
+  <td>Other Allowances</td>
+  <td>₹${otherAllowances.toFixed(2)}</td>
+
+  ${(() => {
+    const totalExtraDeductions = additionalDeductions.reduce(
+      (sum, d) => sum + parseFloat(d.value || 0),
+      0
+    );
+
+    return `
+      <td>${totalExtraDeductions > 0 ? "Others" : ""}</td>
+      <td>${totalExtraDeductions > 0 ? `₹${totalExtraDeductions.toFixed(2)}` : ""}</td>
+    `;
+  })()}
+</tr>
+
 
     <tr>
       <td>Conveyance</td><td>₹${conveyance.toFixed(2)}</td>
@@ -2827,21 +2840,17 @@ const SalarySlipPrint = () => {
         0
       );
 
-      const totalExtraDeductions = additionalDeductions.reduce(
-        (sum, d) => sum + parseFloat(d.value || 0),
-        0
-      );
+    
 
       // If no extra values, return empty string
-      if (totalExtraPayments === 0 && totalExtraDeductions === 0) return "";
+      if (totalExtraPayments === 0 ) return "";
 
       return `
         <tr>
           <td>${totalExtraPayments > 0 ? "Others" : ""}</td>
           <td>${totalExtraPayments > 0 ? `₹${totalExtraPayments.toFixed(2)}` : ""}</td>
 
-          <td>${totalExtraDeductions > 0 ? "Others" : ""}</td>
-          <td>${totalExtraDeductions > 0 ? `₹${totalExtraDeductions.toFixed(2)}` : ""}</td>
+          
         </tr>
       `;
     })()}
