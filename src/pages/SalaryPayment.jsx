@@ -761,7 +761,7 @@ const SalaryPayment = () => {
         salaryMonth: data?.salary_month,
         salaryYear: data?.salary_year,
         payDate: new Date(data?.pay_date).toISOString().split("T")[0],
-        netPayable: data?.net_payable,
+        netPayable: data?.total_salary_payable,
         paidAmount: data?.paid_amount,
         transactionId: data?.transaction_id,
         action: (
