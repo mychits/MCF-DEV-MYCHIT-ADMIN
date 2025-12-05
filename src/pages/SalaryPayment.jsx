@@ -528,7 +528,7 @@ const SalaryPayment = () => {
       deductions: { ...prev.deductions, [name]: value },
     }));
     setCalculatedSalary(null);
-  setShowAdditionalPayments(false);
+    setShowAdditionalPayments(false);
   };
 
   const handleEarningsChange = (name, value) => {
@@ -538,7 +538,7 @@ const SalaryPayment = () => {
       deductions: { ...prev.deductions },
     }));
     setCalculatedSalary(null);
-  setShowAdditionalPayments(false);
+    setShowAdditionalPayments(false);
   };
 
   const updateTotalEarnings = useMemo(() => {
@@ -643,13 +643,50 @@ const SalaryPayment = () => {
         }
       }
 
-      const fixedSalary2 = Number(formData?.earnings?.salary || 0);
-      const calcSalary2 = Number(calculated.calculated_salary || 0);
-      const rawDefaultDifference = fixedSalary2 - calcSalary2;
+
+
+
+
+      const safeNumber = (v) => {
+        if (v === null || v === undefined) return 0;
+        if (typeof v === "object") {
+
+          if (v === null) return 0;
+          if ("amount" in v) return Number(v.amount) || 0;
+          if ("value" in v) return Number(v.value) || 0;
+          return 0;
+        }
+        if (v === "" || isNaN(Number(v))) return 0;
+        return Number(v);
+      };
+
+
+      const totalEarnings = Object.entries(formData.earnings || {})
+        .filter(([key]) => key !== "salary")
+        .reduce((sum, [, val]) => sum + safeNumber(val), 0);
+
+
+      const totalDeductions = Object.values(formData.deductions || {}).reduce(
+        (sum, val) => sum + safeNumber(val),
+        0
+      );
+
+
+      const calcSalary = safeNumber(calculated?.calculated_salary);
+
+
+      const rawDefaultDifference =
+        totalEarnings - totalDeductions - calcSalary;
+
+
       autoAdditionalDeductions.push({
         name: "Absence Adjustment",
         value: rawDefaultDifference,
       });
+
+
+
+
 
       setFormData((prev) => ({
         ...prev,
@@ -687,13 +724,13 @@ const SalaryPayment = () => {
       const baseSalary = calculatedSalary
         ? calculatedSalary.calculated_salary
         : Object.values(formData.earnings).reduce(
-            (sum, v) => sum + Number(v || 0),
-            0
-          ) -
-          Object.values(formData.deductions).reduce(
-            (sum, v) => sum + Number(v || 0),
-            0
-          );
+          (sum, v) => sum + Number(v || 0),
+          0
+        ) -
+        Object.values(formData.deductions).reduce(
+          (sum, v) => sum + Number(v || 0),
+          0
+        );
 
       const additionalPaymentsTotal = formData.additional_payments.reduce(
         (sum, payment) => sum + Number(payment.value || 0),
