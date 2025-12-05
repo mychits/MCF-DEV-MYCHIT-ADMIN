@@ -392,7 +392,8 @@ const SalaryPayment = () => {
           <div
             key={salaryPayment?._id}
             className="text-green-600"
-            onClick={() => handlePrint(salaryPayment?._id)}>
+            onClick={() => handlePrint(salaryPayment?._id)}
+          >
             Print
           </div>
         ),
@@ -403,7 +404,8 @@ const SalaryPayment = () => {
           <div
             key={salaryPayment?._id}
             className="text-green-600"
-            onClick={() => handleEdit(salaryPayment._id)}>
+            onClick={() => handleEdit(salaryPayment._id)}
+          >
             Edit
           </div>
         ),
@@ -417,7 +419,8 @@ const SalaryPayment = () => {
             onClick={() => {
               setDeleteId(salaryPayment?._id);
               setDeleteModalOpen(true);
-            }}>
+            }}
+          >
             Delete
           </div>
         ),
@@ -674,76 +677,77 @@ const SalaryPayment = () => {
     }
   }
 
-async function handleAddSalary() {
-  try {
-    // Base amount: use calculated salary if available, otherwise fallback to manual earnings/deductions
-    const baseSalary = calculatedSalary
-      ? calculatedSalary.calculated_salary
-      : Object.values(formData.earnings).reduce(
-          (sum, v) => sum + Number(v || 0),
-          0
-        ) -
-        Object.values(formData.deductions).reduce(
-          (sum, v) => sum + Number(v || 0),
-          0
-        );
+  async function handleAddSalary() {
+    try {
+      // Base amount: use calculated salary if available, otherwise fallback to manual earnings/deductions
+      const baseSalary = calculatedSalary
+        ? calculatedSalary.calculated_salary
+        : Object.values(formData.earnings).reduce(
+            (sum, v) => sum + Number(v || 0),
+            0
+          ) -
+          Object.values(formData.deductions).reduce(
+            (sum, v) => sum + Number(v || 0),
+            0
+          );
 
-    const additionalPaymentsTotal = formData.additional_payments.reduce(
-      (sum, payment) => sum + Number(payment.value || 0),
-      0
-    );
+      const additionalPaymentsTotal = formData.additional_payments.reduce(
+        (sum, payment) => sum + Number(payment.value || 0),
+        0
+      );
 
-    const additionalDeductionsTotal = formData.additional_deductions.reduce(
-      (sum, deduction) => sum + Number(deduction.value || 0),
-      0
-    );
+      const additionalDeductionsTotal = formData.additional_deductions.reduce(
+        (sum, deduction) => sum + Number(deduction.value || 0),
+        0
+      );
 
-    // ✅ Correct Total Salary Payable
-    const totalSalaryPayable = baseSalary + additionalPaymentsTotal - additionalDeductionsTotal;
+      // ✅ Correct Total Salary Payable
+      const totalSalaryPayable =
+        baseSalary + additionalPaymentsTotal - additionalDeductionsTotal;
 
-    const paidAmount = Number(formData.paid_amount || 0);
-    const remainingBalance = totalSalaryPayable - paidAmount;
+      const paidAmount = Number(formData.paid_amount || 0);
+      const remainingBalance = totalSalaryPayable - paidAmount;
 
-    const salaryData = {
-      employee_id: formData?.employee_id,
-      salary_from_date: calculatedSalary
-        ? calculatedSalary?.salary_from_date
-        : new Date(),
-      salary_to_date: calculatedSalary
-        ? calculatedSalary.salary_to_date
-        : new Date(),
-      salary_month: formData.month,
-      salary_year: formData.year,
-      earnings: formData.earnings,
-      deductions: formData.deductions,
-      additional_deductions: formData.additional_deductions,
-      additional_payments: formData.additional_payments,
-      paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
-      lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
-      net_payable: totalSalaryPayable, // 👈 This is the final payable amount
-      paid_amount: paidAmount,
-      remaining_balance: remainingBalance,
-      total_salary_payable: totalSalaryPayable, // 👈 Explicitly store it
-      payment_method: formData.payment_method,
-      transaction_id:
-        formData.payment_method === "Cash"
-          ? null
-          : formData.transaction_id || null,
-      status: remainingBalance <= 0 ? "Paid" : "Pending",
-      pay_date: formData.pay_date ? formData.pay_date.toDate() : new Date(),
-    };
+      const salaryData = {
+        employee_id: formData?.employee_id,
+        salary_from_date: calculatedSalary
+          ? calculatedSalary?.salary_from_date
+          : new Date(),
+        salary_to_date: calculatedSalary
+          ? calculatedSalary.salary_to_date
+          : new Date(),
+        salary_month: formData.month,
+        salary_year: formData.year,
+        earnings: formData.earnings,
+        deductions: formData.deductions,
+        additional_deductions: formData.additional_deductions,
+        additional_payments: formData.additional_payments,
+        paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
+        lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
+        net_payable: totalSalaryPayable, // 👈 This is the final payable amount
+        paid_amount: paidAmount,
+        remaining_balance: remainingBalance,
+        total_salary_payable: totalSalaryPayable, // 👈 Explicitly store it
+        payment_method: formData.payment_method,
+        transaction_id:
+          formData.payment_method === "Cash"
+            ? null
+            : formData.transaction_id || null,
+        status: remainingBalance <= 0 ? "Paid" : "Pending",
+        pay_date: formData.pay_date ? formData.pay_date.toDate() : new Date(),
+      };
 
-    await API.post("/salary-payment/", salaryData);
-    message.success("Salary added successfully");
-    setIsOpenAddModal(false);
-    setCalculatedSalary(null);
-    setShowAdditionalPayments(false);
-    getAllSalary();
-  } catch (error) {
-    console.error("Error adding salary:", error);
-    message.error("Failed to add salary");
+      await API.post("/salary-payment/", salaryData);
+      message.success("Salary added successfully");
+      setIsOpenAddModal(false);
+      setCalculatedSalary(null);
+      setShowAdditionalPayments(false);
+      getAllSalary();
+    } catch (error) {
+      console.error("Error adding salary:", error);
+      message.error("Failed to add salary");
+    }
   }
-}
 
   async function getAllSalary() {
     try {
@@ -768,7 +772,8 @@ async function handleAddSalary() {
               menu={{
                 items: dropDownItems(data),
               }}
-              placement="bottomLeft">
+              placement="bottomLeft"
+            >
               <IoMdMore className="text-bold" />
             </Dropdown>
           </div>
@@ -793,20 +798,14 @@ async function handleAddSalary() {
 
   const totalDeductions = useMemo(() => {
     const baseDeductions = formData.deductions || {};
-   
-    
+
     const baseTotal = Object.values(baseDeductions).reduce(
       (sum, val) => sum + (Number(val) || 0),
       0
     );
 
- 
-    
-
-    return baseTotal ;
-  }, [formData.deductions, 
-    
-  ]);
+    return baseTotal;
+  }, [formData.deductions]);
 
   return (
     <div>
@@ -821,7 +820,8 @@ async function handleAddSalary() {
                 <div>
                   <button
                     onClick={() => setIsOpenAddModal(true)}
-                    className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200">
+                    className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
+                  >
                     + Add Salary Payment
                   </button>
                 </div>
@@ -847,7 +847,8 @@ async function handleAddSalary() {
             <div className="flex justify-end gap-2">
               <Button
                 onClick={() => setIsOpenAddModal(false)}
-                className="bg-red-600 hover:bg-red-700 text-white">
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
                 Cancel
               </Button>
               {calculatedSalary && (
@@ -856,7 +857,8 @@ async function handleAddSalary() {
                 </Button>
               )}
             </div>
-          }>
+          }
+        >
           <div className="space-y-6">
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1010,7 +1012,7 @@ async function handleAddSalary() {
                           readOnly
                           className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
                         />
-                         <span className="ml-2 font-medium font-mono text-blue-600">
+                        <span className="ml-2 font-medium font-mono text-blue-600">
                           {numberToIndianWords(formData?.target || 0)}
                         </span>
                       </div>
@@ -1366,7 +1368,8 @@ async function handleAddSalary() {
                       }
                       style={{
                         backgroundColor: "#16a34a",
-                      }}>
+                      }}
+                    >
                       Calculate Salary
                     </Button>
                   </div>
@@ -1536,14 +1539,16 @@ async function handleAddSalary() {
                         <Button
                           type="primary"
                           icon={<PlusOutlined />}
-                          onClick={addAdditionalPayment}>
+                          onClick={addAdditionalPayment}
+                        >
                           Add Payment
                         </Button>
                       </div>
                       {formData.additional_payments.map((payment, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                        >
                           <div className="form-group">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Payment Name
@@ -1604,7 +1609,8 @@ async function handleAddSalary() {
                           type="primary"
                           danger
                           icon={<PlusOutlined />}
-                          onClick={addAdditionalDeduction}>
+                          onClick={addAdditionalDeduction}
+                        >
                           Add Deduction
                         </Button>
                       </div>
@@ -1612,7 +1618,8 @@ async function handleAddSalary() {
                         (deduction, index) => (
                           <div
                             key={index}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                          >
                             <div className="form-group">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Deduction Name
@@ -1673,36 +1680,39 @@ async function handleAddSalary() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Total Salary Payable (Auto-calculated) */}
-<div className="form-group">
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Total Salary Payable
-  </label>
-  {(() => {
-    const base = calculatedSalary?.calculated_salary || 0;
-    const addPayments = formData.additional_payments.reduce(
-      (sum, p) => sum + Number(p.value || 0),
-      0
-    );
-    const addDeductions = formData.additional_deductions.reduce(
-      (sum, d) => sum + Number(d.value || 0),
-      0
-    );
-    const total = base + addPayments - addDeductions;
-    return (
-      <>
-        <input
-          type="number"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
-          value={total.toFixed(2)}
-          disabled
-        />
-        <span className="ml-2 font-medium font-mono text-blue-600">
-          {numberToIndianWords(total.toFixed(2))}
-        </span>
-      </>
-    );
-  })()}
-</div>
+                        <div className="form-group">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Total Salary Payable
+                          </label>
+                          {(() => {
+                            const base =
+                              calculatedSalary?.calculated_salary || 0;
+                            const addPayments =
+                              formData.additional_payments.reduce(
+                                (sum, p) => sum + Number(p.value || 0),
+                                0
+                              );
+                            const addDeductions =
+                              formData.additional_deductions.reduce(
+                                (sum, d) => sum + Number(d.value || 0),
+                                0
+                              );
+                            const total = base + addPayments - addDeductions;
+                            return (
+                              <>
+                                <input
+                                  type="number"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                                  value={total.toFixed(2)}
+                                  disabled
+                                />
+                                <span className="ml-2 font-medium font-mono text-blue-600">
+                                  {numberToIndianWords(total.toFixed(2))}
+                                </span>
+                              </>
+                            );
+                          })()}
+                        </div>
                         <div className="form-group">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Total Payable Amount
@@ -1718,7 +1728,7 @@ async function handleAddSalary() {
                           />
                           <span className="ml-2 font-medium font-mono text-blue-600">
                             {numberToIndianWords(
-                             ( formData.paid_amount || 0).toFixed(2) || 0
+                              Number(formData.paid_amount || 0).toFixed(2)
                             )}
                           </span>
                         </div>
@@ -1818,22 +1828,24 @@ async function handleAddSalary() {
               <Button
                 type="primary"
                 onClick={handleUpdateSubmit}
-                loading={updateLoading}>
+                loading={updateLoading}
+              >
                 Update Salary
               </Button>
             </div>
-          }>
+          }
+        >
           <Form
             form={updateForm}
             layout="vertical"
             initialValues={updateFormData}
-            onValuesChange={handleUpdateChange}>
+            onValuesChange={handleUpdateChange}
+          >
             <Form.Item
               name="employee_id"
               label="Employee ID"
-              rules={[
-                { required: true, message: "Please select an employee" },
-              ]}>
+              rules={[{ required: true, message: "Please select an employee" }]}
+            >
               <Select
                 disabled
                 showSearch
@@ -1856,7 +1868,8 @@ async function handleAddSalary() {
             <Form.Item
               name="month"
               label="Month"
-              rules={[{ required: true, message: "Please select a month" }]}>
+              rules={[{ required: true, message: "Please select a month" }]}
+            >
               <Select disabled placeholder="Select Month">
                 {months.map((month) => (
                   <Select.Option key={month.value} value={month.value}>
@@ -1870,9 +1883,8 @@ async function handleAddSalary() {
               name="year"
               label="Year"
               rules={[{ required: true, message: "Please select a year" }]}
-              getValueFromEvent={(value) =>
-                value ? value.format("YYYY") : ""
-              }>
+              getValueFromEvent={(value) => (value ? value.format("YYYY") : "")}
+            >
               <DatePicker disabled picker="year" style={{ width: "100%" }} />
             </Form.Item>
 
@@ -1889,27 +1901,32 @@ async function handleAddSalary() {
                 </Form.Item>
                 <Form.Item
                   name={["earnings", "travel_allowance"]}
-                  label="Travel Allowance">
+                  label="Travel Allowance"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item
                   name={["earnings", "medical_allowance"]}
-                  label="Medical Allowance">
+                  label="Medical Allowance"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item
                   name={["earnings", "basket_of_benifits"]}
-                  label="Basket of Benefits">
+                  label="Basket of Benefits"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item
                   name={["earnings", "performance_bonus"]}
-                  label="Performance Bonus">
+                  label="Performance Bonus"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item
                   name={["earnings", "other_allowances"]}
-                  label="Other Allowances">
+                  label="Other Allowances"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item name={["earnings", "conveyance"]} label="Conveyance">
@@ -1935,7 +1952,8 @@ async function handleAddSalary() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
                   name={["deductions", "income_tax"]}
-                  label="Income Tax">
+                  label="Income Tax"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item name={["deductions", "esi"]} label="ESI">
@@ -1946,7 +1964,8 @@ async function handleAddSalary() {
                 </Form.Item>
                 <Form.Item
                   name={["deductions", "professional_tax"]}
-                  label="Professional Tax">
+                  label="Professional Tax"
+                >
                   <Input type="number" />
                 </Form.Item>
               </div>
@@ -1979,7 +1998,8 @@ async function handleAddSalary() {
                         { name: "", value: 0 },
                       ],
                     });
-                  }}>
+                  }}
+                >
                   Add Payment
                 </Button>
               </div>
@@ -1989,11 +2009,13 @@ async function handleAddSalary() {
                     {fields.map(({ key, name, ...restField }) => (
                       <div
                         key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                      >
                         <Form.Item
                           {...restField}
                           name={[name, "name"]}
-                          label="Payment Name">
+                          label="Payment Name"
+                        >
                           <Input placeholder="Enter payment name" />
                         </Form.Item>
                         <div className="flex items-end gap-2">
@@ -2005,7 +2027,8 @@ async function handleAddSalary() {
                                 e.currentTarget.blur();
                               }}
                               name={[name, "value"]}
-                              label="Amount">
+                              label="Amount"
+                            >
                               <Input type="number" placeholder="Enter amount" />
                             </Form.Item>
                           </div>
@@ -2040,7 +2063,8 @@ async function handleAddSalary() {
                         { name: "", value: 0 },
                       ],
                     });
-                  }}>
+                  }}
+                >
                   Add Deduction
                 </Button>
               </div>
@@ -2050,11 +2074,13 @@ async function handleAddSalary() {
                     {fields.map(({ key, name, ...restField }) => (
                       <div
                         key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                      >
                         <Form.Item
                           {...restField}
                           name={[name, "name"]}
-                          label="Deduction Name">
+                          label="Deduction Name"
+                        >
                           <Input placeholder="Enter deduction name" />
                         </Form.Item>
                         <div className="flex items-end gap-2">
@@ -2062,7 +2088,8 @@ async function handleAddSalary() {
                             <Form.Item
                               {...restField}
                               name={[name, "value"]}
-                              label="Amount">
+                              label="Amount"
+                            >
                               <Input
                                 type="number"
                                 placeholder="Enter amount"
@@ -2090,7 +2117,8 @@ async function handleAddSalary() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
                   name="total_salary_payable"
-                  label="Total Salary Payable">
+                  label="Total Salary Payable"
+                >
                   <Input type="number" />
                 </Form.Item>
                 <Form.Item name="paid_amount" label="Paid Amount">
@@ -2104,7 +2132,8 @@ async function handleAddSalary() {
                   label="Payment Mode"
                   rules={[
                     { required: true, message: "Please select payment mode" },
-                  ]}>
+                  ]}
+                >
                   <Select
                     placeholder="Select payment mode"
                     options={[
@@ -2130,7 +2159,8 @@ async function handleAddSalary() {
                           updateForm.getFieldValue("payment_method") !== "Cash",
                         message: "Transaction ID is required",
                       },
-                    ]}>
+                    ]}
+                  >
                     <Input placeholder="Enter transaction reference" />
                   </Form.Item>
                 )}
@@ -2144,7 +2174,8 @@ async function handleAddSalary() {
                   getValueProps={(value) => ({
                     value: value ? moment(value) : null,
                   })}
-                  getValueFromEvent={(date) => (date ? date.toDate() : null)}>
+                  getValueFromEvent={(date) => (date ? date.toDate() : null)}
+                >
                   <DatePicker
                     style={{ width: "100%" }}
                     format="DD MMM YYYY"
@@ -2172,10 +2203,12 @@ async function handleAddSalary() {
               type="primary"
               danger
               loading={deleteLoading}
-              onClick={() => handleDeleteConfirm(deleteId)}>
+              onClick={() => handleDeleteConfirm(deleteId)}
+            >
               Delete
             </Button>,
-          ]}>
+          ]}
+        >
           <p>
             Are you sure you want to delete this salary payment? This action
             cannot be undone.
@@ -2210,7 +2243,8 @@ async function handleAddSalary() {
                 onClick={() => {
                   handleEdit(existingSalaryRecord._id);
                   setAlreadyPaidModalOpen(false);
-                }}>
+                }}
+              >
                 Edit Record
               </Button>
             ),
@@ -2220,7 +2254,8 @@ async function handleAddSalary() {
             maxHeight: "70vh",
             overflowY: "auto",
             backgroundColor: "#fafafa",
-          }}>
+          }}
+        >
           {existingSalaryRecord ? (
             <div className="space-y-6 text-sm">
               {/* Salary Period */}
@@ -2295,7 +2330,8 @@ async function handleAddSalary() {
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between border-b border-gray-100 pb-1">
+                        className="flex justify-between border-b border-gray-100 pb-1"
+                      >
                         <span className="capitalize">
                           {key.replace(/_/g, " ")}
                         </span>
@@ -2322,7 +2358,8 @@ async function handleAddSalary() {
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between border-b border-gray-100 pb-1">
+                        className="flex justify-between border-b border-gray-100 pb-1"
+                      >
                         <span className="capitalize">
                           {key.replace(/_/g, " ")}
                         </span>
@@ -2349,7 +2386,8 @@ async function handleAddSalary() {
                     {existingSalaryRecord.additional_payments.map((pay, i) => (
                       <li
                         key={i}
-                        className="flex justify-between border-b border-gray-100 pb-1">
+                        className="flex justify-between border-b border-gray-100 pb-1"
+                      >
                         <span>{pay.name || "Payment"}</span>
                         <span className="font-medium">
                           ₹
@@ -2375,7 +2413,8 @@ async function handleAddSalary() {
                       (ded, i) => (
                         <li
                           key={i}
-                          className="flex justify-between border-b border-gray-100 pb-1">
+                          className="flex justify-between border-b border-gray-100 pb-1"
+                        >
                           <span>{ded.name || "Deduction"}</span>
                           <span className="font-medium text-red-600">
                             ₹
@@ -2496,7 +2535,8 @@ async function handleAddSalary() {
                         Number(existingSalaryRecord.remaining_balance) > 0
                           ? "text-red-600 font-bold"
                           : "text-green-600"
-                      }>
+                      }
+                    >
                       ₹
                       {Number(
                         existingSalaryRecord.remaining_balance
@@ -2514,7 +2554,8 @@ async function handleAddSalary() {
                         existingSalaryRecord.status === "Paid"
                           ? "text-green-700 font-bold"
                           : "text-amber-700 font-bold"
-                      }>
+                      }
+                    >
                       {existingSalaryRecord.status}
                     </span>
                   </div>
