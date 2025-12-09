@@ -1687,7 +1687,7 @@ if (rawDefaultDifference !== 0) {
                                   type="number"
                                   placeholder="Enter amount"
                                   onWheel={(e) => e.target.blur()}
-                                  value={deduction.value.toFixed(2)}
+                                  value={deduction.value}
                                   onChange={(e) =>
                                     handleAdditionalDeductionChange(
                                       index,
@@ -1720,8 +1720,25 @@ if (rawDefaultDifference !== 0) {
                       <h3 className="text-lg font-semibold text-blue-800 mb-4">
                         Transaction Details
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="form-group mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Pay Date <span className="text-red-600">*</span>
+                        </label>
+                        <DatePicker
+                          style={{ width: "100%" }}
+                          value={formData.pay_date}
+                          onChange={(date) => handleChange("pay_date", date)}
+                          format="DD MMM YYYY"
+                          disabledDate={(current) => {
+                            return (
+                              current && current.isAfter(moment().endOf("day"))
+                            );
+                          }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         {/* Total Salary Payable (Auto-calculated) */}
+                        
                         <div className="form-group">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Total Salary Payable
@@ -1775,7 +1792,7 @@ if (rawDefaultDifference !== 0) {
                           </span>
                         </div>
                         <div className="form-group">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700  mb-2">
                             Payment Mode <span className="text-red-600">*</span>
                           </label>
                           <Select
@@ -1821,22 +1838,7 @@ if (rawDefaultDifference !== 0) {
                           </div>
                         </div>
                       )}
-                      <div className="form-group">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Pay Date <span className="text-red-600">*</span>
-                        </label>
-                        <DatePicker
-                          style={{ width: "100%" }}
-                          value={formData.pay_date}
-                          onChange={(date) => handleChange("pay_date", date)}
-                          format="DD MMM YYYY"
-                          disabledDate={(current) => {
-                            return (
-                              current && current.isAfter(moment().endOf("day"))
-                            );
-                          }}
-                        />
-                      </div>
+                      
                     </div>
                   )}
                 </>
