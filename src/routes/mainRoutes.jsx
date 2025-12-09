@@ -138,6 +138,7 @@ import SalaryPayment from "../pages/SalaryPayment";
 import TransferMenu from "../pages/TransferMenu";
 import CollectionMenu from "../pages/CollectionMenu";
 import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
+import EmployeeSalaryReport from "../pages/EmployeeSalaryReport"
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -748,6 +749,7 @@ const mainRoutes = createBrowserRouter([
    {path: "salary-remaining", element: <SalaryRemainingReport/>},
     {path: "non-converted-lead-report", element: <NonConvertedLead/>},
    {path: "converted-lead-report", element: <ConvertedLead/>},
+   {path: "employee-salary-report", element: <EmployeeSalaryReport/>},
     {path: "user-registration-source-summary-report", element: <UserRegistrationSourceSummaryReport/>},
     ],
   },

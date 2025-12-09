@@ -316,6 +316,15 @@ const subMenus = [
    Icon: FaMobileAlt,
    color: "from-blue-500 to-blue-600",
   },
+
+       {
+    id:"38",
+    title: "Salary report",
+    link: "/reports/employee-salary-report",
+    category: "Employee",
+   Icon: HiOutlineBanknotes,
+   color: "from-blue-500 to-blue-600",
+  },
   
 ];
 
