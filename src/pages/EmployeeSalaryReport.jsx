@@ -1565,4 +1565,387 @@ const EmployeeSalaryReport = () => {
   );
 };
 
+
+// const EmployeeSalaryReport = () => {
+//   const [allEmployeeSalary, setAllEmployeeSalary] = useState([]);
+//   const [allEmployees, setAllEmployees] = useState([]);
+//   const [allSalaryTable, setAllSalaryTable] = useState([]);
+//   const [summary, setSummary] = useState({
+//     totalNetPayable: 0,
+//     totalPaidAmount: 0,
+//     totalPaidDays: 0,
+//     totalAdditionalPayments: 0,
+//     totalAdditionalDeductions: 0,
+//     addPaymentsListSummary: "",
+//     dedPaymentsListSummary: "",
+//     totalRemainingBalance: 0,
+//   });
+
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [selectedEmployee, setSelectedEmployee] = useState(null);
+//   const [selectedMonthYear, setSelectedMonthYear] = useState(null);
+
+//   // --------------------------
+//   // MONTH + YEAR SORT FUNCTION
+//   // --------------------------
+//   const monthOrder = [
+//     "January", "February", "March", "April", "May", "June",
+//     "July", "August", "September", "October", "November", "December"
+//   ];
+
+//   const sortSalaryList = (list) => {
+//     return list.sort((a, b) => {
+//       const yearA = Number(a.salary_year);
+//       const yearB = Number(b.salary_year);
+
+//       if (yearA !== yearB) return yearA - yearB;
+
+//       return (
+//         monthOrder.indexOf(a.salary_month) -
+//         monthOrder.indexOf(b.salary_month)
+//       );
+//     });
+//   };
+
+//   // Fetch all employees
+//   useEffect(() => {
+//     const fetchEmployee = async () => {
+//       try {
+//         const response = await api.get("/agent/get-employee");
+//         setAllEmployees(response?.data?.employee || []);
+//       } catch (error) {
+//         console.error("unable to fetch employee");
+//       }
+//     };
+//     fetchEmployee();
+//   }, []);
+
+//   // Format salary rows
+//   const formatSalaryData = (salaryList) => {
+//     return salaryList.map((s, index) => {
+//       const addTotal = Array.isArray(s?.additional_payments)
+//         ? s.additional_payments.reduce((acc, cur) => acc + (cur.value || 0), 0)
+//         : 0;
+
+//       const dedTotal = Array.isArray(s?.additional_deductions)
+//         ? s.additional_deductions.reduce(
+//             (acc, cur) => acc + (cur.value || 0),
+//             0
+//           )
+//         : 0;
+
+//       const addListStr = Array.isArray(s?.additional_payments)
+//         ? s.additional_payments
+//             .map((ele) => `${ele.name}:${ele.value}`)
+//             .join(" | ")
+//         : "N/A";
+
+//       const dedListStr = Array.isArray(s?.additional_deductions)
+//         ? s.additional_deductions
+//             .map((ele) => `${ele.name}:${ele.value}`)
+//             .join(" | ")
+//         : "N/A";
+
+//       return {
+//         _id: s?._id,
+//         slNo: index + 1,
+//         employeeCode: s?.employee_id?.employeeCode || "N/A",
+//         employeeName: s?.employee_id?.name || "N/A",
+//         employeePhone: s?.employee_id?.phone_number || "N/A",
+//         employeeSalary: s?.employee_id?.salary || "N/A",
+//         salaryMonth: s?.salary_month || "N/A",
+//         salaryYear: s?.salary_year || "N/A",
+//         totalSalaryPayable: s?.total_salary_payable || 0,
+//         netPayable: s?.net_payable || 0,
+//         paidAmount: s?.paid_amount || 0,
+//         remainingBalance: s?.remaining_balance || 0,
+//         paidDays: s?.paid_days || 0,
+//         paidDate: s?.pay_date?.split("T")[0] || "N/A",
+//         addPaymentsList: addListStr,
+//         dedPaymentsList: dedListStr,
+//         addPayments: addTotal,
+//         dedPayments: dedTotal,
+//         earningBasic: s?.earnings?.basic || 0,
+//         earningHra: s?.earnings?.hra || 0,
+//         earningTravelAllowance: s?.earnings?.travel_allowance || 0,
+//         earningMedicalAllowance: s?.earnings?.medical_allowance || 0,
+//         earningBenifits: s?.earnings?.basket_of_benifits || 0,
+//         earningPerformanceBonus: s?.earnings?.performance_bonus || 0,
+//         earningOthers: s?.earnings?.other_allowances || 0,
+//         earningConveyance: s?.earnings?.conveyance || 0,
+//         deductIT: s?.deductions?.income_tax || 0,
+//         deductESI: s?.deductions?.esi || 0,
+//         deductEPF: s?.deductions?.epf || 0,
+//         deductPT: s?.deductions?.professional_tax || 0,
+//         deductSalaryAdvance: s?.deductions?.salary_advance || 0,
+//         salaryPaymentMethod: s?.payment_method || "N/A",
+//         status: s?.status || "N/A",
+//       };
+//     });
+//   };
+
+//   // SUMMARY CALCULATION
+//   const calculateSummary = (rows) => {
+//     const summaryData = {
+//       totalNetPayable: 0,
+//       totalPaidAmount: 0,
+//       totalPaidDays: 0,
+//       totalAdditionalPayments: 0,
+//       totalAdditionalDeductions: 0,
+//       totalRemainingBalance: 0,
+//       addPaymentsListSummary: "",
+//       dedPaymentsListSummary: "",
+//     };
+
+//     const addListArr = [];
+//     const dedListArr = [];
+
+//     rows.forEach((r) => {
+//       summaryData.totalNetPayable += Number(r.netPayable) || 0;
+//       summaryData.totalPaidAmount += Number(r.paidAmount) || 0;
+//       summaryData.totalPaidDays += Number(r.paidDays) || 0;
+//       summaryData.totalAdditionalPayments += Number(r.addPayments) || 0;
+//       summaryData.totalAdditionalDeductions += Number(r.dedPayments) || 0;
+//       summaryData.totalRemainingBalance += Number(r.remainingBalance);
+
+//       if (r.addPaymentsList !== "N/A") addListArr.push(r.addPaymentsList);
+//       if (r.dedPaymentsList !== "N/A") dedListArr.push(r.dedPaymentsList);
+//     });
+
+//     summaryData.addPaymentsListSummary = addListArr.join(" | ");
+//     summaryData.dedPaymentsListSummary = dedListArr.join(" | ");
+
+//     setSummary(summaryData);
+//   };
+
+//   // --------------------------
+//   // FETCH ALL SALARIES
+//   // --------------------------
+//   useEffect(() => {
+//     const fetchEmployeeAllSalaries = async () => {
+//       try {
+//         setIsLoading(true);
+//         const response = await api.get("/salary-payment/all");
+
+//         const sorted = sortSalaryList(response?.data?.data || []);
+//         const formatted = formatSalaryData(sorted);
+
+//         setAllSalaryTable(formatted);
+//         calculateSummary(formatted);
+//       } catch (error) {
+//         console.error("unable to fetch Employee Salary Payment");
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+//     fetchEmployeeAllSalaries();
+//   }, []);
+
+//   // --------------------------
+//   // FETCH FILTERED SALARIES
+//   // --------------------------
+//   useEffect(() => {
+//     const fetchAllEmployeeData = async () => {
+//       try {
+//         setIsLoading(true);
+//         let query = [];
+
+//         if (selectedEmployee) query.push(`employee_id=${selectedEmployee}`);
+//         if (selectedMonthYear) {
+//           query.push(`month=${selectedMonthYear.month}`);
+//           query.push(`year=${selectedMonthYear.year}`);
+//         }
+
+//         const url = `/salary-payment/report?${query.join("&")}`;
+//         const res = await api.get(url);
+
+//         const sorted = sortSalaryList(res?.data?.data || []);
+//         const formatted = formatSalaryData(sorted);
+
+//         setAllSalaryTable(formatted);
+//         calculateSummary(formatted);
+//       } catch (err) {
+//         console.log("unable to fetch filtered employee data");
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchAllEmployeeData();
+//   }, [selectedEmployee, selectedMonthYear]);
+
+//   // HANDLE MONTH PICKER
+//   const handleMonthPick = (value) => {
+//     if (!value) return setSelectedMonthYear(null);
+
+//     const monthIndex = value.month();
+//     const year = value.year();
+
+//     const monthNames = monthOrder;
+
+//     setSelectedMonthYear({
+//       month: monthNames[monthIndex],
+//       year,
+//     });
+//   };
+
+//   const handleReset = () => {
+//     setSelectedEmployee(null);
+//     setSelectedMonthYear(null);
+//   };
+
+//     const columns = [
+//     { key: "slNo", header: "SL. NO" },
+//     { key: "employeeName", header: "Employee Name" },
+//     { key: "employeeCode", header: "Employee ID" },
+//     { key: "employeePhone", header: "Phone" },
+//     { key: "salaryMonth", header: "Month" },
+//     { key: "salaryYear", header: "Year" },
+//     { key: "paidDate", header: "Pay Date" },
+//     { key: "netPayable", header: "Net Payable" },
+//     { key: "paidAmount", header: "Paid Amount" },
+//   ];
+
+//   const allColumns = [
+//     { key: "slNo", header: "Sl No" },
+//     { key: "employeeCode", header: "Employee ID" },
+//     { key: "employeeName", header: "Name" },
+//     { key: "employeePhone", header: "Phone Number" },
+//     { key: "salaryMonth", header: "Month" },
+//     { key: "salaryYear", header: "Year" },
+//     { key: "totalSalaryPayable", header: "Total Salary Payable" },
+//     { key: "netPayable", header: "Net Payable" },
+//     { key: "paidAmount", header: "Paid Amount" },
+//     { key: "remainingBalance", header: "Remaining Balance" },
+//     { key: "paidDays", header: "Paid Days" },
+//     { key: "paidDate", header: "Paid Date" },
+//     { key: "addPayments", header: "Additional Payments" },
+//     { key: "dedPayments", header: "Deduction Payments" },
+//     { key: "earningBasic", header: "Basic" },
+//     { key: "earningHra", header: "HRA" },
+//     { key: "earningTravelAllowance", header: "Travel Allowance" },
+//     { key: "earningMedicalAllowance", header: "Medical Allowance" },
+//     { key: "earningBenifits", header: "Performance Benifits" },
+//     { key: "earningOthers", header: "Other Allowance" },
+//     { key: "earningConveyance", header: "Conveyance" },
+//     { key: "deductIT", header: "Income Tax" },
+//     { key: "deductESI", header: "ESI" },
+//     { key: "deductEPF", header: "EPF" },
+//     { key: "deductPT", header: "Professional Tax" },
+//     { key: "deductSalaryAdvance", header: "SalaryAdvance" },
+//     { key: "salaryPaymentMethod", header: "Payment Type" },
+//     { key: "status", header: "Status" },
+//   ];
+
+//     const printHeaderKeys = [
+//     "Employee",
+//     "Month",
+//     "Year",
+//     "Total Net Payable",
+//     "Total Paid Amount",
+//     "Total Paid Days",
+//     "Total Add. Payments",
+//     "Total Add. Deductions",
+//     "Total Remaining Balance",
+//   ];
+
+//   const printHeaderValues = [
+//     selectedEmployee
+//       ? allEmployees.find((e) => e._id === selectedEmployee)?.name || "—"
+//       : "All Employees",
+
+//     selectedMonthYear?.month || "—",
+//     selectedMonthYear?.year || "—",
+
+//     `₹${summary.totalNetPayable.toLocaleString("en-IN")}`,
+//     `₹${summary.totalPaidAmount.toLocaleString("en-IN")}`,
+//     summary.totalPaidDays,
+//     `₹${summary.totalAdditionalPayments.toLocaleString("en-IN")}`,
+//     `₹${summary.totalAdditionalDeductions.toLocaleString("en-IN")}`,
+//     `₹${summary.totalRemainingBalance.toLocaleString("en-IN")}`,
+//   ];
+
+//   return (
+//     <div className="w-screen">
+//      <Navbar />
+//       <div className="flex-grow p-7">
+//         <h1 className="font-bold text-2xl mb-4">Reports - Salary Report</h1>
+
+//         {/* FILTERS */}
+//         <div className="flex gap-4 mb-6 items-center">
+//           <Select
+//             allowClear
+//             style={{ width: 300 }}
+//             value={selectedEmployee}
+//             placeholder="Select Employee"
+//             onChange={(value) => setSelectedEmployee(value)}
+//           >
+//             {allEmployees.map((emp) => (
+//               <Option key={emp._id} value={emp._id}>
+//                 {emp.name} | {emp.phone_number}
+//               </Option>
+//             ))}
+//           </Select>
+
+//           <MonthPicker
+//             style={{ width: 250 }}
+//             placeholder="Select Month"
+//             onChange={handleMonthPick}
+//           />
+
+//           <button
+//             onClick={handleReset}
+//             className="px-4 py-2 bg-blue-500 text-white rounded"
+//           >
+//             Reset
+//           </button>
+//         </div>
+
+//         {/* SUMMARY BOX */}
+//         <div className="grid grid-cols-2 gap-4 bg-gray-100 p-4 mb-5 rounded">
+//           <div>
+//             <b>Total Net Payable:</b> ₹{summary.totalNetPayable}
+//           </div>
+//           <div>
+//             <b>Total Paid Amount:</b> ₹{summary.totalPaidAmount}
+//           </div>
+//           <div>
+//             <b>Total Paid Days:</b> {summary.totalPaidDays}
+//           </div>
+//           <div>
+//             <b>Total Add. Payments:</b> ₹{summary.totalAdditionalPayments}
+//           </div>
+//           <div>
+//             <b>Total Add. Deductions:</b> ₹{summary.totalAdditionalDeductions}
+//           </div>
+//           <div>
+//             <b>All Additional Payments:</b> {summary.addPaymentsListSummary}
+//           </div>
+//           <div>
+//             <b>All Deduction Payments:</b> {summary.dedPaymentsListSummary}
+//           </div>
+//           {/* <div><b>All Remaining:</b> {summary.totalRemainingBalance}</div> */}
+//         </div>
+
+//         {isLoading ? (
+//           <div className="flex justify-center py-10">
+//             <Spin size="large" />
+//           </div>
+//         ) : (
+//           <DataTable
+//             columns={columns}
+//             data={allSalaryTable}
+//             exportCols={allColumns}
+//             isExportEnabled={true}
+//             exportedPdfName="Employee Salary Report"
+//             printHeaderKeys={printHeaderKeys}
+//             printHeaderValues={printHeaderValues}
+//             exportedFileName="EmployeeSalaryReport.csv"
+//           />
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
 export default EmployeeSalaryReport;
