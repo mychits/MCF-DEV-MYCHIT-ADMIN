@@ -783,6 +783,23 @@ const SalaryPayment = () => {
     try {
       const response = await API.get("/salary-payment/all");
       const responseData = response?.data?.data || [];
+      const monthOrder = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    // 👉 Sort by year + month order
+    responseData.sort((a, b) => {
+      const yearA = Number(a.salary_year);
+      const yearB = Number(b.salary_year);
+
+      if (yearA !== yearB) return yearA - yearB;
+
+      return (
+        monthOrder.indexOf(a.salary_month) -
+        monthOrder.indexOf(b.salary_month)
+      );
+    });
       const filteredData = responseData.map((data, index) => ({
         siNo: index + 1,
         _id: data?._id,
