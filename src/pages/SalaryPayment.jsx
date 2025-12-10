@@ -668,18 +668,18 @@ const SalaryPayment = () => {
 
       const rawDefaultDifference = totalEarnings - totalDeductions - calcSalary;
 
-      if (rawDefaultDifference !== 0) {
-        autoAdditionalDeductions.push({
-          name: "Absence Adjustment",
-          value: rawDefaultDifference,
-        });
-      }
+      // if (rawDefaultDifference !== 0) {
+      //   autoAdditionalDeductions.push({
+      //     name: "Absence Adjustment",
+      //     value: rawDefaultDifference,
+      //   });
+      // }
 
       setFormData((prev) => ({
         ...prev,
         total_salary_payable: calculated.calculated_salary,
-        additional_payments: autoAdditionalPayments,
-        additional_deductions: autoAdditionalDeductions,
+        // additional_payments: autoAdditionalPayments,
+        // additional_deductions: autoAdditionalDeductions,
       }));
       setShowAdditionalPayments(true);
       message.success("Salary calculated successfully");
