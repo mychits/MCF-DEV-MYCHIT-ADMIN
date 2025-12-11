@@ -22,7 +22,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
 import { numberToIndianWords } from "../helpers/numberToIndianWords";
-
+import moment from "moment";
 
 const SalaryPayment = () => {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ const SalaryPayment = () => {
     },
     additional_payments: [],
     additional_deductions: [],
-    pay_date: dayjs(),
+    pay_date: moment(),
     payment_method: "Cash",
     transaction_id: "",
   });
@@ -285,8 +285,8 @@ const SalaryPayment = () => {
           payment_method: salaryData?.payment_method || "Cash",
           transaction_id: salaryData?.transaction_id || "",
           pay_date: salaryData?.pay_date
-            ? dayjs(salaryData?.pay_date)
-            : dayjs(),
+            ? moment(salaryData?.pay_date)
+            : moment(),
         };
 
         setUpdateFormData(formData);
@@ -469,16 +469,16 @@ const SalaryPayment = () => {
 
   const loadTargetAndIncentive = async () => {
     try {
-      const monthIndex = dayjs().month(formData.month).month();
+      const monthIndex = moment().month(formData.month).month();
       const year = formData.year;
 
-      const start_date = dayjs()
+      const start_date = moment()
         .year(year)
         .month(monthIndex)
         .startOf("month")
         .format("YYYY-MM-DD");
 
-      const end_date = dayjs()
+      const end_date = moment()
         .year(year)
         .month(monthIndex)
         .endOf("month")
@@ -518,6 +518,9 @@ const SalaryPayment = () => {
     if (["employee_id", "month", "year"].includes(name)) {
       setCalculatedSalary(null);
       setShowAdditionalPayments(false);
+       setFormData((prev) => ({ ...prev, paid_amount: 0, transaction_id: "",   payment_method:""  }));
+
+    
     }
   };
 
@@ -526,6 +529,9 @@ const SalaryPayment = () => {
       ...prev,
       earnings: { ...prev.earnings },
       deductions: { ...prev.deductions, [name]: value },
+          paid_amount: 0, 
+    transaction_id: "",
+    payment_method:"",
     }));
     setCalculatedSalary(null);
     setShowAdditionalPayments(false);
@@ -536,6 +542,9 @@ const SalaryPayment = () => {
       ...prev,
       earnings: { ...prev.earnings, [name]: value },
       deductions: { ...prev.deductions },
+       paid_amount: 0, 
+    transaction_id: "",
+    payment_method:"",
     }));
     setCalculatedSalary(null);
     setShowAdditionalPayments(false);
@@ -769,8 +778,8 @@ if (target > 0) {
         status: remainingBalance <= 0 ? "Paid" : "Pending",
         // pay_date: formData.pay_date ? formData.pay_date.toDate() : new Date(),
         pay_date: formData?.pay_date
-  ? dayjs(formData?.pay_date).startOf("day").add(12, "hours")
-  : dayjs().startOf("day").add(12, "hours"),
+  ? moment(formData?.pay_date).startOf("day").add(12, "hours")
+  : moment().startOf("day").add(12, "hours"),
       };
 
       await API.post("/salary-payment/", salaryData);
@@ -1742,7 +1751,7 @@ if (target > 0) {
                           format="DD MMM YYYY"
                           disabledDate={(current) => {
                             return (
-                              current && current.isAfter(dayjs().endOf("day"))
+                              current && current.isAfter(moment().endOf("day"))
                             );
                           }}
                         />
@@ -2226,7 +2235,7 @@ if (target > 0) {
                     { required: true, message: "Please select pay date" },
                   ]}
                   getValueProps={(value) => ({
-                    value: value ? dayjs(value) : null,
+                    value: value ? moment(value) : null,
                   })}
                   getValueFromEvent={(date) => (date ? date.toDate() : null)}
                 >
@@ -2234,7 +2243,7 @@ if (target > 0) {
                     style={{ width: "100%" }}
                     format="DD MMM YYYY"
                     disabledDate={(current) =>
-                      current && current.isAfter(dayjs().endOf("day"))
+                      current && current.isAfter(moment().endOf("day"))
                     }
                   />
                 </Form.Item>
@@ -2324,16 +2333,16 @@ if (target > 0) {
                   </div>
                   <div>
                     <strong>From:</strong>{" "}
-                    {dayjs(existingSalaryRecord.salary_from_date).format(
+                    {moment(existingSalaryRecord.salary_from_date).format(
                       "DD MMM YYYY"
                     )}
                   </div>
                   <div>
                     <strong>To:</strong>{" "}
-                    {/* {dayjs(existingSalaryRecord.salary_to_date).format(
+                    {/* {moment(existingSalaryRecord.salary_to_date).format(
                       "DD MMM YYYY"
                     )} */}
-                    {dayjs(existingSalaryRecord.salary_to_date)
+                    {moment(existingSalaryRecord.salary_to_date)
                       .subtract(1, "day")
                       .format("DD MMM YYYY")}
                   </div>
@@ -2632,7 +2641,7 @@ if (target > 0) {
                   <div className="flex justify-between">
                     <span>Pay Date:</span>{" "}
                     <span>
-                      {dayjs(existingSalaryRecord.pay_date).format(
+                      {moment(existingSalaryRecord.pay_date).format(
                         "DD MMM YYYY"
                       )}
                     </span>
