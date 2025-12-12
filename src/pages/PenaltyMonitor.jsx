@@ -20,6 +20,12 @@ import {
   Dropdown,
   Menu,
   Space,
+  Drawer,
+  Divider,
+  Typography,
+  Alert,
+  Progress,
+  Tooltip,
 } from "antd";
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
@@ -38,10 +44,17 @@ import {
   DollarCircleOutlined,
   SendOutlined,
   DownOutlined,
+  ArrowLeftOutlined,
+  UndoOutlined,
+  InfoCircleOutlined,
+  CalculatorOutlined,
+  WalletOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import Sidebar from "../components/layouts/Sidebar";
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const PenaltyMonitor = () => {
   const [searchText, setSearchText] = useState("");
@@ -77,10 +90,10 @@ const PenaltyMonitor = () => {
   const [reversalCustomerFilter, setReversalCustomerFilter] = useState("");
   const [reversalTicketFilter, setReversalTicketFilter] = useState("");
 
-  const [penaltySummaryModal, setPenaltySummaryModal] = useState(false);
+  const [penaltySummaryDrawer, setPenaltySummaryDrawer] = useState(false);
   const [penaltySummary, setPenaltySummary] = useState(null);
   const [selectedReversalType, setSelectedReversalType] = useState(null);
-  const [reverseAmountModal, setReverseAmountModal] = useState(false);
+  const [reverseAmountDrawer, setReverseAmountDrawer] = useState(false);
   const [reverseAmount, setReverseAmount] = useState("");
   const [maxAllowedAmount, setMaxAllowedAmount] = useState(0);
 
@@ -269,13 +282,13 @@ const PenaltyMonitor = () => {
                   >
                     View
                   </Button>
-                  {whatsappMenuItems.length > 0 && (
+                  {/* {whatsappMenuItems.length > 0 && (
                     <Dropdown menu={{ items: whatsappMenuItems }} placement="bottomRight">
                       <Button type="dashed" size="small" icon={<SendOutlined />}>
                         WhatsApp <DownOutlined />
                       </Button>
                     </Dropdown>
-                  )}
+                  )} */}
                 </Space>
               );
               usersList.push({
@@ -337,7 +350,8 @@ const PenaltyMonitor = () => {
 
   // 🔹 Calculate totals
   useEffect(() => {
-    const totalCustomers = filteredUsers.length;
+    const uniqueCustomerIds = new Set(filteredUsers.map(u => u.userId));
+    const totalCustomers = uniqueCustomerIds.size;
     const groupSet = new Set(filteredUsers.map((user) => user.groupName));
     const totalGroups = groupFilter ? 1 : groupSet.size;
     const totalToBePaid = filteredUsers.reduce((sum, u) => sum + (u.totalToBePaid || 0), 0);
@@ -529,24 +543,24 @@ const PenaltyMonitor = () => {
   };
   const handleTicketSelect = (value) => {
     setReversalTicketFilter(value);
-    const user = usersData.find(
-      u => u.groupName === reversalGroupFilter && u.userName === reversalCustomerFilter && u.paymentsTicket === value
-    );
-    if (user) {
-      setPenaltySummary({
-        userName: user.userName,
-        groupName: user.groupName,
-        paymentsTicket: user.paymentsTicket,
-        userId: user.userId,
-        groupId: user.groupId,
-        lateFee: user.totalLateFee || 0,
-        regularPenalty: user.regularPenalty || 0,
-        vcPenalty: user.vcPenalty || 0,
-      });
-      setPenaltySummaryModal(true);
-    }
+    // const user = usersData.find(
+    //   u => u.groupName === reversalGroupFilter && u.userName === reversalCustomerFilter && u.paymentsTicket === value
+    // );
+    // if (user) {
+    //   setPenaltySummary({
+    //     userName: user.userName,
+    //     groupName: user.groupName,
+    //     paymentsTicket: user.paymentsTicket,
+    //     userId: user.userId,
+    //     groupId: user.groupId,
+    //     lateFee: user.totalLateFee || 0,
+    //     regularPenalty: user.regularPenalty || 0,
+    //     vcPenalty: user.vcPenalty || 0,
+    //   });
+    //   // setPenaltySummaryModal(true);
+    // }
   };
-  const openReverseAmountModal = (type) => {
+  const openReverseAmountDrawer = (type) => {
     let maxAmount = 0;
     switch (type) {
       case "late_fee": maxAmount = penaltySummary.lateFee; break;
@@ -558,8 +572,8 @@ const PenaltyMonitor = () => {
     setMaxAllowedAmount(maxAmount);
     setReverseAmount("");
     setSelectedReversalType(type);
-    setReverseAmountModal(true);
-    setPenaltySummaryModal(false);
+    setReverseAmountDrawer(true);
+    setPenaltySummaryDrawer(false);
   };
   const handleApplyReversal = async () => {
     const amount = parseFloat(reverseAmount);
@@ -578,7 +592,7 @@ const PenaltyMonitor = () => {
       };
       await api.post("/penalty/reverse-amount", payload);
       message.success("✅ Penalty reversal applied successfully!");
-      setReverseAmountModal(false);
+      setReverseAmountDrawer(false);
       fetchData(); // Refresh
     } catch (err) {
       console.error("Reversal error:", err);
@@ -590,37 +604,37 @@ const PenaltyMonitor = () => {
 
   // ✅ COLUMN DEFINITION (unchanged)
   const columns = [
-    {
-      key: "selection",
-      header: (
-        <Checkbox
-          indeterminate={filteredUsers.length > 0 && selectedRows.length > 0 && selectedRows.length < filteredUsers.length}
-          checked={filteredUsers.length > 0 && selectedRows.length === filteredUsers.length}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...filteredUsers]);
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-          disabled={filteredUsers.length === 0}
-        />
-      ),
-      render: (_, record) => (
-        <Checkbox
-          checked={selectedRows.some((row) => row._id === record._id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows((prev) => [...prev, record]);
-            } else {
-              setSelectedRows((prev) => prev.filter((row) => row._id !== record._id));
-            }
-          }}
-        />
-      ),
-      width: 50,
-      align: "center",
-    },
+    // {
+    //   key: "selection",
+    //   header: (
+    //     <Checkbox
+    //       indeterminate={filteredUsers.length > 0 && selectedRows.length > 0 && selectedRows.length < filteredUsers.length}
+    //       checked={filteredUsers.length > 0 && selectedRows.length === filteredUsers.length}
+    //       onChange={(e) => {
+    //         if (e.target.checked) {
+    //           setSelectedRows([...filteredUsers]);
+    //         } else {
+    //           setSelectedRows([]);
+    //         }
+    //       }}
+    //       disabled={filteredUsers.length === 0}
+    //     />
+    //   ),
+    //   render: (_, record) => (
+    //     <Checkbox
+    //       checked={selectedRows.some((row) => row._id === record._id)}
+    //       onChange={(e) => {
+    //         if (e.target.checked) {
+    //           setSelectedRows((prev) => [...prev, record]);
+    //         } else {
+    //           setSelectedRows((prev) => prev.filter((row) => row._id !== record._id));
+    //         }
+    //       }}
+    //     />
+    //   ),
+    //   width: 50,
+    //   align: "center",
+    // },
     {
       key: "sl_no",
       header: "SL. NO",
@@ -801,11 +815,11 @@ const PenaltyMonitor = () => {
           visibility={true}
         />
         {screenLoading ? (
-          <div className="flex-grow flex items-center justify-center h-screen">
+          <div className=" flex-grow flex items-center justify-center h-screen">
             <CircularLoader color="text-green-600" />
           </div>
         ) : (
-          <div className="flex-grow p-6">
+          <div className="flex-grow w-1/2 p-6">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Penalty & Outstanding Report</h1>
               <p className="text-gray-600">Monitor and manage customer penalties, late fees, and outstanding amounts</p>
@@ -869,6 +883,7 @@ const PenaltyMonitor = () => {
               </Card>
             </div>
 
+
             {/* 🔹 PENALTY REVERSAL FILTERS */}
             <div className="mb-8">
               <Card
@@ -880,7 +895,7 @@ const PenaltyMonitor = () => {
                   </div>
                 }
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
                     <Select
@@ -890,10 +905,13 @@ const PenaltyMonitor = () => {
                       onChange={handleGroupSelect}
                       allowClear
                     >
-                      {groupOptions.map(group => (
-                        <Option key={group} value={group}>{group}</Option>
+                      {groupOptions.map((group) => (
+                        <Option key={group} value={group}>
+                          {group}
+                        </Option>
                       ))}
                     </Select>
+                    <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
@@ -905,12 +923,17 @@ const PenaltyMonitor = () => {
                       disabled={!reversalGroupFilter}
                       allowClear
                     >
-                      {customerOptions.map(user => (
+                      {customerOptions.map((user) => (
                         <Option key={user.userName} value={user.userName}>
                           {user.userName}
                         </Option>
                       ))}
                     </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reversalGroupFilter
+                        ? "Step 2: Choose a customer from this group"
+                        : "Select a group first"}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ticket</label>
@@ -918,15 +941,53 @@ const PenaltyMonitor = () => {
                       className="w-full"
                       placeholder="Select Ticket"
                       value={reversalTicketFilter || undefined}
-                      onChange={handleTicketSelect}
+                      onChange={(value) => setReversalTicketFilter(value)}
                       disabled={!reversalCustomerFilter}
                       allowClear
                     >
-                      {ticketOptions.map(ticket => (
-                        <Option key={ticket} value={ticket}>{ticket}</Option>
+                      {ticketOptions.map((ticket) => (
+                        <Option key={ticket} value={ticket}>
+                          {ticket}
+                        </Option>
                       ))}
                     </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reversalCustomerFilter
+                        ? "Step 3: Select a ticket to review penalties"
+                        : "Select a customer first"}
+                    </p>
                   </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    type="primary"
+                    disabled={!reversalTicketFilter}
+                    onClick={() => {
+                      const user = usersData.find(
+                        (u) =>
+                          u.groupName === reversalGroupFilter &&
+                          u.userName === reversalCustomerFilter &&
+                          u.paymentsTicket === reversalTicketFilter
+                      );
+                      if (user) {
+                        setPenaltySummary({
+                          userName: user.userName,
+                          groupName: user.groupName,
+                          userPhone: user.userPhone,
+                          paymentsTicket: user.paymentsTicket,
+                          userId: user.userId,
+                          groupId: user.groupId,
+                          lateFee: user.totalLateFee || 0,
+                          regularPenalty: user.regularPenalty || 0,
+                          vcPenalty: user.vcPenalty || 0,
+                        });
+                        setPenaltySummaryDrawer(true);
+                      }
+                    }}
+                  >
+                    Review & Reverse Penalties
+                  </Button>
                 </div>
               </Card>
             </div>
@@ -965,7 +1026,7 @@ const PenaltyMonitor = () => {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={4}>
+                {/* <Col xs={24} sm={12} md={4}>
                   <Card className="shadow-sm border border-gray-200">
                     <Statistic
                       title="Total Penalty"
@@ -975,7 +1036,7 @@ const PenaltyMonitor = () => {
                       formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
                     />
                   </Card>
-                </Col>
+                </Col> */}
                 <Col xs={24} sm={12} md={4}>
                   <Card className="shadow-sm border border-gray-200">
                     <Statistic
@@ -1036,7 +1097,7 @@ const PenaltyMonitor = () => {
 
             {/* Data Table */}
             <Card
-              className="shadow-sm rounded-lg border border-gray-200"
+              className="shadow-sm rounded-lg border border-gray-200 overflow-hidden"
               title={
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-lg">Customer Details</span>
@@ -1092,7 +1153,19 @@ const PenaltyMonitor = () => {
                 )
               }
             >
-              <DataTable data={filteredTableData} columns={columns} exportedPdfName="Penalty Report" exportedFileName="PenaltyReport.csv" />
+
+              <div className="w-full overflow-x-auto overflow-y-auto max-h-[600px]">
+                <div style={{ width: "max-content" }}>
+                  <DataTable
+                    data={filteredTableData}
+                    columns={columns}
+                    exportedPdfName="Penalty Report"
+                    exportedFileName="PenaltyReport.csv"
+                  />
+                </div>
+              </div>
+
+
             </Card>
           </div>
         )}
@@ -1203,136 +1276,352 @@ const PenaltyMonitor = () => {
         </ul>
       </Modal>
 
-      {/* 🔹 Penalty Summary Modal */}
-      <Modal
-        title="Penalty Summary"
-        open={penaltySummaryModal}
-        onCancel={() => setPenaltySummaryModal(false)}
-        footer={null}
-        width={600}
-      >
-       {penaltySummary && (
-  <div className="space-y-4">
-    <div><strong>Customer:</strong> {penaltySummary.userName}</div>
-    <div><strong>Group:</strong> {penaltySummary.groupName}</div>
-    <div><strong>Ticket:</strong> {penaltySummary.paymentsTicket}</div>
 
-    <div className="grid grid-cols-1 gap-3 mt-4">
-
-      {/* Late Fee */}
-      <Card>
-        <div className="flex justify-between">
-          <span>Late Fee</span>
-          <span className="font-bold text-orange-600">
-            ₹{Number(penaltySummary.lateFee).toLocaleString("en-IN")}
-          </span>
-        </div>
-
-        {penaltySummary.lateFee > 0 && (
-          <Button size="small" type="default" className="mt-2"
-            onClick={() => openReverseAmountModal("late_fee")}>
-            Reverse Late Fee
-          </Button>
-        )}
-      </Card>
-
-      {/* Regular Penalty */}
-      <Card>
-        <div className="flex justify-between">
-          <span>Regular Penalty</span>
-          <span className="font-bold text-red-600">
-            ₹{Number(penaltySummary.regularPenalty).toLocaleString("en-IN")}
-          </span>
-        </div>
-
-        {penaltySummary.regularPenalty > 0 && (
-          <Button size="small" type="default" className="mt-2"
-            onClick={() => openReverseAmountModal("penalty")}>
-            Reverse Penalty
-          </Button>
-        )}
-      </Card>
-
-      {/* VC Penalty */}
-      <Card>
-        <div className="flex justify-between">
-          <span>VC Penalty</span>
-          <span className="font-bold text-yellow-700">
-            ₹{Number(penaltySummary.vcPenalty).toLocaleString("en-IN")}
-          </span>
-        </div>
-
-        {penaltySummary.vcPenalty > 0 && (
-          <Button size="small" type="default" className="mt-2"
-            onClick={() => openReverseAmountModal("vc_penalty")}>
-            Reverse VC Penalty
-          </Button>
-        )}
-      </Card>
-
-      {/* Total */}
-      <Card>
-        <div className="flex justify-between">
-          <span>Total Penalty + Late Fee</span>
-          <span className="font-bold text-purple-600">
-            ₹{(
-              Number(penaltySummary.lateFee) +
-              Number(penaltySummary.regularPenalty) +
-              Number(penaltySummary.vcPenalty)
-            ).toLocaleString("en-IN")}
-          </span>
-        </div>
-
-        {(penaltySummary.lateFee +
-          penaltySummary.regularPenalty +
-          penaltySummary.vcPenalty) > 0 && (
-          <Button size="small" type="primary" className="mt-2"
-            onClick={() => openReverseAmountModal("all")}>
-            Reverse All
-          </Button>
-        )}
-      </Card>
-
-    </div>
-  </div>
-)}
-
-      </Modal>
-
-      {/* 🔹 Reverse Amount Modal */}
-      <Modal
-        title={`Reverse ${selectedReversalType === "late_fee" ? "Late Fee" : selectedReversalType === "penalty" ? "Penalty" : selectedReversalType === "vc_penalty" ? "VC Penalty" : "All Penalties"}`}
-        open={reverseAmountModal}
-        onCancel={() => {
-          setReverseAmountModal(false);
-          setPenaltySummaryModal(true);
-        }}
-        onOk={handleApplyReversal}
-        okText="Apply Reversal"
-        cancelText="Back"
+      <Drawer
+        title={null}
+        placement="right"
+        onClose={() => setPenaltySummaryDrawer(false)}
+        open={penaltySummaryDrawer}
+        width={900}
+        bodyStyle={{ padding: "0" }}
+        closable={false}
       >
         {penaltySummary && (
-          <div className="space-y-4">
-            <div><strong>Customer:</strong> {penaltySummary.userName}</div>
-            <div><strong>Group:</strong> {penaltySummary.groupName}</div>
-            <div><strong>Max Allowed:</strong> ₹{maxAllowedAmount.toLocaleString("en-IN")}</div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Amount to Reverse</label>
-              <Input
-                type="number"
-                value={reverseAmount}
-                onChange={(e) => setReverseAmount(e.target.value)}
-                placeholder={`Enter amount (≤ ${maxAllowedAmount})`}
-                min={0}
-                step={0.01}
+          <div className="h-full flex flex-col bg-white">
+            {/* Header Section */}
+            <div className="bg-blue-100 text-white p-6 border-b">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Title level={3} className="text-white mb-1">Penalty Reversal</Title>
+                  <Text className=" text-sm">Review and reverse penalties for customer account</Text>
+                </div>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => setPenaltySummaryDrawer(false)}
+                >
+                  Close
+                </Button>
+
+              </div>
+            </div>
+
+            {/* Customer Info Card */}
+            <div className="px-6 py-4 border-b">
+              <div className="flex items-center mb-3">
+                <Title level={4} className="mb-0">Customer Details</Title>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Customer Name</Text>
+                  <Text strong className="text-base">{penaltySummary.userName}</Text>
+                </div>
+                <div>
+                  <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Phone Number</Text>
+                  <Text strong className="text-base">{penaltySummary.userPhone}</Text>
+                </div>
+                <div>
+                  <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Group</Text>
+                  <Text strong className="text-base">{penaltySummary.groupName}</Text>
+                </div>
+                <div>
+                  <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Ticket Number</Text>
+                  <Text strong className="text-base">{penaltySummary.paymentsTicket}</Text>
+                </div>
+              </div>
+            </div>
+
+            {/* Penalty Breakdown Section */}
+            <div className="px-6 py-4 flex-grow overflow-auto">
+              <Title level={4} className="mb-4">Penalty Breakdown</Title>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Late Fee Card */}
+                <Card className={`h-full ${penaltySummary.lateFee > 0 ? '' : 'opacity-60'}`}>
+                  <div className="mb-4">
+                    <Title level={5} className="mb-1">Late Fee</Title>
+                    <Text type="secondary" className="text-sm">Charges for delayed payments</Text>
+                  </div>
+                  <div className="mb-4">
+                    <Text type="secondary" className="text-sm">Available for Reversal</Text>
+                    <div className="text-xl font-semibold">
+                      ₹{Number(penaltySummary.lateFee).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  {penaltySummary.lateFee > 0 && (
+                    <Button
+                      type="primary"
+                      className="w-full"
+                      onClick={() => openReverseAmountDrawer("late_fee")}
+                    >
+                      Review Late Fee
+                    </Button>
+                  )}
+                </Card>
+
+                {/* Regular Penalty Card */}
+                <Card className={`h-full ${penaltySummary.regularPenalty > 0 ? '' : 'opacity-60'}`}>
+                  <div className="mb-4">
+                    <Title level={5} className="mb-1">Regular Penalty</Title>
+                    <Text type="secondary" className="text-sm">Standard penalty charges</Text>
+                  </div>
+                  <div className="mb-4">
+                    <Text type="secondary" className="text-sm">Available for Reversal</Text>
+                    <div className="text-xl font-semibold">
+                      ₹{Number(penaltySummary.regularPenalty).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  {penaltySummary.regularPenalty > 0 && (
+                    <Button
+                      type="primary"
+                      className="w-full"
+                      onClick={() => openReverseAmountDrawer("penalty")}
+                    >
+                      Review Regular Penalty
+                    </Button>
+                  )}
+                </Card>
+              </div>
+
+              {/* VC Penalty Card */}
+              <Card className={`mb-4 ${penaltySummary.vcPenalty > 0 ? '' : 'opacity-60'}`}>
+                <div className="mb-4">
+                  <Title level={5} className="mb-1">Vacant Chit Penalty</Title>
+                  <Text type="secondary" className="text-sm">Vacant chit penalty charges</Text>
+                </div>
+                <div className="mb-4">
+                  <Text type="secondary" className="text-sm">Available for Reversal</Text>
+                  <div className="text-xl font-semibold">
+                    ₹{Number(penaltySummary.vcPenalty).toLocaleString("en-IN")}
+                  </div>
+                </div>
+                {penaltySummary.vcPenalty > 0 && (
+                  <Button
+                    type="primary"
+                    className="w-full"
+                    onClick={() => openReverseAmountDrawer("vc_penalty")}
+                  >
+                    Review Vacant Chit Penalty
+                  </Button>
+                )}
+              </Card>
+
+              {/* Total Reversal Card */}
+              <Card className={`mb-4 ${(penaltySummary.lateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 ? 'border-2 border-slate-300' : 'opacity-60'}`}>
+                <div className="mb-4">
+                  <Title level={5} className="mb-1">Total Reversible Amount</Title>
+                  <Text type="secondary" className="text-sm">Sum of all penalties and fees</Text>
+                </div>
+                <div className="mb-4">
+                  <Text type="secondary" className="text-sm">Total Available for Reversal</Text>
+                  <div className="text-2xl font-semibold">
+                    ₹{(
+                      Number(penaltySummary.lateFee) +
+                      Number(penaltySummary.regularPenalty) +
+                      Number(penaltySummary.vcPenalty)
+                    ).toLocaleString("en-IN")}
+                  </div>
+                </div>
+                {(penaltySummary.lateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 && (
+                  <Button
+                    type="primary"
+                    className="w-full"
+                    onClick={() => openReverseAmountDrawer("all")}
+                  >
+                    Review All Penalties & Fees
+                  </Button>
+                )}
+              </Card>
+
+              {/* Information Alert */}
+              <Alert
+                message="Important Information"
+                description="Select a penalty type above to reverse. You may reverse part or all of any penalty type. Enter the exact amount in the next step. All reversals will be logged for audit purposes."
+                type="info"
+                showIcon
+                className="mt-4"
               />
             </div>
-            {parseFloat(reverseAmount) > maxAllowedAmount && (
-              <div className="text-red-600 text-sm">Amount cannot exceed ₹{maxAllowedAmount.toLocaleString("en-IN")}</div>
-            )}
           </div>
         )}
-      </Modal>
+      </Drawer>
+
+      <Drawer
+        title={null}
+        placement="right"
+        onClose={() => {
+          setReverseAmountDrawer(false);
+          setPenaltySummaryDrawer(true);
+        }}
+        open={reverseAmountDrawer}
+        width={800}
+        bodyStyle={{ padding: "0" }}
+        closable={false}
+      >
+        {penaltySummary && (
+          <div className="h-full flex flex-col bg-white">
+            {/* Header Section */}
+            <div className="bg-blue-100 text-white p-6 border-b">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Title level={3} className="text-white mb-1">
+                    {selectedReversalType === "late_fee"
+                      ? "Reverse Late Fee"
+                      : selectedReversalType === "penalty"
+                        ? "Reverse Regular Penalty"
+                        : selectedReversalType === "vc_penalty"
+                          ? "Reverse VC Penalty"
+                          : "Reverse All Penalties & Fees"}
+                  </Title>
+                  <Text className=" text-sm">
+                    Enter the amount you want to reverse from the customer's penalties
+                  </Text>
+                </div>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => {
+                    setReverseAmountDrawer(false);
+                    setPenaltySummaryDrawer(true);
+                  }}
+                >
+                  Close
+                </Button>
+
+              </div>
+            </div>
+
+            <div className="px-6 py-4 flex-grow overflow-auto">
+              {/* Customer Info */}
+              <div className="mb-4 border-b pb-4">
+                <Title level={4} className="mb-3">Customer Information</Title>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Customer</Text>
+                    <Text strong className="text-base">{penaltySummary.userName}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Phone</Text>
+                    <Text strong className="text-base">{penaltySummary.userPhone}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Group</Text>
+                    <Text strong className="text-base">{penaltySummary.groupName}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Ticket</Text>
+                    <Text strong className="text-base">{penaltySummary.paymentsTicket}</Text>
+                  </div>
+                </div>
+              </div>
+
+              {/* Available Amount Card */}
+              <div className="mb-4 p-4 bg-slate-50 rounded-lg border">
+                <Title level={4} className="mb-2">
+                  {selectedReversalType === "late_fee"
+                    ? "Late Fee Available for Reversal"
+                    : selectedReversalType === "penalty"
+                      ? "Regular Penalty Available for Reversal"
+                      : selectedReversalType === "vc_penalty"
+                        ? "VC Penalty Available for Reversal"
+                        : "Total Reversible Amount"}
+                </Title>
+                <div className="text-2xl font-semibold mb-2">
+                  ₹{maxAllowedAmount.toLocaleString("en-IN")}
+                </div>
+                <Text type="secondary">Maximum amount that can be reversed</Text>
+              </div>
+
+              {/* Amount Input Section */}
+              <div className="mb-4">
+                <Title level={4} className="mb-3">Enter Reversal Amount</Title>
+                <Input
+                  type="number"
+                  value={reverseAmount}
+                  onChange={(e) => setReverseAmount(e.target.value)}
+                  placeholder={`Enter amount (e.g., ${Math.min(100, maxAllowedAmount).toLocaleString("en-IN")})`}
+                  min={0}
+                  step={0.01}
+                  className="w-full h-12 text-lg"
+                  addonBefore="₹"
+                />
+                {parseFloat(reverseAmount) > maxAllowedAmount && (
+                  <div className="text-red-600 text-sm mt-2 flex items-center bg-red-50 p-2 rounded">
+                    <ExclamationCircleOutlined className="mr-2" />
+                    Amount cannot exceed ₹{maxAllowedAmount.toLocaleString("en-IN")}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="mb-4">
+                <Title level={5} className="mb-3">Quick Select Amount</Title>
+                <div className="grid grid-cols-4 gap-3">
+                  <Button
+                    onClick={() => setReverseAmount((maxAllowedAmount * 0.25).toFixed(2))}
+                    disabled={maxAllowedAmount <= 0}
+                  >
+                    25%
+                  </Button>
+                  <Button
+                    onClick={() => setReverseAmount((maxAllowedAmount * 0.5).toFixed(2))}
+                    disabled={maxAllowedAmount <= 0}
+                  >
+                    50%
+                  </Button>
+                  <Button
+                    onClick={() => setReverseAmount((maxAllowedAmount * 0.75).toFixed(2))}
+                    disabled={maxAllowedAmount <= 0}
+                  >
+                    75%
+                  </Button>
+                  <Button
+                    onClick={() => setReverseAmount(maxAllowedAmount.toFixed(2))}
+                    disabled={maxAllowedAmount <= 0}
+                  >
+                    100%
+                  </Button>
+                </div>
+              </div>
+
+              {/* Warning Alert */}
+              <Alert
+                message="Important Notice"
+                description="Reversed amounts will be deducted from the customer's balance and logged for audit. This action cannot be undone. Please verify the amount before proceeding."
+                type="warning"
+                showIcon
+                className="mb-4"
+              />
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <Button
+                  size="large"
+                  className="flex-1"
+                  onClick={() => {
+                    setReverseAmountDrawer(false);
+                    setPenaltySummaryDrawer(true);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  size="large"
+                  className="flex-1"
+                  disabled={!reverseAmount || parseFloat(reverseAmount) <= 0 || parseFloat(reverseAmount) > maxAllowedAmount}
+                  onClick={handleApplyReversal}
+                >
+                  Apply Reversal
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 };
