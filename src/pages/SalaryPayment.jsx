@@ -720,79 +720,177 @@ if (target > 0) {
     }
   }
 
+  // async function handleAddSalary() {
+  //   try {
+  //     const baseSalary = calculatedSalary
+  //       ? calculatedSalary.calculated_salary
+  //       : Object.values(formData.earnings).reduce(
+  //           (sum, v) => sum + Number(v || 0),
+  //           0
+  //         ) -
+  //         Object.values(formData.deductions).reduce(
+  //           (sum, v) => sum + Number(v || 0),
+  //           0
+  //         );
+
+  //     const additionalPaymentsTotal = formData.additional_payments.reduce(
+  //       (sum, payment) => sum + Number(payment.value || 0),
+  //       0
+  //     );
+
+  //     const additionalDeductionsTotal = formData.additional_deductions.reduce(
+  //       (sum, deduction) => sum + Number(deduction.value || 0),
+  //       0
+  //     );
+
+  //     // ✅ Correct Total Salary Payable
+  //     const totalSalaryPayable =
+  //       baseSalary + additionalPaymentsTotal - additionalDeductionsTotal;
+
+  //     const paidAmount = Number(formData.paid_amount || 0);
+  //     const remainingBalance = totalSalaryPayable - paidAmount;
+
+  //     const salaryData = {
+  //       employee_id: formData?.employee_id,
+  //       salary_from_date: calculatedSalary
+  //         ? calculatedSalary?.salary_from_date
+  //         : new Date(),
+  //       salary_to_date: calculatedSalary
+  //         ? calculatedSalary.salary_to_date
+  //         : new Date(),
+  //       salary_month: formData.month,
+  //       salary_year: formData.year,
+  //       earnings: formData.earnings,
+  //       deductions: formData.deductions,
+  //       additional_deductions: formData.additional_deductions,
+  //       additional_payments: formData.additional_payments,
+  //       paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
+  //       lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
+  //       net_payable: totalSalaryPayable, // 👈 This is the final payable amount
+  //       paid_amount: paidAmount,
+  //       remaining_balance: remainingBalance,
+  //       total_salary_payable: totalSalaryPayable, // 👈 Explicitly store it
+  //       payment_method: formData.payment_method,
+  //       transaction_id:
+  //         formData.payment_method === "Cash"
+  //           ? null
+  //           : formData.transaction_id || null,
+  //       status: remainingBalance <= 0 ? "Paid" : "Pending",
+  //       // pay_date: formData.pay_date ? formData.pay_date.toDate() : new Date(),
+  //       pay_date: formData?.pay_date
+  // ? moment(formData?.pay_date).startOf("day").add(12, "hours")
+  // : moment().startOf("day").add(12, "hours"),
+  //     };
+
+  //     await API.post("/salary-payment/", salaryData);
+  //     message.success("Salary added successfully");
+  //     setIsOpenAddModal(false);
+  //     setCalculatedSalary(null);
+  //     setShowAdditionalPayments(false);
+  //     getAllSalary();
+  //   } catch (error) {
+  //     console.error("Error adding salary:", error);
+  //     message.error("Failed to add salary");
+  //   }
+  // }
+
   async function handleAddSalary() {
-    try {
-      const baseSalary = calculatedSalary
-        ? calculatedSalary.calculated_salary
-        : Object.values(formData.earnings).reduce(
-            (sum, v) => sum + Number(v || 0),
-            0
-          ) -
-          Object.values(formData.deductions).reduce(
-            (sum, v) => sum + Number(v || 0),
-            0
-          );
+  try {
+    const baseSalary = calculatedSalary
+      ? calculatedSalary.calculated_salary
+      : Object.values(formData.earnings).reduce(
+          (sum, v) => sum + Number(v || 0),
+          0
+        ) -
+        Object.values(formData.deductions).reduce(
+          (sum, v) => sum + Number(v || 0),
+          0
+        );
 
-      const additionalPaymentsTotal = formData.additional_payments.reduce(
-        (sum, payment) => sum + Number(payment.value || 0),
-        0
-      );
+    const additionalPaymentsTotal = formData.additional_payments.reduce(
+      (sum, payment) => sum + Number(payment.value || 0),
+      0
+    );
 
-      const additionalDeductionsTotal = formData.additional_deductions.reduce(
-        (sum, deduction) => sum + Number(deduction.value || 0),
-        0
-      );
+    const additionalDeductionsTotal = formData.additional_deductions.reduce(
+      (sum, deduction) => sum + Number(deduction.value || 0),
+      0
+    );
 
-      // ✅ Correct Total Salary Payable
-      const totalSalaryPayable =
-        baseSalary + additionalPaymentsTotal - additionalDeductionsTotal;
+    const totalSalaryPayable =
+      baseSalary + additionalPaymentsTotal - additionalDeductionsTotal;
 
-      const paidAmount = Number(formData.paid_amount || 0);
-      const remainingBalance = totalSalaryPayable - paidAmount;
+    const paidAmount = Number(formData.paid_amount || 0);
+    const remainingBalance = totalSalaryPayable - paidAmount;
 
-      const salaryData = {
-        employee_id: formData?.employee_id,
-        salary_from_date: calculatedSalary
-          ? calculatedSalary?.salary_from_date
-          : new Date(),
-        salary_to_date: calculatedSalary
-          ? calculatedSalary.salary_to_date
-          : new Date(),
-        salary_month: formData.month,
-        salary_year: formData.year,
-        earnings: formData.earnings,
-        deductions: formData.deductions,
-        additional_deductions: formData.additional_deductions,
-        additional_payments: formData.additional_payments,
-        paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
-        lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
-        net_payable: totalSalaryPayable, // 👈 This is the final payable amount
-        paid_amount: paidAmount,
-        remaining_balance: remainingBalance,
-        total_salary_payable: totalSalaryPayable, // 👈 Explicitly store it
-        payment_method: formData.payment_method,
-        transaction_id:
-          formData.payment_method === "Cash"
-            ? null
-            : formData.transaction_id || null,
-        status: remainingBalance <= 0 ? "Paid" : "Pending",
-        // pay_date: formData.pay_date ? formData.pay_date.toDate() : new Date(),
-        pay_date: formData?.pay_date
-  ? moment(formData?.pay_date).startOf("day").add(12, "hours")
-  : moment().startOf("day").add(12, "hours"),
-      };
+  
+    const attendanceDetails = calculatedSalary ? {
+      total_days: calculatedSalary.total_days,
+      present_days: calculatedSalary.present_days,
+      paid_days: calculatedSalary.paid_days,
+      lop_days: calculatedSalary.lop_days,
+      per_day_salary: calculatedSalary.per_day_salary,
+      calculated_salary: calculatedSalary.calculated_salary,
+      absent_days: calculatedSalary.absent_days || 0,
+      leave_days: calculatedSalary.leave_days || 0,
+      half_days: calculatedSalary.half_days || 0,
+      salary_from_date: calculatedSalary.salary_from_date,
+      salary_to_date: calculatedSalary.salary_to_date
+    } : {};
 
-      await API.post("/salary-payment/", salaryData);
-      message.success("Salary added successfully");
-      setIsOpenAddModal(false);
-      setCalculatedSalary(null);
-      setShowAdditionalPayments(false);
-      getAllSalary();
-    } catch (error) {
-      console.error("Error adding salary:", error);
-      message.error("Failed to add salary");
-    }
+  
+    const monthlyTargetIncentive = {
+      target: Number(formData.target || 0),
+      incentive: Number(formData.incentive || 0),
+      target_in_words: numberToIndianWords(formData.target || 0),
+      incentive_in_words: numberToIndianWords(formData.incentive || 0)
+    };
+
+    const salaryData = {
+      employee_id: formData?.employee_id,
+      salary_from_date: calculatedSalary
+        ? calculatedSalary?.salary_from_date
+        : new Date(),
+      salary_to_date: calculatedSalary
+        ? calculatedSalary.salary_to_date
+        : new Date(),
+      salary_month: formData.month,
+      salary_year: formData.year,
+      earnings: formData.earnings,
+      deductions: formData.deductions,
+      additional_deductions: formData.additional_deductions,
+      additional_payments: formData.additional_payments,
+      paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
+      lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
+      net_payable: totalSalaryPayable,
+      paid_amount: paidAmount,
+      remaining_balance: remainingBalance,
+      total_salary_payable: totalSalaryPayable,
+      payment_method: formData.payment_method,
+      transaction_id:
+        formData.payment_method === "Cash"
+          ? null
+          : formData.transaction_id || null,
+      status: remainingBalance <= 0 ? "Paid" : "Pending",
+      pay_date: formData?.pay_date
+        ? moment(formData?.pay_date).startOf("day").add(12, "hours")
+        : moment().startOf("day").add(12, "hours"),
+     
+      calculated_salary_details: calculatedSalaryDetails,
+      monthly_target_incentive: monthlyTargetIncentive
+    };
+
+    await API.post("/salary-payment/", salaryData);
+    message.success("Salary added successfully");
+    setIsOpenAddModal(false);
+    setCalculatedSalary(null);
+    setShowAdditionalPayments(false);
+    getAllSalary();
+  } catch (error) {
+    console.error("Error adding salary:", error);
+    message.error("Failed to add salary");
   }
+}
 
   async function getAllSalary() {
     try {
@@ -1440,7 +1538,7 @@ if (target > 0) {
                   {calculatedSalary && (
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                        Calculated Salary Details
+                        Attendance Details
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="form-group">
