@@ -22,7 +22,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { numberToIndianWords } from "../helpers/numberToIndianWords";
 import moment from "moment";
-
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 const HRSalaryManagement = () => {
   console.log(navigator.get);
   const navigate = useNavigate();
@@ -45,6 +46,8 @@ const HRSalaryManagement = () => {
 
   const [alreadyPaidModalOpen, setAlreadyPaidModalOpen] = useState(false);
   const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
+
+  const [isEditFormDirty, setIsEditFormDirty] = useState(false);
 
   const [updateFormData, setUpdateFormData] = useState({
     employee_id: "",
@@ -257,10 +260,114 @@ const HRSalaryManagement = () => {
     }
   }, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
 
+  const handleRecalculateInEdit = async () => {
+    const { employee_id, month, year, earnings, deductions } = updateFormData;
+    if (!employee_id || !month || !year) {
+      message.warning("Please select employee, month, and year.");
+      return;
+    }
+
+    try {
+      setUpdateLoading(true);
+
+      const yearValue = dayjs.isDayjs(year) ? year.format("YYYY") : year;
+
+      // 🔥 POST to new endpoint (no 406)
+      const response = await API.post("/salary-payment/calculate-edit", {
+        employee_id,
+        month,
+        year: yearValue,
+        earnings,
+        deductions,
+      });
+
+      const calculated = response.data.data;
+
+      // Fetch target & incentive
+      const monthIndex = moment().month(month).month();
+      const start_date = moment()
+        .year(yearValue)
+        .month(monthIndex)
+        .startOf("month")
+        .format("YYYY-MM-DD");
+      const end_date = moment()
+        .year(yearValue)
+        .month(monthIndex)
+        .endOf("month")
+        .format("YYYY-MM-DD");
+      const [targetValue, incentiveValue] = await Promise.all([
+        fetchEmployeeTarget(employee_id, start_date, end_date),
+        fetchEmployeeIncentive(employee_id, start_date, end_date),
+      ]);
+
+      // 🔁 Apply incentive logic (same as Add Drawer)
+      let autoAdditionalPayments = [];
+      let autoAdditionalDeductions = [];
+      const target = Number(targetValue || 0);
+      const incentive = Number(incentiveValue || 0);
+      if (target > 0) {
+        const incentiveValueNum = incentive * 100;
+        const diff = (incentiveValueNum - target) / 100;
+        if (diff > 0) {
+          autoAdditionalPayments = [{ name: "Incentive", value: diff }];
+        } else if (diff < 0) {
+          autoAdditionalDeductions = [
+            { name: "Incentive", value: Math.abs(diff) },
+          ];
+        }
+      }
+
+      // Total payable = calculated_salary + additional payments - deductions
+      const totalPayable =
+        calculated.calculated_salary +
+        autoAdditionalPayments.reduce((sum, p) => sum + Number(p.value), 0) -
+        autoAdditionalDeductions.reduce((sum, d) => sum + Number(d.value), 0);
+
+      // Update form data
+      const updatedData = {
+        ...updateFormData,
+        year: dayjs(yearValue, "YYYY"),
+        earnings,
+        deductions,
+        total_salary_payable: totalPayable,
+        additional_payments: autoAdditionalPayments,
+        additional_deductions: autoAdditionalDeductions,
+        attendance_details: {
+          total_days: calculated.total_days,
+          present_days: calculated.present_days,
+          paid_days: calculated.paid_days,
+          lop_days: calculated.lop_days,
+          per_day_salary: calculated.per_day_salary,
+          calculated_salary: calculated.calculated_salary,
+          absent_days: calculated.absent_days || 0,
+          leave_days: calculated.leave_days || 0,
+          half_days: calculated.half_days || 0,
+          salary_from_date: calculated.salary_from_date,
+          salary_to_date: calculated.salary_to_date,
+        },
+        monthly_business_info: {
+          target: targetValue || 0,
+          total_business_closed: incentiveValue || 0,
+        },
+      };
+
+      setUpdateFormData(updatedData);
+      updateForm.setFieldsValue(updatedData);
+      setIsEditFormDirty(false);
+      message.success("Salary recalculated successfully");
+    } catch (error) {
+      console.error("Recalculate in edit failed:", error);
+      message.error("Failed to recalculate salary. Please try again.");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   const handleEdit = async (id) => {
     try {
       setUpdateLoading(true);
       setIsOpenUpdateModal(true);
+      setIsEditFormDirty(false);
       const salaryData = await getSalaryById(id);
       if (salaryData) {
         setCurrentSalaryId(id);
@@ -282,6 +389,11 @@ const HRSalaryManagement = () => {
           pay_date: salaryData?.pay_date
             ? moment(salaryData?.pay_date)
             : moment(),
+          attendance_details: salaryData?.attendance_details || {},
+          monthly_business_info: salaryData?.monthly_business_info || {
+            target: 0,
+            total_business_closed: 0,
+          },
         };
 
         setUpdateFormData(formData);
@@ -312,7 +424,20 @@ const HRSalaryManagement = () => {
     if (changedValues.year && dayjs.isDayjs(changedValues.year)) {
       changedValues.year = changedValues.year.format("YYYY");
     }
+    const currentEarnings = allValues.earnings || {};
+    const currentDeductions = allValues.deductions || {};
 
+    const originalEarnings = updateFormData.earnings || {};
+    const originalDeductions = updateFormData.deductions || {};
+
+    const earningsChanged =
+      JSON.stringify(currentEarnings) !== JSON.stringify(originalEarnings);
+    const deductionsChanged =
+      JSON.stringify(currentDeductions) !== JSON.stringify(originalDeductions);
+
+    if (earningsChanged || deductionsChanged) {
+      setIsEditFormDirty(true);
+    }
     setUpdateFormData({
       ...updateFormData,
       ...changedValues,
@@ -1929,143 +2054,222 @@ const HRSalaryManagement = () => {
               </div>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-purple-800">
-                  Additional Payments
-                </h3>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    const currentPayments =
-                      updateForm.getFieldValue("additional_payments") || [];
-                    updateForm.setFieldsValue({
-                      additional_payments: [
-                        ...currentPayments,
-                        { name: "", value: 0 },
-                      ],
-                    });
-                  }}>
-                  Add Payment
-                </Button>
-              </div>
-              <Form.List name="additional_payments">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div
-                        key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "name"]}
-                          label="Payment Name">
-                          <Input placeholder="Enter payment name" />
-                        </Form.Item>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-grow">
-                            <Form.Item
-                              {...restField}
-                              onWheel={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.blur();
-                              }}
-                              name={[name, "value"]}
-                              label="Amount">
-                              <Input type="number" placeholder="Enter amount" />
-                            </Form.Item>
-                          </div>
-                          <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
+            <div className="flex justify-end mb-4">
+              <Button
+                type="primary"
+                onClick={handleRecalculateInEdit}
+                loading={updateLoading}
+                style={{ backgroundColor: "#16a34a" }}>
+                Continue
+              </Button>
             </div>
-            <div className="bg-orange-50 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-orange-800">
-                  Additional Deductions
-                </h3>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    const currentDeductions =
-                      updateForm.getFieldValue("additional_deductions") || [];
-                    updateForm.setFieldsValue({
-                      additional_deductions: [
-                        ...currentDeductions,
-                        { name: "", value: 0 },
-                      ],
-                    });
-                  }}>
-                  Add Deduction
-                </Button>
-              </div>
-              <Form.List name="additional_deductions">
-                {(fields, { remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div
-                        key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "name"]}
-                          label="Deduction Name">
-                          <Input placeholder="Enter deduction name" />
-                        </Form.Item>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-grow">
-                            <Form.Item
-                              {...restField}
-                              name={[name, "value"]}
-                              label="Amount">
-                              <Input
-                                type="number"
-                                placeholder="Enter amount"
-                                min={0}
-                              />
-                            </Form.Item>
-                          </div>
-                          <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                Payment Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Form.Item
-                  name="total_salary_payable"
-                  label="Total Salary Payable">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item name="paid_amount" label="Paid Amount">
-                  <Input type="number" />
-                </Form.Item>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+            {!isEditFormDirty && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                  Attendance Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Form.Item
+                    label="Total Days"
+                    name={["attendance_details", "total_days"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Present Days"
+                    name={["attendance_details", "present_days"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Paid Days"
+                    name={["attendance_details", "paid_days"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="LOP Days"
+                    name={["attendance_details", "lop_days"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Per Day Salary"
+                    name={["attendance_details", "per_day_salary"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Calculated Salary"
+                    name={["attendance_details", "calculated_salary"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-lg mb-3">
+                    Monthly Target & Incentive
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Form.Item
+                      label="Total Target"
+                      name={["monthly_business_info", "target"]}>
+                      <Input type="number" disabled />
+                    </Form.Item>
+                    <Form.Item
+                      label="Total Business Closed (1% Each)"
+                      name={["monthly_business_info", "total_business_closed"]}
+                      getValueProps={(value) => ({ value: (value || 0) / 100 })}
+                      getValueFromEvent={(e) => Number(e.target.value) * 100}>
+                      <Input type="number" disabled />
+                    </Form.Item>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isEditFormDirty && (
+              <div className="bg-purple-50 p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-purple-800">
+                    Additional Payments
+                  </h3>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      const currentPayments =
+                        updateForm.getFieldValue("additional_payments") || [];
+                      updateForm.setFieldsValue({
+                        additional_payments: [
+                          ...currentPayments,
+                          { name: "", value: 0 },
+                        ],
+                      });
+                    }}>
+                    Add Payment
+                  </Button>
+                </div>
+                <Form.List name="additional_payments">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map(({ key, name, ...restField }) => (
+                        <div
+                          key={key}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <Form.Item
+                            {...restField}
+                            name={[name, "name"]}
+                            label="Payment Name">
+                            <Input placeholder="Enter payment name" />
+                          </Form.Item>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-grow">
+                              <Form.Item
+                                {...restField}
+                                onWheel={(e) => {
+                                  e.preventDefault();
+                                  e.currentTarget.blur();
+                                }}
+                                name={[name, "value"]}
+                                label="Amount">
+                                <Input
+                                  type="number"
+                                  placeholder="Enter amount"
+                                />
+                              </Form.Item>
+                            </div>
+                            <Button
+                              type="primary"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </Form.List>
+              </div>
+            )}
+
+            {!isEditFormDirty && (
+              <div className="bg-orange-50 p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-orange-800">
+                    Additional Deductions
+                  </h3>
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      const currentDeductions =
+                        updateForm.getFieldValue("additional_deductions") || [];
+                      updateForm.setFieldsValue({
+                        additional_deductions: [
+                          ...currentDeductions,
+                          { name: "", value: 0 },
+                        ],
+                      });
+                    }}>
+                    Add Deduction
+                  </Button>
+                </div>
+                <Form.List name="additional_deductions">
+                  {(fields, { remove }) => (
+                    <>
+                      {fields.map(({ key, name, ...restField }) => (
+                        <div
+                          key={key}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <Form.Item
+                            {...restField}
+                            name={[name, "name"]}
+                            label="Deduction Name">
+                            <Input placeholder="Enter deduction name" />
+                          </Form.Item>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-grow">
+                              <Form.Item
+                                {...restField}
+                                name={[name, "value"]}
+                                label="Amount">
+                                <Input
+                                  type="number"
+                                  placeholder="Enter amount"
+                                  min={0}
+                                />
+                              </Form.Item>
+                            </div>
+                            <Button
+                              type="primary"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </Form.List>
+              </div>
+            )}
+
+            {!isEditFormDirty && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                  Payment Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Form.Item
+                    name="total_salary_payable"
+                    label="Total Salary Payable">
+                    <Input type="number" />
+                  </Form.Item>
+                  {/* <Form.Item name="paid_amount" label="Paid Amount">
+                  <Input type="number" />
+                </Form.Item> */}
+                </div>
+
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                 <Form.Item
                   name="payment_method"
                   label="Payment Mode"
@@ -2120,8 +2324,9 @@ const HRSalaryManagement = () => {
                     }
                   />
                 </Form.Item>
+              </div> */}
               </div>
-            </div>
+            )}
           </Form>
         </Drawer>
 
@@ -2187,83 +2392,90 @@ const HRSalaryManagement = () => {
             backgroundColor: "#fafafa",
           }}>
           {existingSalaryRecord ? (
-            <div className="space-y-6 text-sm">
-              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+            <div className="space-y-5">
+              {/* Salary Period */}
+              <section className="bg-gradient-to-br from-white to-slate-50 p-6 rounded-xl shadow-md border border-slate-200 hover:shadow-lg transition-shadow">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
                   Salary Period
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-gray-700">
-                  <div>
-                    <strong>Month:</strong> {existingSalaryRecord.salary_month}{" "}
-                    {existingSalaryRecord.salary_year}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+                      Month
+                    </p>
+                    <p className="text-slate-900 font-semibold text-base">
+                      {existingSalaryRecord.salary_month}{" "}
+                      {existingSalaryRecord.salary_year}
+                    </p>
                   </div>
-                  <div>
-                    <strong>From:</strong>{" "}
-                    {moment(existingSalaryRecord.salary_from_date).format(
-                      "DD MMM YYYY"
-                    )}
+                  <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+                      From
+                    </p>
+                    <p className="text-slate-900 font-semibold text-base">
+                      {dayjs
+                        .utc(existingSalaryRecord.salary_from_date)
+                        .format("DD MMM YYYY")}
+                    </p>
                   </div>
-                  <div>
-                    <strong>To:</strong>{" "}
-                    {moment(existingSalaryRecord.salary_to_date)
-                      .subtract(1, "day")
-                      .format("DD MMM YYYY")}
+                  <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+                      To
+                    </p>
+                    <p className="text-slate-900 font-semibold text-base">
+                      {dayjs
+                        .utc(existingSalaryRecord.salary_to_date)
+                        .format("DD MMM YYYY")}
+                    </p>
                   </div>
                 </div>
               </section>
 
               {/* Attendance Summary */}
-              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
-                  Attendance Summary
+                <section className="bg-gradient-to-br from-purple-50 to-purple-50 p-6 rounded-xl shadow-md border border-purple-200 hover:shadow-lg transition-shadow">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-purple-600 rounded-full mr-3"></span>
+                  Attendance Details
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-gray-700">
-                  <div>
-                    <strong>Total Days:</strong>{" "}
-                    {existingSalaryRecord.total_days || 0}
-                  </div>
-                  <div>
-                    <strong>Paid Days:</strong>{" "}
-                    {existingSalaryRecord.paid_days || 0}
-                  </div>
-                  <div>
-                    <strong>LOP Days:</strong>{" "}
-                    {existingSalaryRecord.lop_days || 0}
-                  </div>
-                  <div>
-                    <strong>Present:</strong>{" "}
-                    {existingSalaryRecord.present_days || 0}
-                  </div>
-                  <div>
-                    <strong>Absent:</strong>{" "}
-                    {existingSalaryRecord.absent_days || 0}
-                  </div>
-                  <div>
-                    <strong>On Leave:</strong>{" "}
-                    {existingSalaryRecord.leave_days || 0}
-                  </div>
-                  <div>
-                    <strong>Half Days:</strong>{" "}
-                    {existingSalaryRecord.half_days || 0}
-                  </div>
-                </div>
+                <ul className="space-y-2">
+                  {Object.entries(existingSalaryRecord.attendance_details || {}).map(
+                    ([key, val]) => (
+                      <li
+                        key={key}
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-purple-100 hover:border-purple-200 transition-colors">
+                        <span className="capitalize text-slate-700 font-medium">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                        <span className="font-bold text-purple-700">
+                          ₹
+                          {Number(val).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
               </section>
 
               {/* Earnings */}
-              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+              <section className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl shadow-md border border-green-200 hover:shadow-lg transition-shadow">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-green-600 rounded-full mr-3"></span>
                   Earnings
                 </h4>
-                <ul className="space-y-2 text-gray-700">
+                <ul className="space-y-2">
                   {Object.entries(existingSalaryRecord.earnings || {}).map(
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between border-b border-gray-100 pb-1">
-                        <span className="capitalize">
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
+                        <span className="capitalize text-slate-700 font-medium">
                           {key.replace(/_/g, " ")}
                         </span>
-                        <span className="font-medium">
+                        <span className="font-bold text-green-700">
                           ₹
                           {Number(val).toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
@@ -2277,20 +2489,21 @@ const HRSalaryManagement = () => {
               </section>
 
               {/* Deductions */}
-              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+              <section className="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-xl shadow-md border border-red-200 hover:shadow-lg transition-shadow">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-red-600 rounded-full mr-3"></span>
                   Deductions
                 </h4>
-                <ul className="space-y-2 text-gray-700">
+                <ul className="space-y-2">
                   {Object.entries(existingSalaryRecord.deductions || {}).map(
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between border-b border-gray-100 pb-1">
-                        <span className="capitalize">
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-red-100 hover:border-red-200 transition-colors">
+                        <span className="capitalize text-slate-700 font-medium">
                           {key.replace(/_/g, " ")}
                         </span>
-                        <span className="font-medium">
+                        <span className="font-bold text-red-700">
                           ₹
                           {Number(val).toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
@@ -2302,20 +2515,48 @@ const HRSalaryManagement = () => {
                   )}
                 </ul>
               </section>
-
+              <section className="bg-gradient-to-br from-blue-50 to-blue-50 p-6 rounded-xl shadow-md border border-blue-200 hover:shadow-lg transition-shadow">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
+                  Target Details
+                </h4>
+                <ul className="space-y-2">
+                  {Object.entries(existingSalaryRecord.monthly_business_info || {}).map(
+                    ([key, val]) => (
+                      <li
+                        key={key}
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
+                        <span className="capitalize text-slate-700 font-medium">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                        <span className="font-bold text-blue-700">
+                          ₹
+                          {Number(val).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </section>
               {/* Additional Payments */}
               {existingSalaryRecord.additional_payments?.length > 0 && (
-                <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+                <section className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl shadow-md border border-blue-200 hover:shadow-lg transition-shadow">
+                  <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                    <span className="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
                     Additional Payments
                   </h4>
-                  <ul className="space-y-2 text-gray-700">
+                  <ul className="space-y-2">
                     {existingSalaryRecord.additional_payments.map((pay, i) => (
                       <li
                         key={i}
-                        className="flex justify-between border-b border-gray-100 pb-1">
-                        <span>{pay.name || "Payment"}</span>
-                        <span className="font-medium">
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
+                        <span className="text-slate-700 font-medium">
+                          {pay.name || "Payment"}
+                        </span>
+                        <span className="font-bold text-blue-700">
                           ₹
                           {Number(pay.value).toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
@@ -2330,18 +2571,21 @@ const HRSalaryManagement = () => {
 
               {/* Additional Deductions */}
               {existingSalaryRecord.additional_deductions?.length > 0 && (
-                <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+                <section className="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl shadow-md border border-orange-200 hover:shadow-lg transition-shadow">
+                  <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                    <span className="w-1 h-6 bg-orange-600 rounded-full mr-3"></span>
                     Additional Deductions
                   </h4>
-                  <ul className="space-y-2 text-gray-700">
+                  <ul className="space-y-2">
                     {existingSalaryRecord.additional_deductions.map(
                       (ded, i) => (
                         <li
                           key={i}
-                          className="flex justify-between border-b border-gray-100 pb-1">
-                          <span>{ded.name || "Deduction"}</span>
-                          <span className="font-medium text-red-600">
+                          className="flex justify-between items-center bg-white p-4 rounded-lg border border-orange-100 hover:border-orange-200 transition-colors">
+                          <span className="text-slate-700 font-medium">
+                            {ded.name || "Deduction"}
+                          </span>
+                          <span className="font-bold text-orange-700">
                             ₹
                             {Number(ded.value).toLocaleString("en-IN", {
                               minimumFractionDigits: 2,
@@ -2356,17 +2600,20 @@ const HRSalaryManagement = () => {
               )}
 
               {/* Payment Summary */}
-              <section className="bg-gradient-to-r from-amber-50 to-white border border-amber-200 p-5 rounded-lg shadow-sm">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+              <section className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 rounded-xl shadow-lg border-2 border-indigo-200">
+                <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
+                  <span className="w-1 h-6 bg-indigo-600 rounded-full mr-3"></span>
                   Payment Summary
                 </h4>
-                <div className="space-y-2 text-gray-800 font-medium">
-                  <div className="flex justify-between">
-                    <span>Total Earnings:</span>{" "}
-                    <span>
+                <div className="space-y-3 bg-white p-5 rounded-lg border border-slate-200">
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-700 font-medium">
+                      Calculated Salary
+                    </span>
+                    <span className="text-slate-900 font-semibold text-lg">
                       ₹
                       {Number(
-                        existingSalaryRecord.total_earnings
+                       existingSalaryRecord?.attendance_details?.calculated_salary
                       ).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -2374,11 +2621,12 @@ const HRSalaryManagement = () => {
                     </span>
                   </div>
 
-                  {/* Additional Payments Total (if any) */}
                   {existingSalaryRecord.additional_payments?.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Additional Payments:</span>{" "}
-                      <span>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-700 font-medium">
+                        Additional Payments:
+                      </span>
+                      <span className="text-green-700 font-semibold text-lg">
                         ₹
                         {Number(
                           existingSalaryRecord.additional_payments.reduce(
@@ -2393,24 +2641,14 @@ const HRSalaryManagement = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-between">
-                    <span>Total Base Deductions:</span>{" "}
-                    <span>
-                      ₹
-                      {Number(
-                        existingSalaryRecord.total_deductions
-                      ).toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
+                
 
-                  {/* Additional Deductions Total (if any) */}
                   {existingSalaryRecord?.additional_deductions?.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Additional Deductions:</span>{" "}
-                      <span className="text-red-600">
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-700 font-medium">
+                        Additional Deductions:
+                      </span>
+                      <span className="text-red-700 font-semibold text-lg">
                         ₹
                         {Number(
                           existingSalaryRecord.additional_deductions.reduce(
@@ -2425,9 +2663,11 @@ const HRSalaryManagement = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-2">
-                    <span>Net Payable:</span>
-                    <span>
+                  <div className="flex justify-between items-center py-3 border-t-2 border-slate-300 mt-3">
+                    <span className="text-slate-900 font-bold text-lg">
+                      Net Payable:
+                    </span>
+                    <span className="text-indigo-700 font-bold text-2xl">
                       ₹
                       {Number(existingSalaryRecord.net_payable).toLocaleString(
                         "en-IN",
@@ -2439,9 +2679,11 @@ const HRSalaryManagement = () => {
                     </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Paid Amount:</span>{" "}
-                    <span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-700 font-medium">
+                      Paid Amount:
+                    </span>
+                    <span className="text-slate-900 font-semibold text-lg">
                       ₹
                       {Number(existingSalaryRecord.paid_amount).toLocaleString(
                         "en-IN",
@@ -2453,14 +2695,16 @@ const HRSalaryManagement = () => {
                     </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Remaining Balance:</span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-700 font-medium">
+                      Remaining Balance:
+                    </span>
                     <span
-                      className={
+                      className={`font-bold text-lg ${
                         Number(existingSalaryRecord.remaining_balance) > 0
-                          ? "text-red-600 font-bold"
+                          ? "text-red-600"
                           : "text-green-600"
-                      }>
+                      }`}>
                       ₹
                       {Number(
                         existingSalaryRecord.remaining_balance
@@ -2471,28 +2715,36 @@ const HRSalaryManagement = () => {
                     </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Status:</span>
+                  <div className="flex justify-between items-center py-2 mt-3 pt-3 border-t border-slate-200">
+                    <span className="text-slate-700 font-medium">Status:</span>
                     <span
-                      className={
+                      className={`px-4 py-1 rounded-full font-semibold text-sm ${
                         existingSalaryRecord.status === "Paid"
-                          ? "text-green-700 font-bold"
-                          : "text-amber-700 font-bold"
-                      }>
+                          ? "bg-green-100 text-green-800 border border-green-300"
+                          : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}>
                       {existingSalaryRecord.status}
                     </span>
                   </div>
 
                   {existingSalaryRecord.transaction_id && (
-                    <div className="flex justify-between">
-                      <span>Transaction ID:</span>{" "}
-                      <span>{existingSalaryRecord.transaction_id}</span>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-700 font-medium">
+                        Transaction ID:
+                      </span>
+                      <span className="text-slate-900 font-mono text-sm bg-slate-100 px-3 py-1 rounded">
+                        {existingSalaryRecord.transaction_id}
+                      </span>
                     </div>
                   )}
 
-                  <div className="flex justify-between">
-                    <span>Payment Method:</span>{" "}
-                    <span>{existingSalaryRecord.payment_method || "—"} </span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-700 font-medium">
+                      Payment Method:
+                    </span>
+                    <span className="text-slate-900 font-medium">
+                      {existingSalaryRecord.payment_method || "—"}
+                    </span>
                   </div>
                 </div>
               </section>
