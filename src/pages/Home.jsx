@@ -12,7 +12,6 @@ import Navbar from "../components/layouts/Navbar";
 import api from "../instance/TokenInstance";
 
 const Home = () => {
-
   const [groups, setGroups] = useState([]);
   const [users, setUsers] = useState([]);
   const [agents, setAgents] = useState([]);
@@ -175,7 +174,7 @@ const Home = () => {
       bgGradient: "from-blue-500 to-blue-600",
       iconBg: "bg-blue-700",
       hoverBg: "hover:from-blue-600 hover:to-blue-700",
-      redirect: "/group",
+      redirect: "/group-menu",
     },
     {
       id: 2,
@@ -236,7 +235,6 @@ const Home = () => {
           icon: (
             <div className="flex items-center justify-center">
               <SlCalender size={24} className="mr-1" />
-              
             </div>
           ),
           text: "Current Month Payments",
@@ -333,8 +331,7 @@ const Home = () => {
                       `}
                       style={{
                         transitionDelay: `${index * 100}ms`,
-                      }}
-                    >
+                      }}>
                       {/* Decorative Background */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
                       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full -ml-12 -mb-12" />
@@ -348,8 +345,7 @@ const Home = () => {
                             ${card.iconBg} text-white rounded-xl mb-4
                             group-hover:scale-110 transition-transform duration-300
                             shadow-md
-                          `}
-                        >
+                          `}>
                           {card.icon}
                         </div>
 
@@ -361,8 +357,7 @@ const Home = () => {
                           line-clamp-2
                           ${card.text.length > 20 ? "text-base" : "text-lg"}
                           ${card.text.length > 30 ? "text-sm" : ""}
-                        `}
-                        >
+                        `}>
                           {card.text}
                         </h3>
 
@@ -376,8 +371,7 @@ const Home = () => {
                                 : "text-3xl"
                             }
                             ${String(card.count).length > 15 ? "text-xl" : ""}
-                          `}
-                          >
+                          `}>
                             {card.count}
                           </span>
                           <div className="text-xs font-semibold text-white opacity-75 bg-white bg-opacity-20 px-2 py-1 rounded-full whitespace-nowrap">

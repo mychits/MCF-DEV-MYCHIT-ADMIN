@@ -154,7 +154,7 @@ const HRSalaryManagement = () => {
     transaction_id: "",
     target: 0,
     incentive: 0,
-    total_salary: 0, // This will be editable total salary
+    total_salary: 0, 
   });
   async function fetchEmployees() {
     try {
@@ -281,22 +281,18 @@ const HRSalaryManagement = () => {
       let targetValue = monthly_business_info?.target || 0;
       let incentiveValue = monthly_business_info?.total_business_closed || 0;
       
-      // If target is not set in form data, fetch from API
       if (!targetValue) {
         targetValue = await fetchEmployeeTarget(employee_id, start_date, end_date);
       }
       
-      // If incentive is not set in form data, fetch from API
       if (!incentiveValue) {
         incentiveValue = await fetchEmployeeIncentive(employee_id, start_date, end_date);
       }
       
-      // Calculate incentive adjustment
       let calculatedIncentive = 0;
       const target = Number(targetValue || 0);
       const incentive = Number(incentiveValue || 0);
       
-      // Apply business condition: if total business achieved * 100 is less than target
       if (incentive * 100 < target) {
         calculatedIncentive = 0;
       } else if (target > 0) {
@@ -477,7 +473,7 @@ const HRSalaryManagement = () => {
       let netPayable = 0;
       let finalCalculatedIncentive = 0;
       
-      if (incentive * 100 < target) {
+      if (incentive < target) {
         // If condition met: zero base salary + additional pay - addition deduction + advance pay
         netPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
         finalCalculatedIncentive = 0;
@@ -634,7 +630,7 @@ const HRSalaryManagement = () => {
   }, [formData?.employee_id]);
   const handleChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (["employee_id", "month", "year"].includes(name)) {
+    if (["employee_id", "month", "year","target"].includes(name)) {
       setCalculatedSalary(null);
       setShowComponents(false);
       setFormData((prev) => ({
@@ -843,11 +839,10 @@ const HRSalaryManagement = () => {
           baseSalary +
           advanceTotal +
           additionalPaymentsTotal -
-          additionalDeductionsTotal +
-          formData.calculated_incentive;
+          additionalDeductionsTotal 
         finalCalculatedIncentive = formData.calculated_incentive;
       }
-      
+   
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
       const attendanceDetails = calculatedSalary
@@ -902,7 +897,7 @@ const HRSalaryManagement = () => {
         attendance_details: attendanceDetails,
         monthly_business_info: monthlyTargetIncentive,
       };
-      
+      console.log(salaryData,"this is salary data");
       await API.post("/salary-payment/", salaryData);
       message.success("Salary added successfully");
       setIsOpenAddModal(false);
@@ -1178,6 +1173,7 @@ const HRSalaryManagement = () => {
                         <label className="font-medium">Total Target</label>
                         <input
                           type="number"
+                          onWheel={(e)=>e.target.blur()}
                           value={formData.target || 0}
                           onChange={(e) => handleChange("target", e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
@@ -1695,7 +1691,7 @@ const HRSalaryManagement = () => {
                   {calculatedSalary && (
                     <div className="bg-blue-50 p-4 rounded-lg mt-4">
                       <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                        Incentive Adjustment
+                        Incentive Payable
                       </h3>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1987,7 +1983,7 @@ const HRSalaryManagement = () => {
                                   0
                                 );
                               total =
-                                base + advanceTotal + addPayments - addDeductions + formData.calculated_incentive;
+                                base + advanceTotal + addPayments - addDeductions 
                             }
                             
                             return (

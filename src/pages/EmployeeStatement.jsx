@@ -18,11 +18,18 @@ import moment from "moment";
 
 const { Text, Title } = Typography;
 
+// Helper to safely sum array of values (defensive against non-array input)
+const sumValues = (arr) => {
+  if (!Array.isArray(arr)) return 0;
+  return arr.reduce((sum, item) => sum + (item?.value || 0), 0);
+};
+
 const EmployeeStatement = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [ledgerData, setLedgerData] = useState([]);
   const [tableData, setTableData] = useState([]);
+  const [overallSummary, setOverallSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [alertConfig, setAlertConfig] = useState({
@@ -54,53 +61,62 @@ const EmployeeStatement = () => {
   useEffect(() => {
     if (selectedEmployee) {
       fetchLedgerData(selectedEmployee);
+    } else {
+      setLedgerData([]);
+      setTableData([]);
+      setOverallSummary(null);
     }
   }, [selectedEmployee]);
 
   const fetchLedgerData = async (employeeId) => {
     try {
       setIsLoading(true);
-      const response = await api.get(`/employee/ledger/${employeeId}`);
-      setLedgerData(response.data.ledger || []);
-      const formattedData = (response.data.ledger || []).map((item, index) => {
-        const isPositiveBalance = item.balance >= 0;
-        const balanceColor = isPositiveBalance
-          ? "text-green-600"
-          : "text-red-600";
+      const response = await api.get(`/employee/ledgertest/${employeeId}`);
+      console.log("Ledger API Response:", response.data);
+      const ledger = response.data.ledger || [];
+      const summary = response.data.overall_summary;
+
+      const formattedData = ledger.map((item, index) => {
+        const netPosition = item.company_books.net_position;
+        const balanceColor = netPosition >= 0 ? "text-green-600" : "text-red-600";
 
         return {
           id: index + 1,
-          month: item.month,
-          calculatedSalary: item?.details?.calculated_salary,
-          targetAmount: item?.details?.target,
-          businessClosed: item?.details?.business_closed,
-          isTargetAchieved: item?.details?.is_target_achieved ? "Yes" : "No",
+          month: item.period.label,
+          calculatedSalary: item.salary.total_salary_payable,
+          targetAmount: item.business.target,
+          businessClosed: item.business.total_business_closed,
+          isTargetAchieved: item.business.target_achieved ? "Yes" : "No",
+          incentiveEarned: item.incentive.earned,
 
-          incentiveEarned: item?.details?.incentive_earned,
-          additionalEarnings: item.details?.additional_payments,
-          additionalDeductions: item.details?.additional_payments,
-          advanceGiven: item.details?.advance_given,
+          salaryStatus: getStatusTag(item.salary.status),
+          incentiveStatus: getStatusTag(item.incentive.status),
+
+          advanceGiven: item.advance.given,
+
           debit:
-            item.debit > 0
-              ? item.debit.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
+            item.company_books.debit > 0
+              ? item.company_books.debit.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })
               : "-",
+
           credit:
-            item.credit > 0
-              ? item.credit.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
+            item.company_books.credit > 0
+              ? item.company_books.credit.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })
               : "-",
+
           balance: (
             <span className={balanceColor}>
-              {Math.abs(item.balance).toLocaleString("en-IN", {
+              {Math.abs(netPosition).toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
                 minimumFractionDigits: 0,
@@ -112,13 +128,15 @@ const EmployeeStatement = () => {
           action: (
             <button
               className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
-              onClick={() => showDetailsModal(item)}>
+              onClick={() => showDetailsModal(item)}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke="currentColor">
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -139,6 +157,8 @@ const EmployeeStatement = () => {
       });
 
       setTableData(formattedData);
+      setLedgerData(ledger);
+      setOverallSummary(summary);
     } catch (error) {
       console.error("Error fetching ledger data:", error);
       setAlertConfig({
@@ -173,9 +193,13 @@ const EmployeeStatement = () => {
     { key: "businessClosed", header: "Total Business Closed" },
     { key: "isTargetAchieved", header: "Target Achieved" },
     { key: "incentiveEarned", header: "Incentive" },
-    { key: "additionalEarnings", header: "Additional Earnings" },
-    { key: "additionalDeductions", header: "Additional Deductions" },
+
     { key: "advanceGiven", header: "Advance" },
+
+    { key: "salaryStatus", header: "Salary Status" },
+    { key: "incentiveStatus", header: "Incentive Status" },
+
+
     {
       key: "debit",
       header: (
@@ -222,12 +246,27 @@ const EmployeeStatement = () => {
     );
   };
 
-  const getTargetAchievementTag = (achievement) => {
-    const pct = parseFloat(achievement.replace("%", ""));
-    if (pct >= 100) return <Tag color="green">{achievement} (Achieved)</Tag>;
-    if (pct >= 80) return <Tag color="blue">{achievement} (Near Target)</Tag>;
-    return <Tag color="orange">{achievement} (Below Target)</Tag>;
+  const getTargetAchievementTag = (target, achieved) => {
+    const pct = target > 0 ? (achieved / target) * 100 : 0;
+    const label = `${pct.toFixed(1)}%`;
+    if (pct >= 100) return <Tag color="green">{label} (Achieved)</Tag>;
+    if (pct >= 80) return <Tag color="blue">{label} (Near Target)</Tag>;
+    return <Tag color="orange">{label} (Below Target)</Tag>;
   };
+
+  const getStatusTag = (status) => {
+    switch (status) {
+      case "Paid":
+        return <Tag color="green">Paid</Tag>;
+      case "Processed":
+        return <Tag color="blue">Processed</Tag>;
+      case "Pending":
+      default:
+        return <Tag color="orange">Pending</Tag>;
+    }
+  };
+
+
 
   return (
     <>
@@ -272,9 +311,8 @@ const EmployeeStatement = () => {
                     }
                     options={employees.map((emp) => ({
                       value: emp._id,
-                      label: `${emp.name} ${emp.phone_number}(${
-                        emp.employeeCode || "N/A"
-                      })`,
+                      label: `${emp.name} (${emp.phone_number}) ${emp.employeeCode ? `– ${emp.employeeCode}` : ""
+                        }`,
                       employee: emp,
                     }))}
                   />
@@ -317,7 +355,7 @@ const EmployeeStatement = () => {
                   />
                 )}
 
-                {ledgerData.length > 0 && (
+                {overallSummary && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <Title level={4} className="flex items-center">
                       <DollarCircleOutlined className="mr-2 text-gray-600" />
@@ -326,58 +364,62 @@ const EmployeeStatement = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                       <div className="p-4 bg-white rounded-lg shadow border border-gray-100">
                         <Text type="secondary" className="text-sm">
-                          Total Credits
+                          Total Credits (Outstanding)
                         </Text>
                         <Title
                           level={3}
-                          className="text-green-600 mb-0 mt-1 flex items-center">
+                          className="text-green-600 mb-0 mt-1 flex items-center"
+                        >
                           <PlusCircleOutlined className="mr-2" />
-                          {ledgerData
-                            .reduce((sum, item) => sum + item.credit, 0)
-                            .toLocaleString("en-IN", {
+                          {overallSummary.company_books.credit.toLocaleString(
+                            "en-IN",
+                            {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
-                            })}
+                            }
+                          )}
                         </Title>
                       </div>
                       <div className="p-4 bg-white rounded-lg shadow border border-gray-100">
                         <Text type="secondary" className="text-sm">
-                          Total Debits
+                          Total Debits (Paid/Advanced)
                         </Text>
                         <Title
                           level={3}
-                          className="text-red-600 mb-0 mt-1 flex items-center">
+                          className="text-red-600 mb-0 mt-1 flex items-center"
+                        >
                           <MinusCircleOutlined className="mr-2" />
-                          {ledgerData
-                            .reduce((sum, item) => sum + item.debit, 0)
-                            .toLocaleString("en-IN", {
+                          {overallSummary.company_books.debit.toLocaleString(
+                            "en-IN",
+                            {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
-                            })}
+                            }
+                          )}
                         </Title>
                       </div>
                       <div className="p-4 bg-white rounded-lg shadow border border-gray-100">
                         <Text type="secondary" className="text-sm">
-                          Current Balance
+                          Net Position
                         </Text>
                         <Title
                           level={3}
-                          className={`mb-0 mt-1 flex items-center ${
-                            ledgerData[ledgerData.length - 1]?.balance > 0
+                          className={`mb-0 mt-1 flex items-center ${overallSummary.company_books.net_position >= 0
                               ? "text-green-600"
                               : "text-red-600"
-                          }`}>
-                          {ledgerData[ledgerData.length - 1]?.balance > 0 ? (
+                            }`}
+                        >
+                          {overallSummary.company_books.net_position >= 0 ? (
                             <PlusCircleOutlined className="mr-2" />
                           ) : (
                             <MinusCircleOutlined className="mr-2" />
                           )}
                           {Math.abs(
-                            ledgerData[ledgerData.length - 1]?.balance
+                            overallSummary.company_books.net_position
                           ).toLocaleString("en-IN", {
                             style: "currency",
                             currency: "INR",
@@ -411,11 +453,11 @@ const EmployeeStatement = () => {
               <Space>
                 <MinusCircleOutlined className="text-red-500" />
                 <Text>
-                  <strong>Debit:</strong> Amount owed by employee |
+                  <strong>Debit:</strong> Amount paid/advanced by company |
                   <PlusCircleOutlined className="text-green-500 ml-2 mr-1" />
-                  <strong>Credit:</strong> Amount owed to employee |
+                  <strong>Credit:</strong> Amount owed by company |
                   <DollarCircleOutlined className="ml-2 mr-1" />
-                  <strong>Balance:</strong> Running total (Credit - Debit)
+                  <strong>Balance:</strong> Net position (Credit - Debit)
                 </Text>
               </Space>
             </div>
@@ -431,7 +473,8 @@ const EmployeeStatement = () => {
                 className="h-6 w-6 text-blue-600 mr-2"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke="currentColor">
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -440,7 +483,7 @@ const EmployeeStatement = () => {
                 />
               </svg>
               <span className="font-semibold">
-                {currentDetails?.month} Details
+                {currentDetails?.period?.label || "Details"}
               </span>
             </div>
           }
@@ -448,32 +491,43 @@ const EmployeeStatement = () => {
           onClose={closeDrawer}
           visible={drawerVisible}
           bodyStyle={{ paddingBottom: 80 }}
-          footer={null}>
+          footer={null}
+        >
           {currentDetails && (
             <div className="space-y-6">
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <Descriptions title="Monthly Summary" column={1} bordered>
                   <Descriptions.Item label="Status">
-                    <Tag color={currentDetails.balance >= 0 ? "green" : "red"}>
-                      {currentDetails.balance >= 0
-                        ? "Credit Balance"
-                        : "Debit Balance"}
+                    <Tag
+                      color={
+                        currentDetails.company_books.net_position >= 0
+                          ? "green"
+                          : "red"
+                      }
+                    >
+                      {currentDetails.company_books.net_position >= 0
+                        ? "Credit Balance (Company owes)"
+                        : "Debit Balance (Company overpaid)"}
                     </Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Net Amount">
+                  <Descriptions.Item label="Net Position">
                     <Title
                       level={4}
                       className={
-                        currentDetails.balance >= 0
+                        currentDetails.company_books.net_position >= 0
                           ? "text-green-600"
                           : "text-red-600"
-                      }>
-                      {currentDetails.balance.toLocaleString("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })}
+                      }
+                    >
+                      {currentDetails.company_books.net_position.toLocaleString(
+                        "en-IN",
+                        {
+                          style: "currency",
+                          currency: "INR",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }
+                      )}
                     </Title>
                   </Descriptions.Item>
                 </Descriptions>
@@ -482,7 +536,7 @@ const EmployeeStatement = () => {
               <Descriptions title="Salary Components" column={1} bordered>
                 <Descriptions.Item label="Base Salary">
                   <Text strong>
-                    {currentDetails.details.base_salary.toLocaleString(
+                    {currentDetails.salary.total_salary_payable.toLocaleString(
                       "en-IN",
                       {
                         style: "currency",
@@ -495,46 +549,35 @@ const EmployeeStatement = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Other Payments">
                   <Text type="success" strong>
-                    +{" "}
-                    {currentDetails.details.other_payments.toLocaleString(
-                      "en-IN",
-                      {
-                        style: "currency",
-                        currency: "INR",
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }
-                    ) || "0"}
+                    + ₹
+                    {sumValues(currentDetails.earnings).toLocaleString() || "0"}
                   </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Other Deductions">
                   <Text type="danger" strong>
-                    -{" "}
-                    {currentDetails.details.other_deductions.toLocaleString(
-                      "en-IN",
-                      {
-                        style: "currency",
-                        currency: "INR",
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }
-                    ) || "0"}
+                    - ₹
+                    {sumValues(currentDetails.deductions).toLocaleString() ||
+                      "0"}
                   </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Incentive Adjustment">
-                  {getIncentiveTag(currentDetails.details.incentive_adjustment)}
+                  {getIncentiveTag(
+                    currentDetails.incentive.earned -
+                    currentDetails.incentive.paid
+                  )}
                 </Descriptions.Item>
               </Descriptions>
 
               <Descriptions title="Business Performance" column={1} bordered>
                 <Descriptions.Item label="Target Achievement">
                   {getTargetAchievementTag(
-                    currentDetails.details.target_achievement
+                    currentDetails.business.target,
+                    currentDetails.business.total_business_closed
                   )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Business Closed">
                   <Text strong>
-                    {currentDetails.details.business_closed.toLocaleString(
+                    {currentDetails.business.total_business_closed.toLocaleString(
                       "en-IN",
                       {
                         style: "currency",
@@ -547,7 +590,7 @@ const EmployeeStatement = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Target">
                   <Text type="secondary">
-                    {currentDetails.details.target.toLocaleString("en-IN", {
+                    {currentDetails.business.target.toLocaleString("en-IN", {
                       style: "currency",
                       currency: "INR",
                       minimumFractionDigits: 0,
@@ -556,6 +599,13 @@ const EmployeeStatement = () => {
                   </Text>
                 </Descriptions.Item>
               </Descriptions>
+              <Descriptions.Item label="Salary Status">
+                {getStatusTag(currentDetails.salary.status)}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Incentive Status">
+                {getStatusTag(currentDetails.incentive.status)}
+              </Descriptions.Item>
 
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <Title level={5} className="flex items-center mb-3">
@@ -564,7 +614,8 @@ const EmployeeStatement = () => {
                     className="h-5 w-5 mr-2 text-gray-600"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -576,29 +627,35 @@ const EmployeeStatement = () => {
                 </Title>
                 <div className="space-y-2 text-gray-700">
                   <p>
-                    <span className="font-medium">Base Amount:</span> ₹
-                    {currentDetails.details.base_salary.toLocaleString()}
+                    <span className="font-medium">Base Salary:</span> ₹
+                    {currentDetails.salary.total_salary_payable.toLocaleString()}
                   </p>
                   <p>
                     <span className="font-medium">+ Other Payments:</span> ₹
-                    {currentDetails.details.other_payments.toLocaleString()}
+                    {sumValues(currentDetails.earnings).toLocaleString() || "0"}
                   </p>
                   <p>
-                    <span className="font-medium">+ Incentive:</span>{" "}
-                    {currentDetails.details.incentive_adjustment > 0 ? "+" : ""}
-                    ₹
-                    {Math.abs(
-                      currentDetails.details.incentive_adjustment
-                    ).toLocaleString()}
+                    <span className="font-medium">+ Incentive Earned:</span> ₹
+                    {currentDetails.incentive.earned.toLocaleString()}
                   </p>
                   <p>
-                    <span className="font-medium">- Other Deductions:</span> -₹
-                    {currentDetails.details.other_deductions.toLocaleString()}
+                    <span className="font-medium">- Other Deductions:</span> ₹
+                    {sumValues(currentDetails.deductions).toLocaleString() || "0"}
+                  </p>
+                  <p>
+                    <span className="font-medium">- Advance Recovered:</span> ₹
+                    {currentDetails.advance.recovered.toLocaleString()}
                   </p>
                   <div className="border-t pt-2 mt-2">
                     <p className="font-semibold">
-                      Net Amount: {currentDetails.balance >= 0 ? "+" : "-"}₹
-                      {Math.abs(currentDetails.balance).toLocaleString()}
+                      Net Position:{" "}
+                      {currentDetails.company_books.net_position >= 0
+                        ? "+"
+                        : "-"}
+                      ₹
+                      {Math.abs(
+                        currentDetails.company_books.net_position
+                      ).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -618,15 +675,14 @@ const EmployeeStatement = () => {
   );
 };
 
-// Simple filter function similar to your Groups page
 const filterOption = (data, searchText) => {
   if (!searchText) return data;
 
   return data.filter((item) =>
     Object.values(item).some(
       (val) =>
-        typeof val === "string" &&
-        val.toLowerCase().includes(searchText.toLowerCase())
+        (typeof val === "string" || typeof val === "number") &&
+        val.toString().toLowerCase().includes(searchText.toLowerCase())
     )
   );
 };
