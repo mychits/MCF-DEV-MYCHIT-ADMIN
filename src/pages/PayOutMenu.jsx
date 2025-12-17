@@ -17,17 +17,17 @@ const PayOutMenu = () => {
       href:"/payment-menu/payment-in-out-menu/general-payment-out/chit",
       stats: "Chit Payment Out Information"
     },
-    // {
-    //   id: "#2",
-    //   title: "Commission / Incentive",
-    //   description: "Manage customer Commission / Incentive  payment out transaction information.",
-    //   icon: <HiCurrencyRupee size={28} className="text-yellow-600" />,
-    //    color: "from-blue-600 to-blue-700",
-    //       lightColor: "bg-blue-50",
-    //       borderColor: "border-blue-200",
-    //    href:"/target-commission-incentive",
-    //    stats: "Commission / Incentive Information"
-    // },
+    {
+      id: "#2",
+      title: "Incentive",
+      description: "Manage Employee Incentive  payment out transaction information.",
+      icon: <HiCurrencyRupee size={28} className="text-yellow-600" />,
+       color: "from-blue-600 to-blue-700",
+          lightColor: "bg-blue-50",
+          borderColor: "border-blue-200",
+       href:"/salary-incentive",
+       stats: "Incentive Information"
+    },
     {
       id: "#3",
       title: "Salary",

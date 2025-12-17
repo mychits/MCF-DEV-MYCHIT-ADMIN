@@ -140,7 +140,8 @@ import CollectionMenu from "../pages/CollectionMenu";
 import SalarySlipPrint from "../components/printFormats/SalarySlipPrint";
 import EmployeeSalaryReport from "../pages/EmployeeSalaryReport"
 import HRSalaryManagement from "../pages/HRSalaryManagement";
-import EmployeeStatement from "../pages/EmployeeStatement"
+import EmployeeStatement from "../pages/EmployeeStatement";
+import SalaryIncentive from "../pages/SalaryIncentive";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -266,6 +267,15 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  {
+    path: "/salary-incentive",
+    element: (
+      <ProtectedRoute>
+        <SalaryIncentive />
+      </ProtectedRoute>
+    ),
+  },
+  
   {
     path: "/enroll-menu/mobile-app-enroll",
     element: (

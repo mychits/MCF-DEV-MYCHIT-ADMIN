@@ -17,7 +17,7 @@ import DataTable from "../components/layouts/Datatable";
 import { useEffect, useState, useMemo } from "react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
-import { Select as AntSelect, Segmented, Button as AntButton,Flex, Spin } from "antd";
+import { Select as AntSelect, Segmented, Button as AntButton, Flex, Spin } from "antd";
 import { IoMdMore } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -26,7 +26,6 @@ import moment from "moment";
 import utc from "dayjs/plugin/utc";
 import { LoadingOutlined } from '@ant-design/icons';
 dayjs.extend(utc);
-
 const HRSalaryManagement = () => {
   const navigate = useNavigate();
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
@@ -44,7 +43,7 @@ const HRSalaryManagement = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [form] = Form.useForm();
-  const [dataTableLoading,setDataTableLoading] = useState(false);
+  const [dataTableLoading, setDataTableLoading] = useState(false);
   const [updateForm] = Form.useForm();
   const [alreadyPaidModalOpen, setAlreadyPaidModalOpen] = useState(false);
   const [existingSalaryRecord, setExistingSalaryRecord] = useState(null);
@@ -75,8 +74,11 @@ const HRSalaryManagement = () => {
     calculated_incentive: 0,
     payment_method: "Cash",
     transaction_id: "",
+    monthly_business_info: {
+      target: 0,
+      total_business_closed: 0,
+    }
   });
-
   const thisYear = dayjs().format("YYYY");
   const earningsObject = {
     basic: 0,
@@ -94,7 +96,6 @@ const HRSalaryManagement = () => {
     epf: 0,
     professional_tax: 0,
   };
-
   const columns = [
     { key: "siNo", header: "SL. NO" },
     { key: "employeeName", header: "Employee Name" },
@@ -104,7 +105,6 @@ const HRSalaryManagement = () => {
     { key: "netPayable", header: "Net Payable" },
     { key: "action", header: "Action" },
   ];
-
   const months = [
     { label: "January", value: "January", disabled: false },
     { label: "February", value: "February", disabled: false },
@@ -123,7 +123,6 @@ const HRSalaryManagement = () => {
     { label: "November", value: "November", disabled: false },
     { label: "December", value: "December", disabled: false },
   ];
-
   const previousMonth = months[dayjs().subtract(2, "month").format("MM")].label;
   const [formData, setFormData] = useState({
     employee_id: "",
@@ -155,8 +154,8 @@ const HRSalaryManagement = () => {
     transaction_id: "",
     target: 0,
     incentive: 0,
+    total_salary: 0, // This will be editable total salary
   });
-
   async function fetchEmployees() {
     try {
       const responseData = await API.get("/employee");
@@ -169,11 +168,9 @@ const HRSalaryManagement = () => {
       setEmployees([]);
     }
   }
-
   useEffect(() => {
     fetchEmployees();
   }, []);
-
   async function getSalaryById(id) {
     try {
       const response = await API.get(`/salary-payment/${id}`);
@@ -183,7 +180,6 @@ const HRSalaryManagement = () => {
       return null;
     }
   }
-
   const fetchEmployeeTarget = async (employeeId, start_date, end_date) => {
     try {
       const response = await API.get(`/target/employees/${employeeId}`, {
@@ -195,7 +191,6 @@ const HRSalaryManagement = () => {
       return 0;
     }
   };
-
   const fetchEmployeeIncentive = async (employeeId, start_date, end_date) => {
     try {
       const response = await API.get(
@@ -208,7 +203,6 @@ const HRSalaryManagement = () => {
       return 0;
     }
   };
-
   const getValidMonths = (joiningDateStr, selectedYear) => {
     if (!joiningDateStr || !selectedYear) {
       return months.map((m) => ({ ...m, disabled: true }));
@@ -231,7 +225,6 @@ const HRSalaryManagement = () => {
       return { ...month, disabled };
     });
   };
-
   useEffect(() => {
     if (
       formData.employee_id &&
@@ -256,9 +249,8 @@ const HRSalaryManagement = () => {
       }
     }
   }, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
-
   const handleRecalculateInEdit = async () => {
-    const { employee_id, month, year, earnings, deductions } = updateFormData;
+    const { employee_id, month, year, earnings, deductions, monthly_business_info } = updateFormData;
     if (!employee_id || !month || !year) {
       message.warning("Please select employee, month, and year.");
       return;
@@ -285,19 +277,33 @@ const HRSalaryManagement = () => {
         .month(monthIndex)
         .endOf("month")
         .format("YYYY-MM-DD");
-      const [targetValue, incentiveValue] = await Promise.all([
-        fetchEmployeeTarget(employee_id, start_date, end_date),
-        fetchEmployeeIncentive(employee_id, start_date, end_date),
-      ]);
-
+      
+      let targetValue = monthly_business_info?.target || 0;
+      let incentiveValue = monthly_business_info?.total_business_closed || 0;
+      
+      // If target is not set in form data, fetch from API
+      if (!targetValue) {
+        targetValue = await fetchEmployeeTarget(employee_id, start_date, end_date);
+      }
+      
+      // If incentive is not set in form data, fetch from API
+      if (!incentiveValue) {
+        incentiveValue = await fetchEmployeeIncentive(employee_id, start_date, end_date);
+      }
+      
+      // Calculate incentive adjustment
       let calculatedIncentive = 0;
       const target = Number(targetValue || 0);
       const incentive = Number(incentiveValue || 0);
-      if (target > 0) {
+      
+      // Apply business condition: if total business achieved * 100 is less than target
+      if (incentive * 100 < target) {
+        calculatedIncentive = 0;
+      } else if (target > 0) {
         const incentiveValueNum = incentive * 100;
         calculatedIncentive = (incentiveValueNum - target) / 100;
       }
-
+      
       const advanceTotal = updateFormData.advance_payments.reduce(
         (sum, a) => sum + Number(a.value || 0),
         0
@@ -311,14 +317,22 @@ const HRSalaryManagement = () => {
           (sum, d) => sum + Number(d.value || 0),
           0
         );
-
-      const totalPayable =
-        calculated.calculated_salary +
-        advanceTotal +
-        additionalPaymentsTotal -
-        additionalDeductionsTotal +
-        calculatedIncentive;
-
+      
+      // Apply business condition to total payable
+      let totalPayable = 0;
+      if (incentive * 100 < target) {
+        // If condition met: zero base salary + additional pay - addition deduction + advance pay
+        totalPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+      } else {
+        // Normal calculation
+        totalPayable =
+          calculated.calculated_salary +
+          advanceTotal +
+          additionalPaymentsTotal -
+          additionalDeductionsTotal +
+          calculatedIncentive;
+      }
+      
       const updatedData = {
         ...updateFormData,
         year: dayjs(yearValue, "YYYY"),
@@ -355,7 +369,6 @@ const HRSalaryManagement = () => {
       setUpdateLoading(false);
     }
   };
-
   const handleEdit = async (id) => {
     try {
       setUpdateLoading(true);
@@ -397,7 +410,6 @@ const HRSalaryManagement = () => {
       setUpdateLoading(false);
     }
   };
-
   const handleDeleteConfirm = async (id) => {
     try {
       setDeleteLoading(true);
@@ -411,7 +423,6 @@ const HRSalaryManagement = () => {
       setDeleteLoading(false);
     }
   };
-
   const handleUpdateChange = (changedValues, allValues) => {
     if (changedValues.year && dayjs.isDayjs(changedValues.year)) {
       changedValues.year = changedValues.year.format("YYYY");
@@ -433,11 +444,9 @@ const HRSalaryManagement = () => {
       ...allValues,
     });
   };
-
   const handleUpdateSubmit = async () => {
     try {
       setUpdateLoading(true);
-
       const totalEarnings = Object.values(updateFormData.earnings).reduce(
         (sum, value) => sum + Number(value),
         0
@@ -446,7 +455,6 @@ const HRSalaryManagement = () => {
         (sum, value) => sum + Number(value),
         0
       );
-
       const advanceTotal = updateFormData.advance_payments.reduce(
         (sum, a) => sum + Number(a.value || 0),
         0
@@ -460,24 +468,45 @@ const HRSalaryManagement = () => {
           (sum, deduction) => sum + Number(deduction.value || 0),
           0
         );
-
-      const netPayable =
-        totalEarnings -
-        totalDeductions +
-        advanceTotal +
-        additionalPaymentsTotal -
-        additionalDeductionsTotal +
-        updateFormData.calculated_incentive;
-
+      
+      // Get business info
+      const target = Number(updateFormData.monthly_business_info?.target || 0);
+      const incentive = Number(updateFormData.monthly_business_info?.total_business_closed || 0);
+      
+      // Apply business condition
+      let netPayable = 0;
+      let finalCalculatedIncentive = 0;
+      
+      if (incentive * 100 < target) {
+        // If condition met: zero base salary + additional pay - addition deduction + advance pay
+        netPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+        finalCalculatedIncentive = 0;
+      } else {
+        // Normal calculation
+        netPayable =
+          totalEarnings -
+          totalDeductions +
+          advanceTotal +
+          additionalPaymentsTotal -
+          additionalDeductionsTotal +
+          updateFormData.calculated_incentive;
+        finalCalculatedIncentive = updateFormData.calculated_incentive;
+      }
+      
       const updateData = {
         ...updateFormData,
         earnings: updateFormData.earnings,
         deductions: updateFormData.deductions,
+        calculated_incentive: finalCalculatedIncentive,
         net_payable: netPayable,
         total_salary_payable: netPayable,
         remaining_balance: netPayable - (updateFormData.paid_amount || 0),
+        monthly_business_info: {
+          target: target,
+          total_business_closed: incentive,
+        }
       };
-
+      
       await API.put(`/salary-payment/${currentSalaryId}`, updateData);
       message.success("Salary updated successfully");
       setIsOpenUpdateModal(false);
@@ -489,11 +518,9 @@ const HRSalaryManagement = () => {
       setUpdateLoading(false);
     }
   };
-
   const handlePrint = (salaryPaymentId) => {
     navigate("/salary-slip-print/" + salaryPaymentId);
   };
-
   const dropDownItems = (salaryPayment) => {
     const dropDownItemList = [
       {
@@ -535,7 +562,6 @@ const HRSalaryManagement = () => {
     ];
     return dropDownItemList;
   };
-
   async function fetchSalaryDetails() {
     try {
       setEmployeeDetailsLoading(true);
@@ -555,6 +581,7 @@ const HRSalaryManagement = () => {
         ...prev,
         earnings: updatedEarnings,
         deductions: updatedDeductions,
+        total_salary: emp?.salary || 0,
       }));
     } catch (error) {
       setEmployeeDetails({});
@@ -562,13 +589,11 @@ const HRSalaryManagement = () => {
       setEmployeeDetailsLoading(false);
     }
   }
-
   useEffect(() => {
     if (formData.employee_id && formData.month && formData.year) {
       loadTargetAndIncentive();
     }
   }, [formData.employee_id, formData.month, formData.year]);
-
   const loadTargetAndIncentive = async () => {
     try {
       const monthIndex = moment().month(formData.month).month();
@@ -602,13 +627,11 @@ const HRSalaryManagement = () => {
       console.error("Failed to auto-load target & incentive", err);
     }
   };
-
   useEffect(() => {
     if (formData.employee_id) {
       fetchSalaryDetails();
     }
-  }, [formData?.employee_id, formData.month, formData.month]);
-
+  }, [formData?.employee_id]);
   const handleChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (["employee_id", "month", "year"].includes(name)) {
@@ -622,7 +645,6 @@ const HRSalaryManagement = () => {
       }));
     }
   };
-
   const handleDeductionsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -635,7 +657,6 @@ const HRSalaryManagement = () => {
     setCalculatedSalary(null);
     setShowComponents(false);
   };
-
   const handleEarningsChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -648,35 +669,30 @@ const HRSalaryManagement = () => {
     setCalculatedSalary(null);
     setShowComponents(false);
   };
-
   // Advance Payment Handlers
   const handleAdvancePaymentChange = (index, field, value) => {
     const updatedPayments = [...formData.advance_payments];
     updatedPayments[index] = { ...updatedPayments[index], [field]: value };
     setFormData((prev) => ({ ...prev, advance_payments: updatedPayments }));
   };
-
   const addAdvancePayment = () => {
     setFormData((prev) => ({
       ...prev,
       advance_payments: [...prev.advance_payments, { name: "", value: 0 }],
     }));
   };
-
   const removeAdvancePayment = (index) => {
     const updatedPayments = formData.advance_payments.filter(
       (_, i) => i !== index
     );
     setFormData((prev) => ({ ...prev, advance_payments: updatedPayments }));
   };
-
   // Additional Payment Handlers (kept as manual entries)
   const handleAdditionalPaymentChange = (index, field, value) => {
     const updatedPayments = [...formData.additional_payments];
     updatedPayments[index] = { ...updatedPayments[index], [field]: value };
     setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
   };
-
   const addAdditionalPayment = () => {
     setFormData((prev) => ({
       ...prev,
@@ -686,14 +702,12 @@ const HRSalaryManagement = () => {
       ],
     }));
   };
-
   const removeAdditionalPayment = (index) => {
     const updatedPayments = formData.additional_payments.filter(
       (_, i) => i !== index
     );
     setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
   };
-
   // Additional Deduction Handlers (kept as manual entries)
   const handleAdditionalDeductionChange = (index, field, value) => {
     const updatedDeductions = [...formData.additional_deductions];
@@ -703,7 +717,6 @@ const HRSalaryManagement = () => {
       additional_deductions: updatedDeductions,
     }));
   };
-
   const addAdditionalDeduction = () => {
     setFormData((prev) => ({
       ...prev,
@@ -713,7 +726,6 @@ const HRSalaryManagement = () => {
       ],
     }));
   };
-
   const removeAdditionalDeduction = (index) => {
     const updatedDeductions = formData.additional_deductions.filter(
       (_, i) => i !== index
@@ -723,12 +735,10 @@ const HRSalaryManagement = () => {
       additional_deductions: updatedDeductions,
     }));
   };
-
   const updateTotalEarnings = useMemo(() => {
     const earnings = updateFormData?.earnings || {};
     return Object.values(earnings).reduce((sum, v) => sum + Number(v || 0), 0);
   }, [updateFormData]);
-
   const updateTotalDeductions = useMemo(() => {
     const deductions = updateFormData?.deductions || {};
     const base = Object.values(deductions).reduce(
@@ -737,7 +747,6 @@ const HRSalaryManagement = () => {
     );
     return base;
   }, [updateFormData]);
-
   async function handleCalculateSalary() {
     try {
       setCalculateLoading(true);
@@ -752,22 +761,24 @@ const HRSalaryManagement = () => {
       });
       const calculated = response.data.data;
       setCalculatedSalary(calculated);
-
       // Calculate incentive adjustment
       let calculatedIncentive = 0;
       const target = Number(formData?.target || 0);
       const incentive = Number(formData?.incentive || 0);
-      if (target > 0) {
+      
+      // Apply business condition: if total business achieved * 100 is less than target
+      if (incentive * 100 < target) {
+        calculatedIncentive = 0;
+      } else if (target > 0) {
         const incentiveValue = incentive * 100;
         calculatedIncentive = (incentiveValue - target) / 100;
       }
-
+      
       setFormData((prev) => ({
         ...prev,
         calculated_incentive: calculatedIncentive,
         total_salary_payable: calculated.calculated_salary,
       }));
-
       setShowComponents(true);
       message.success("Salary calculated successfully");
     } catch (error) {
@@ -789,7 +800,6 @@ const HRSalaryManagement = () => {
       setCalculateLoading(false);
     }
   }
-
   async function handleAddSalary() {
     try {
       const baseSalary = calculatedSalary
@@ -802,34 +812,44 @@ const HRSalaryManagement = () => {
             (sum, v) => sum + Number(v || 0),
             0
           );
-
       // Calculate totals for all payment/deduction types
       const advanceTotal = formData.advance_payments.reduce(
         (sum, a) => sum + Number(a.value || 0),
         0
       );
-
       const additionalPaymentsTotal = formData.additional_payments.reduce(
         (sum, payment) => sum + Number(payment.value || 0),
         0
       );
-
       const additionalDeductionsTotal = formData.additional_deductions.reduce(
         (sum, deduction) => sum + Number(deduction.value || 0),
         0
       );
-
-      // Total salary payable includes:
-      // base salary + advance payments + additional payments + calculated incentive - additional deductions
-      const totalSalaryPayable =
-        baseSalary +
-        advanceTotal +
-        additionalPaymentsTotal -
-        additionalDeductionsTotal;
-
+      
+      // Apply business condition
+      let totalSalaryPayable = 0;
+      let finalCalculatedIncentive = 0;
+      
+      const target = Number(formData.target || 0);
+      const incentive = Number(formData.incentive || 0);
+      
+      if (incentive * 100 < target) {
+        // If condition met: zero base salary + additional pay - addition deduction + advance pay
+        totalSalaryPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+        finalCalculatedIncentive = 0;
+      } else {
+        // Normal calculation
+        totalSalaryPayable =
+          baseSalary +
+          advanceTotal +
+          additionalPaymentsTotal -
+          additionalDeductionsTotal +
+          formData.calculated_incentive;
+        finalCalculatedIncentive = formData.calculated_incentive;
+      }
+      
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
-
       const attendanceDetails = calculatedSalary
         ? {
             total_days: calculatedSalary.total_days,
@@ -845,12 +865,12 @@ const HRSalaryManagement = () => {
             salary_to_date: calculatedSalary.salary_to_date,
           }
         : {};
-
+      
       const monthlyTargetIncentive = {
         target: Number(formData.target || 0),
         total_business_closed: Number(formData.incentive || 0),
       };
-
+      
       const salaryData = {
         employee_id: formData?.employee_id,
         salary_from_date: calculatedSalary
@@ -866,7 +886,7 @@ const HRSalaryManagement = () => {
         additional_payments: formData.additional_payments,
         additional_deductions: formData.additional_deductions,
         advance_payments: formData.advance_payments,
-        calculated_incentive: formData.calculated_incentive,
+        calculated_incentive: finalCalculatedIncentive,
         paid_days: calculatedSalary ? calculatedSalary.paid_days : 30,
         lop_days: calculatedSalary ? calculatedSalary.lop_days : 0,
         net_payable: totalSalaryPayable,
@@ -882,7 +902,7 @@ const HRSalaryManagement = () => {
         attendance_details: attendanceDetails,
         monthly_business_info: monthlyTargetIncentive,
       };
-
+      
       await API.post("/salary-payment/", salaryData);
       message.success("Salary added successfully");
       setIsOpenAddModal(false);
@@ -894,7 +914,6 @@ const HRSalaryManagement = () => {
       message.error("Failed to add salary");
     }
   }
-
   async function getAllSalary() {
     try {
       setDataTableLoading(true)
@@ -930,18 +949,15 @@ const HRSalaryManagement = () => {
       setDataTableLoading(false)
     }
   }
-
   useEffect(() => {
     getAllSalary();
   }, []);
-
   const totalEarningsExcludingSalary = useMemo(() => {
     const earnings = formData.earnings || {};
     return Object.keys(earnings)
       .filter((key) => key !== "salary")
       .reduce((sum, key) => sum + (Number(earnings[key]) || 0), 0);
   }, [formData.earnings]);
-
   const totalDeductions = useMemo(() => {
     const baseDeductions = formData.deductions || {};
     const baseTotal = Object.values(baseDeductions).reduce(
@@ -950,7 +966,7 @@ const HRSalaryManagement = () => {
     );
     return baseTotal;
   }, [formData.deductions]);
-
+  
   return (
     <div>
       <div className="flex mt-20">
@@ -1136,6 +1152,21 @@ const HRSalaryManagement = () => {
                           disabled
                         />
                       </div>
+                      <div className="form-group">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Total Salary
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder="Enter Total Salary"
+                          value={formData.total_salary}
+                          onChange={(e) => handleChange("total_salary", e.target.value)}
+                        />
+                        <span className="ml-2 font-medium font-mono text-blue-600">
+                          {numberToIndianWords(formData.total_salary || 0)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="mt-6 border p-4 rounded bg-gray-50">
@@ -1148,8 +1179,8 @@ const HRSalaryManagement = () => {
                         <input
                           type="number"
                           value={formData.target || 0}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                          onChange={(e) => handleChange("target", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
                         />
                         <span className="ml-2 font-medium font-mono text-blue-600">
                           {numberToIndianWords(formData?.target || 0)}
@@ -1630,13 +1661,13 @@ const HRSalaryManagement = () => {
                             <label className="font-medium">Total Target</label>
                             <input
                               type="number"
-                              value={(formData.target || 0).toFixed(2)}
-                              readOnly
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                              value={formData.target}
+                              onChange={(e) => handleChange("target", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
                             />
                             <span className="ml-2 font-medium font-mono text-blue-600">
                               {numberToIndianWords(
-                                (formData.target || 0).toFixed(2) || 0
+                                formData.target 
                               )}
                             </span>
                           </div>
@@ -1660,7 +1691,6 @@ const HRSalaryManagement = () => {
                       </div>
                     </div>
                   )}
-
                   {/* Incentive Adjustment Display */}
                   {calculatedSalary && (
                     <div className="bg-blue-50 p-4 rounded-lg mt-4">
@@ -1706,7 +1736,6 @@ const HRSalaryManagement = () => {
                       </div>
                     </div>
                   )}
-
                   {showComponents && (
                     <div className="bg-indigo-50 p-4 rounded-lg">
                       <div className="flex justify-between items-center mb-4">
@@ -1772,7 +1801,6 @@ const HRSalaryManagement = () => {
                       ))}
                     </div>
                   )}
-
                   {showComponents && (
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="flex justify-between items-center mb-4">
@@ -1838,7 +1866,6 @@ const HRSalaryManagement = () => {
                       ))}
                     </div>
                   )}
-
                   {showComponents && (
                     <div className="bg-orange-50 p-4 rounded-lg">
                       <div className="flex justify-between items-center mb-4">
@@ -1910,7 +1937,6 @@ const HRSalaryManagement = () => {
                       )}
                     </div>
                   )}
-
                   {calculatedSalary && showComponents && (
                     <div className="bg-blue-50 p-4 rounded-lg mt-4">
                       <h3 className="text-lg font-semibold text-blue-800 mb-4">
@@ -1922,25 +1948,48 @@ const HRSalaryManagement = () => {
                             Total Salary Payable
                           </label>
                           {(() => {
-                            const base =
-                              calculatedSalary?.calculated_salary || 0;
-                            const advanceTotal =
-                              formData.advance_payments.reduce(
+                            let total = 0;
+                            const target = Number(formData.target || 0);
+                            const incentive = Number(formData.incentive || 0);
+                            
+                            if (incentive * 100 < target) {
+                              // If condition met: zero base salary + additional pay - addition deduction + advance pay
+                              const advanceTotal = formData.advance_payments.reduce(
                                 (sum, p) => sum + Number(p.value || 0),
                                 0
                               );
-                            const addPayments =
-                              formData.additional_payments.reduce(
+                              const addPayments = formData.additional_payments.reduce(
                                 (sum, p) => sum + Number(p.value || 0),
                                 0
                               );
-                            const addDeductions =
-                              formData.additional_deductions.reduce(
+                              const addDeductions = formData.additional_deductions.reduce(
                                 (sum, d) => sum + Number(d.value || 0),
                                 0
                               );
-                            const total =
-                              base + advanceTotal + addPayments - addDeductions;
+                              total = advanceTotal + addPayments - addDeductions;
+                            } else {
+                              // Normal calculation
+                              const base =
+                                calculatedSalary?.calculated_salary || 0;
+                              const advanceTotal =
+                                formData.advance_payments.reduce(
+                                  (sum, p) => sum + Number(p.value || 0),
+                                  0
+                                );
+                              const addPayments =
+                                formData.additional_payments.reduce(
+                                  (sum, p) => sum + Number(p.value || 0),
+                                  0
+                                );
+                              const addDeductions =
+                                formData.additional_deductions.reduce(
+                                  (sum, d) => sum + Number(d.value || 0),
+                                  0
+                                );
+                              total =
+                                base + advanceTotal + addPayments - addDeductions + formData.calculated_incentive;
+                            }
+                            
                             return (
                               <>
                                 <input
@@ -2125,6 +2174,31 @@ const HRSalaryManagement = () => {
                   disabled
                   className="bg-gray-100"
                 />
+              </div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                Monthly Business Info
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item
+                  name={["monthly_business_info", "target"]}
+                  label="Target">
+                  <Input 
+                    type="number" 
+                    placeholder="Enter target amount" 
+                    onWheel={(e) => e.currentTarget.blur()}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name={["monthly_business_info", "total_business_closed"]}
+                  label="Total Business Closed">
+                  <Input 
+                    type="number" 
+                    placeholder="Enter total business closed" 
+                    disabled 
+                  />
+                </Form.Item>
               </div>
             </div>
             <div className="flex justify-end mb-4">
@@ -2847,7 +2921,7 @@ const HRSalaryManagement = () => {
                       Payment Method:
                     </span>
                     <span className="text-slate-900 font-medium">
-                      {existingSalaryRecord.payment_method || "—"}
+                      {existingSalaryRecord.payment_method || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -2855,7 +2929,7 @@ const HRSalaryManagement = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center h-32 text-gray-500">
-              Loading salary details…
+              Loading salary details...
             </div>
           )}
         </Modal>
