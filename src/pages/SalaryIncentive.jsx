@@ -7,7 +7,7 @@ import DataTable from "../components/layouts/Datatable";
 import CircularLoader from "../components/loaders/CircularLoader";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
 import filterOption from "../helpers/filterOption";
-import { Drawer, Form, Input, Button, Select, InputNumber } from "antd";
+import { Drawer, Form, Input, Button, Select, InputNumber, Tag } from "antd";
 
 const AllEmployeeIncentives = () => {
   const [tableData, setTableData] = useState([]);
@@ -29,62 +29,67 @@ const AllEmployeeIncentives = () => {
     setSearchText(e.target.value);
   };
 
- 
   useEffect(() => {
     const fetchAllIncentives = async () => {
       try {
         setIsLoading(true);
 
-        const response = await api.get(
-          "/employee/incentives/pending"
-        );
+        const response = await api.get("/employee/incentives/pending");
 
         const apiData = response.data?.data || [];
-        let rows = [];
-        let index = 1;
+        const responseArray = apiData.map((data, index) => {
+          const target = data?.monthly_business_info?.target || 0;
+          const actual =
+            data?.monthly_business_info?.total_business_closed || 0;
+          const incentiveEarned = data?.calculated_incentive || 0;
+          const incentivePaid = data?.incentive_paid_amount || 0;
+          const incentiveRemaining = incentiveEarned - incentivePaid;
+          const targetStatus = actual >= target ? "Achieved" : "Not Achieved";
 
-        apiData.forEach((emp) => {
-          emp.records.forEach((record) => {
-            rows.push({
-              _id: record._id, // IMPORTANT
-              id: index++,
-              employee_name: emp.employee.name,
-              employee_code: emp.employee.employee_code,
-              salary_month: record.period.month,
-              salary_year: record.period.year,
-              target_amount: record.target.target_amount,
-              actual_closed: record.target.actual_closed,
-              incentive_earned: record.incentive.earned,
-              incentive_paid: record.incentive.paid,
-              incentive_remaining: record.incentive.remaining,
-              incentive_status: record.incentive.status,
-              target_status: record.target.is_achieved
-                ? "Achieved"
-                : "Not Achieved",
-              action: (
-                <Button
-                  type="primary"
-                  size="small"
-                  disabled={record.incentive.remaining <= 0}
-                  onClick={() =>
-                    openDrawer({
-                      salary_id: record.salary_id,
-                      employee_name: emp.employee.name,
-                      employee_code: emp.employee.employee_code,
-                      month: record.period.month,
-                      year: record.period.year,
-                      remaining: record.incentive.remaining,
-                    })
-                  }
-                >
-                  Pay Incentive
-                </Button>
-              ),
-            });
-          });
+          return {
+            _id: data._id,
+            id: index + 1,
+            employee_name: data?.employee_id?.name || "N/A",
+            employee_code: data?.employee_id?.employeeCode || "N/A",
+            salary_month: data?.salary_month || "N/A",
+            salary_year: data?.salary_year || "N/A",
+            target_amount: target,
+            actual_closed: actual,
+            target_status: (
+              <Tag color={targetStatus === "Achieved" ? "green" : "volcano"}>
+                {targetStatus}
+              </Tag>
+            ),
+            incentive_earned: incentiveEarned,
+            incentive_paid: incentivePaid,
+            incentive_remaining: incentiveRemaining,
+            incentive_status: (
+              <Tag
+                color={data?.incentive_status === "Paid" ? "green" : "orange"}>
+                {data?.incentive_status || "Pending"}
+              </Tag>
+            ),
+            action: (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => {
+                  openDrawer({
+                    salary_id: data._id,
+                    employee_name: data?.employee_id?.name,
+                    employee_code: data?.employee_id?.employeeCode,
+                    month: data?.salary_month,
+                    year: data?.salary_year,
+                    remaining: incentiveRemaining,
+                  });
+                }}>
+                Pay Incentive
+              </Button>
+            ),
+          };
         });
 
-        setTableData(rows);
+        setTableData(responseArray);
       } catch (error) {
         console.error(error);
         setAlertConfig({
@@ -100,7 +105,6 @@ const AllEmployeeIncentives = () => {
     fetchAllIncentives();
   }, [reload]);
 
-  
   const openDrawer = (data) => {
     setSelectedRow(data);
     form.setFieldsValue({
@@ -116,9 +120,7 @@ const AllEmployeeIncentives = () => {
     form.resetFields();
   };
 
-  
   const handlePayIncentive = async (values) => {
-    console.log(selectedRow,"selectRow")
     try {
       await api.put(
         `/employee/salaries/${selectedRow.salary_id}/pay-incentive`,
@@ -136,18 +138,15 @@ const AllEmployeeIncentives = () => {
     } catch (err) {
       setAlertConfig({
         visibility: true,
-        message:
-          err.response?.data?.message || "Failed to pay incentive",
+        message: err.response?.data?.message || "Failed to pay incentive",
         type: "error",
       });
     }
   };
 
-
   const columns = [
     { key: "id", header: "SL. NO" },
     { key: "employee_name", header: "Employee Name" },
- 
     { key: "salary_month", header: "Month" },
     { key: "salary_year", header: "Year" },
     { key: "target_amount", header: "Target (₹)" },
@@ -200,20 +199,14 @@ const AllEmployeeIncentives = () => {
         </div>
       </div>
 
-      
       <Drawer
         title="Pay Incentive"
         placement="right"
         width={420}
         open={drawerOpen}
-        onClose={closeDrawer}
-      >
+        onClose={closeDrawer}>
         {selectedRow && (
-          <Form
-            layout="vertical"
-            form={form}
-            onFinish={handlePayIncentive}
-          >
+          <Form layout="vertical" form={form} onFinish={handlePayIncentive}>
             <Form.Item label="Employee">
               <Input
                 disabled
@@ -224,19 +217,22 @@ const AllEmployeeIncentives = () => {
             <Form.Item label="Period">
               <Input
                 disabled
-                value={`${selectedRow.month} ${selectedRow.year}`}
+                value={`${selectedRow.month}, ${selectedRow.year}`}
               />
             </Form.Item>
 
             <Form.Item label="Remaining Incentive">
-              <Input disabled value={`₹ ${selectedRow.remaining}`} />
+              <Input
+                disabled
+                value={`₹ ${selectedRow.remaining.toLocaleString()}`}
+              />
             </Form.Item>
 
             <Form.Item
               label="Pay Amount"
               name="incentive_paid_amount"
               rules={[
-                { required: true },
+                { required: true, message: "Please enter amount to pay" },
                 {
                   validator: (_, value) =>
                     value > selectedRow.remaining
@@ -245,16 +241,23 @@ const AllEmployeeIncentives = () => {
                         )
                       : Promise.resolve(),
                 },
-              ]}
-            >
-              <InputNumber min={1} style={{ width: "100%" }} />
+              ]}>
+              <InputNumber
+                min={1}
+                style={{ width: "100%" }}
+                formatter={(value) =>
+                  `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                parser={(value) => value.replace(/\₹\s?|(,*)/g, "")}
+              />
             </Form.Item>
 
             <Form.Item
               label="Payment Method"
               name="incentive_payment_method"
-              rules={[{ required: true }]}
-            >
+              rules={[
+                { required: true, message: "Please select payment method" },
+              ]}>
               <Select placeholder="Select payment method">
                 <Select.Option value="Cash">Cash</Select.Option>
                 <Select.Option value="UPI">UPI</Select.Option>

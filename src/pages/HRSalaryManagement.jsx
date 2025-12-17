@@ -17,14 +17,20 @@ import DataTable from "../components/layouts/Datatable";
 import { useEffect, useState, useMemo } from "react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
-import { Select as AntSelect, Segmented, Button as AntButton, Flex, Spin } from "antd";
+import {
+  Select as AntSelect,
+  Segmented,
+  Button as AntButton,
+  Flex,
+  Spin,
+} from "antd";
 import { IoMdMore } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { numberToIndianWords } from "../helpers/numberToIndianWords";
 import moment from "moment";
 import utc from "dayjs/plugin/utc";
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from "@ant-design/icons";
 dayjs.extend(utc);
 const HRSalaryManagement = () => {
   const navigate = useNavigate();
@@ -77,7 +83,7 @@ const HRSalaryManagement = () => {
     monthly_business_info: {
       target: 0,
       total_business_closed: 0,
-    }
+    },
   });
   const thisYear = dayjs().format("YYYY");
   const earningsObject = {
@@ -103,6 +109,8 @@ const HRSalaryManagement = () => {
     { key: "salaryMonth", header: "Salary Month" },
     { key: "salaryYear", header: "Year" },
     { key: "netPayable", header: "Net Payable" },
+    { key: "paidAmount", header: "Paid Amount" },
+    { key: "status", header: "Payment Status" },
     { key: "action", header: "Action" },
   ];
   const months = [
@@ -154,7 +162,7 @@ const HRSalaryManagement = () => {
     transaction_id: "",
     target: 0,
     incentive: 0,
-    total_salary: 0, 
+    total_salary: 0,
   });
   async function fetchEmployees() {
     try {
@@ -250,7 +258,14 @@ const HRSalaryManagement = () => {
     }
   }, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
   const handleRecalculateInEdit = async () => {
-    const { employee_id, month, year, earnings, deductions, monthly_business_info } = updateFormData;
+    const {
+      employee_id,
+      month,
+      year,
+      earnings,
+      deductions,
+      monthly_business_info,
+    } = updateFormData;
     if (!employee_id || !month || !year) {
       message.warning("Please select employee, month, and year.");
       return;
@@ -277,29 +292,37 @@ const HRSalaryManagement = () => {
         .month(monthIndex)
         .endOf("month")
         .format("YYYY-MM-DD");
-      
+
       let targetValue = monthly_business_info?.target || 0;
       let incentiveValue = monthly_business_info?.total_business_closed || 0;
-      
+
       if (!targetValue) {
-        targetValue = await fetchEmployeeTarget(employee_id, start_date, end_date);
+        targetValue = await fetchEmployeeTarget(
+          employee_id,
+          start_date,
+          end_date
+        );
       }
-      
+
       if (!incentiveValue) {
-        incentiveValue = await fetchEmployeeIncentive(employee_id, start_date, end_date);
+        incentiveValue = await fetchEmployeeIncentive(
+          employee_id,
+          start_date,
+          end_date
+        );
       }
-      
+
       let calculatedIncentive = 0;
       const target = Number(targetValue || 0);
       const incentive = Number(incentiveValue || 0);
-      
+
       if (incentive * 100 < target) {
         calculatedIncentive = 0;
       } else if (target > 0) {
         const incentiveValueNum = incentive * 100;
         calculatedIncentive = (incentiveValueNum - target) / 100;
       }
-      
+
       const advanceTotal = updateFormData.advance_payments.reduce(
         (sum, a) => sum + Number(a.value || 0),
         0
@@ -313,12 +336,13 @@ const HRSalaryManagement = () => {
           (sum, d) => sum + Number(d.value || 0),
           0
         );
-      
+
       // Apply business condition to total payable
       let totalPayable = 0;
       if (incentive * 100 < target) {
         // If condition met: zero base salary + additional pay - addition deduction + advance pay
-        totalPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+        totalPayable =
+          advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
       } else {
         // Normal calculation
         totalPayable =
@@ -328,7 +352,7 @@ const HRSalaryManagement = () => {
           additionalDeductionsTotal +
           calculatedIncentive;
       }
-      
+
       const updatedData = {
         ...updateFormData,
         year: dayjs(yearValue, "YYYY"),
@@ -464,18 +488,21 @@ const HRSalaryManagement = () => {
           (sum, deduction) => sum + Number(deduction.value || 0),
           0
         );
-      
+
       // Get business info
       const target = Number(updateFormData.monthly_business_info?.target || 0);
-      const incentive = Number(updateFormData.monthly_business_info?.total_business_closed || 0);
-      
+      const incentive = Number(
+        updateFormData.monthly_business_info?.total_business_closed || 0
+      );
+
       // Apply business condition
       let netPayable = 0;
       let finalCalculatedIncentive = 0;
-      
+
       if (incentive < target) {
         // If condition met: zero base salary + additional pay - addition deduction + advance pay
-        netPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+        netPayable =
+          advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
         finalCalculatedIncentive = 0;
       } else {
         // Normal calculation
@@ -488,7 +515,7 @@ const HRSalaryManagement = () => {
           updateFormData.calculated_incentive;
         finalCalculatedIncentive = updateFormData.calculated_incentive;
       }
-      
+
       const updateData = {
         ...updateFormData,
         earnings: updateFormData.earnings,
@@ -500,9 +527,9 @@ const HRSalaryManagement = () => {
         monthly_business_info: {
           target: target,
           total_business_closed: incentive,
-        }
+        },
       };
-      
+
       await API.put(`/salary-payment/${currentSalaryId}`, updateData);
       message.success("Salary updated successfully");
       setIsOpenUpdateModal(false);
@@ -537,7 +564,7 @@ const HRSalaryManagement = () => {
             key={salaryPayment?._id}
             className="text-green-600"
             onClick={() => handleEdit(salaryPayment._id)}>
-            Edit
+            View
           </div>
         ),
       },
@@ -630,7 +657,7 @@ const HRSalaryManagement = () => {
   }, [formData?.employee_id]);
   const handleChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (["employee_id", "month", "year","target"].includes(name)) {
+    if (["employee_id", "month", "year", "target"].includes(name)) {
       setCalculatedSalary(null);
       setShowComponents(false);
       setFormData((prev) => ({
@@ -761,7 +788,7 @@ const HRSalaryManagement = () => {
       let calculatedIncentive = 0;
       const target = Number(formData?.target || 0);
       const incentive = Number(formData?.incentive || 0);
-      
+
       // Apply business condition: if total business achieved * 100 is less than target
       if (incentive * 100 < target) {
         calculatedIncentive = 0;
@@ -769,7 +796,7 @@ const HRSalaryManagement = () => {
         const incentiveValue = incentive * 100;
         calculatedIncentive = (incentiveValue - target) / 100;
       }
-      
+
       setFormData((prev) => ({
         ...prev,
         calculated_incentive: calculatedIncentive,
@@ -821,17 +848,18 @@ const HRSalaryManagement = () => {
         (sum, deduction) => sum + Number(deduction.value || 0),
         0
       );
-      
+
       // Apply business condition
       let totalSalaryPayable = 0;
       let finalCalculatedIncentive = 0;
-      
+
       const target = Number(formData.target || 0);
       const incentive = Number(formData.incentive || 0);
-      
+
       if (incentive * 100 < target) {
         // If condition met: zero base salary + additional pay - addition deduction + advance pay
-        totalSalaryPayable = advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
+        totalSalaryPayable =
+          advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
         finalCalculatedIncentive = 0;
       } else {
         // Normal calculation
@@ -839,10 +867,10 @@ const HRSalaryManagement = () => {
           baseSalary +
           advanceTotal +
           additionalPaymentsTotal -
-          additionalDeductionsTotal 
+          additionalDeductionsTotal;
         finalCalculatedIncentive = formData.calculated_incentive;
       }
-   
+
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
       const attendanceDetails = calculatedSalary
@@ -860,12 +888,12 @@ const HRSalaryManagement = () => {
             salary_to_date: calculatedSalary.salary_to_date,
           }
         : {};
-      
+
       const monthlyTargetIncentive = {
         target: Number(formData.target || 0),
         total_business_closed: Number(formData.incentive || 0),
       };
-      
+
       const salaryData = {
         employee_id: formData?.employee_id,
         salary_from_date: calculatedSalary
@@ -897,7 +925,7 @@ const HRSalaryManagement = () => {
         attendance_details: attendanceDetails,
         monthly_business_info: monthlyTargetIncentive,
       };
-      console.log(salaryData,"this is salary data");
+      console.log(salaryData, "this is salary data");
       await API.post("/salary-payment/", salaryData);
       message.success("Salary added successfully");
       setIsOpenAddModal(false);
@@ -911,7 +939,7 @@ const HRSalaryManagement = () => {
   }
   async function getAllSalary() {
     try {
-      setDataTableLoading(true)
+      setDataTableLoading(true);
       const response = await API.get("/salary-payment/all");
       const responseData = response?.data?.data || [];
       const filteredData = responseData.map((data, index) => ({
@@ -923,6 +951,7 @@ const HRSalaryManagement = () => {
         salaryYear: data?.salary_year,
         netPayable: data?.total_salary_payable,
         paidAmount: data?.paid_amount,
+        status: data?.status,
         action: (
           <div className="flex justify-center gap-2">
             <Dropdown
@@ -940,8 +969,8 @@ const HRSalaryManagement = () => {
       setAllSalarypayments([...filteredData]);
     } catch (error) {
       setAllSalarypayments([]);
-    }finally{
-      setDataTableLoading(false)
+    } finally {
+      setDataTableLoading(false);
     }
   }
   useEffect(() => {
@@ -961,7 +990,7 @@ const HRSalaryManagement = () => {
     );
     return baseTotal;
   }, [formData.deductions]);
-  
+
   return (
     <div>
       <div className="flex mt-20">
@@ -981,7 +1010,12 @@ const HRSalaryManagement = () => {
                 </div>
               </div>
             </div>
-            {dataTableLoading ? <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} className="w-full"/> : (allSalaryPayments|| []).length > 0 ? (
+            {dataTableLoading ? (
+              <Spin
+                indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />}
+                className="w-full"
+              />
+            ) : (allSalaryPayments || []).length > 0 ? (
               <DataTable columns={columns} data={allSalaryPayments} />
             ) : (
               <Empty description="No Salary Data Found" />
@@ -1156,7 +1190,9 @@ const HRSalaryManagement = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           placeholder="Enter Total Salary"
                           value={formData.total_salary}
-                          onChange={(e) => handleChange("total_salary", e.target.value)}
+                          onChange={(e) =>
+                            handleChange("total_salary", e.target.value)
+                          }
                         />
                         <span className="ml-2 font-medium font-mono text-blue-600">
                           {numberToIndianWords(formData.total_salary || 0)}
@@ -1173,9 +1209,11 @@ const HRSalaryManagement = () => {
                         <label className="font-medium">Total Target</label>
                         <input
                           type="number"
-                          onWheel={(e)=>e.target.blur()}
+                          onWheel={(e) => e.target.blur()}
                           value={formData.target || 0}
-                          onChange={(e) => handleChange("target", e.target.value)}
+                          onChange={(e) =>
+                            handleChange("target", e.target.value)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
                         />
                         <span className="ml-2 font-medium font-mono text-blue-600">
@@ -1658,13 +1696,13 @@ const HRSalaryManagement = () => {
                             <input
                               type="number"
                               value={formData.target}
-                              onChange={(e) => handleChange("target", e.target.value)}
+                              onChange={(e) =>
+                                handleChange("target", e.target.value)
+                              }
                               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
                             />
                             <span className="ml-2 font-medium font-mono text-blue-600">
-                              {numberToIndianWords(
-                                formData.target 
-                              )}
+                              {numberToIndianWords(formData.target)}
                             </span>
                           </div>
                           <div className="flex flex-col">
@@ -1947,22 +1985,26 @@ const HRSalaryManagement = () => {
                             let total = 0;
                             const target = Number(formData.target || 0);
                             const incentive = Number(formData.incentive || 0);
-                            
+
                             if (incentive * 100 < target) {
                               // If condition met: zero base salary + additional pay - addition deduction + advance pay
-                              const advanceTotal = formData.advance_payments.reduce(
-                                (sum, p) => sum + Number(p.value || 0),
-                                0
-                              );
-                              const addPayments = formData.additional_payments.reduce(
-                                (sum, p) => sum + Number(p.value || 0),
-                                0
-                              );
-                              const addDeductions = formData.additional_deductions.reduce(
-                                (sum, d) => sum + Number(d.value || 0),
-                                0
-                              );
-                              total = advanceTotal + addPayments - addDeductions;
+                              const advanceTotal =
+                                formData.advance_payments.reduce(
+                                  (sum, p) => sum + Number(p.value || 0),
+                                  0
+                                );
+                              const addPayments =
+                                formData.additional_payments.reduce(
+                                  (sum, p) => sum + Number(p.value || 0),
+                                  0
+                                );
+                              const addDeductions =
+                                formData.additional_deductions.reduce(
+                                  (sum, d) => sum + Number(d.value || 0),
+                                  0
+                                );
+                              total =
+                                advanceTotal + addPayments - addDeductions;
                             } else {
                               // Normal calculation
                               const base =
@@ -1983,9 +2025,12 @@ const HRSalaryManagement = () => {
                                   0
                                 );
                               total =
-                                base + advanceTotal + addPayments - addDeductions 
+                                base +
+                                advanceTotal +
+                                addPayments -
+                                addDeductions;
                             }
-                            
+
                             return (
                               <>
                                 <input
@@ -2019,404 +2064,342 @@ const HRSalaryManagement = () => {
           </div>
         </Drawer>
         <Drawer
-          title="Update Salary"
+          title="View Salary Details"
           width={"80%"}
           className="payment-drawer"
           open={isOpenUpdateModal}
           onClose={() => setIsOpenUpdateModal(false)}
           closable={true}
           footer={
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setIsOpenUpdateModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="primary"
-                onClick={handleUpdateSubmit}
-                loading={updateLoading}>
-                Update Salary
-              </Button>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsOpenUpdateModal(false)}>Close</Button>
             </div>
           }>
-          <Form
-            form={updateForm}
-            layout="vertical"
-            initialValues={updateFormData}
-            onValuesChange={handleUpdateChange}>
-            <Form.Item
-              name="employee_id"
-              label="Employee ID"
-              rules={[
-                { required: true, message: "Please select an employee" },
-              ]}>
-              <Select
-                disabled
-                showSearch
-                optionFilterProp="label"
-                filterOption={(input, option) =>
-                  (option?.label ?? "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
+          <div className="space-y-6">
+            {/* Employee Info */}
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Employee
+              </label>
+              <Input
+                value={
+                  employees.find((e) => e.value === updateFormData.employee_id)
+                    ?.label || "—"
                 }
-                filterSort={(optionA, optionB) =>
-                  (optionA?.label ?? "")
-                    .toLowerCase()
-                    .localeCompare((optionB?.label ?? "").toLowerCase())
-                }
-                placeholder="Select Employee"
-                options={employees}
+                readOnly
+                className="!bg-gray-100 !text-gray-800 !cursor-default"
               />
-            </Form.Item>
-            <Form.Item
-              name="month"
-              label="Month"
-              rules={[{ required: true, message: "Please select a month" }]}>
-              <Select disabled placeholder="Select Month">
-                {months.map((month) => (
-                  <Select.Option key={month.value} value={month.value}>
-                    {month.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="year"
-              label="Year"
-              rules={[{ required: true, message: "Please select a year" }]}
-              getValueFromEvent={(value) =>
-                value ? value.format("YYYY") : ""
-              }>
-              <DatePicker disabled picker="year" style={{ width: "100%" }} />
-            </Form.Item>
-            <div className="bg-green-50 p-4 rounded-lg mb-4">
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-group">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Month
+                </label>
+                <Input
+                  value={updateFormData.month || "—"}
+                  readOnly
+                  className="!bg-gray-100 !text-gray-800 !cursor-default"
+                />
+              </div>
+              <div className="form-group">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Year
+                </label>
+                <Input
+                  value={
+                    dayjs.isDayjs(updateFormData.year)
+                      ? updateFormData.year.format("YYYY")
+                      : updateFormData.year || "—"
+                  }
+                  readOnly
+                  className="!bg-gray-100 !text-gray-800 !cursor-default"
+                />
+              </div>
+            </div>
+
+            {/* Earnings */}
+            <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-green-800 mb-4">
                 Earnings
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Form.Item name={["earnings", "basic"]} label="Basic Salary">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item name={["earnings", "hra"]} label="HRA">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["earnings", "travel_allowance"]}
-                  label="Travel Allowance">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["earnings", "medical_allowance"]}
-                  label="Medical Allowance">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["earnings", "basket_of_benifits"]}
-                  label="Basket of Benefits">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["earnings", "performance_bonus"]}
-                  label="Performance Bonus">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["earnings", "other_allowances"]}
-                  label="Other Allowances">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item name={["earnings", "conveyance"]} label="Conveyance">
-                  <Input type="number" />
-                </Form.Item>
+                {Object.entries(updateFormData.earnings || {}).map(
+                  ([key, value]) => (
+                    <div key={key} className="form-group">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {key
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </label>
+                      <Input
+                        value={Number(value || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        readOnly
+                        className="!bg-gray-100 !text-gray-800 !cursor-default"
+                      />
+                    </div>
+                  )
+                )}
               </div>
               <div className="form-group mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Earnings
                 </label>
                 <Input
-                  value={updateTotalEarnings.toFixed(2)}
-                  disabled
-                  className="bg-gray-100"
+                  value={updateTotalEarnings.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  readOnly
+                  className="!bg-gray-100 !text-gray-800 !cursor-default font-semibold"
                 />
               </div>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg mb-4">
+
+            {/* Deductions */}
+            <div className="bg-red-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-red-800 mb-4">
                 Deductions
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Form.Item
-                  name={["deductions", "income_tax"]}
-                  label="Income Tax">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item name={["deductions", "esi"]} label="ESI">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item name={["deductions", "epf"]} label="EPF">
-                  <Input type="number" />
-                </Form.Item>
-                <Form.Item
-                  name={["deductions", "professional_tax"]}
-                  label="Professional Tax">
-                  <Input type="number" />
-                </Form.Item>
+                {Object.entries(updateFormData.deductions || {}).map(
+                  ([key, value]) => (
+                    <div key={key} className="form-group">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {key
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </label>
+                      <Input
+                        value={Number(value || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        readOnly
+                        className="!bg-gray-100 !text-gray-800 !cursor-default"
+                      />
+                    </div>
+                  )
+                )}
               </div>
               <div className="form-group mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Deductions
                 </label>
                 <Input
-                  value={updateTotalDeductions.toFixed(2)}
-                  disabled
-                  className="bg-gray-100"
+                  value={updateTotalDeductions.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  readOnly
+                  className="!bg-gray-100 !text-gray-800 !cursor-default font-semibold"
                 />
               </div>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+
+            {/* Monthly Business Info */}
+            <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-800 mb-4">
                 Monthly Business Info
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Form.Item
-                  name={["monthly_business_info", "target"]}
-                  label="Target">
-                  <Input 
-                    type="number" 
-                    placeholder="Enter target amount" 
-                    onWheel={(e) => e.currentTarget.blur()}
-                  />
-                </Form.Item>
-                <Form.Item
-                  name={["monthly_business_info", "total_business_closed"]}
-                  label="Total Business Closed">
-                  <Input 
-                    type="number" 
-                    placeholder="Enter total business closed" 
-                    disabled 
-                  />
-                </Form.Item>
-              </div>
-            </div>
-            <div className="flex justify-end mb-4">
-              <Button
-                type="primary"
-                onClick={handleRecalculateInEdit}
-                loading={updateLoading}
-                style={{ backgroundColor: "#16a34a" }}>
-                Continue
-              </Button>
-            </div>
-            {!isEditFormDirty && (
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                  Incentive Adjustment
-                </h3>
                 <div className="form-group">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Calculated Incentive
+                    Target
                   </label>
-                  <Form.Item name="calculated_incentive">
-                    <Input type="number" disabled />
-                  </Form.Item>
+                  <Input
+                    value={Number(
+                      updateFormData.monthly_business_info?.target || 0
+                    ).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                    readOnly
+                    className="!bg-gray-100 !text-gray-800 !cursor-default"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Total Business Closed
+                  </label>
+                  <Input
+                    value={Number(
+                      updateFormData.monthly_business_info
+                        ?.total_business_closed || 0
+                    ).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                    readOnly
+                    className="!bg-gray-100 !text-gray-800 !cursor-default"
+                  />
                 </div>
               </div>
-            )}
-            <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-indigo-800">
+            </div>
+
+            {/* Incentive */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                Calculated Incentive
+              </h3>
+              <Input
+                value={Number(
+                  updateFormData.calculated_incentive || 0
+                ).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+                readOnly
+                className="!bg-gray-100 !text-gray-800 !cursor-default font-semibold text-lg"
+              />
+            </div>
+
+            {/* Advance Payments */}
+            {updateFormData.advance_payments?.length > 0 && (
+              <div className="bg-indigo-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-indigo-800 mb-4">
                   Advance Payments
                 </h3>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    const currentPayments =
-                      updateForm.getFieldValue("advance_payments") || [];
-                    updateForm.setFieldsValue({
-                      advance_payments: [
-                        ...currentPayments,
-                        { name: "", value: 0 },
-                      ],
-                    });
-                  }}>
-                  Add Advance
-                </Button>
-              </div>
-              <Form.List name="advance_payments">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div
-                        key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "name"]}
-                          label="Advance Name">
-                          <Input placeholder="e.g., Festival Advance" />
-                        </Form.Item>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-grow">
-                            <Form.Item
-                              {...restField}
-                              onWheel={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.blur();
-                              }}
-                              name={[name, "value"]}
-                              label="Amount">
-                              <Input type="number" placeholder="Enter amount" />
-                            </Form.Item>
-                          </div>
-                          <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-purple-800">
-                  Additional Payments
-                </h3>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    const currentPayments =
-                      updateForm.getFieldValue("additional_payments") || [];
-                    updateForm.setFieldsValue({
-                      additional_payments: [
-                        ...currentPayments,
-                        { name: "", value: 0 },
-                      ],
-                    });
-                  }}>
-                  Add Payment
-                </Button>
-              </div>
-              <Form.List name="additional_payments">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div
-                        key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "name"]}
-                          label="Payment Name">
-                          <Input placeholder="Enter payment name" />
-                        </Form.Item>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-grow">
-                            <Form.Item
-                              {...restField}
-                              onWheel={(e) => {
-                                e.preventDefault();
-                                e.currentTarget.blur();
-                              }}
-                              name={[name, "value"]}
-                              label="Amount">
-                              <Input type="number" placeholder="Enter amount" />
-                            </Form.Item>
-                          </div>
-                          <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
-            </div>
-            <div className="bg-orange-50 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-orange-800">
-                  Additional Deductions
-                </h3>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    const currentDeductions =
-                      updateForm.getFieldValue("additional_deductions") || [];
-                    updateForm.setFieldsValue({
-                      additional_deductions: [
-                        ...currentDeductions,
-                        { name: "", value: 0 },
-                      ],
-                    });
-                  }}>
-                  Add Deduction
-                </Button>
-              </div>
-              <Form.List name="additional_deductions">
-                {(fields, { remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div
-                        key={key}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "name"]}
-                          label="Deduction Name">
-                          <Input placeholder="Enter deduction name" />
-                        </Form.Item>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-grow">
-                            <Form.Item
-                              {...restField}
-                              name={[name, "value"]}
-                              label="Amount">
-                              <Input
-                                type="number"
-                                placeholder="Enter amount"
-                                min={0}
-                              />
-                            </Form.Item>
-                          </div>
-                          <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
-            </div>
-            {!isEditFormDirty && (
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                  Payment Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Form.Item
-                    name="total_salary_payable"
-                    label="Total Salary Payable">
-                    <Input type="number" disabled />
-                  </Form.Item>
-                </div>
+                {updateFormData.advance_payments.map((pay, i) => (
+                  <div key={i} className="flex gap-4 mb-2">
+                    <Input
+                      value={pay.name || "Advance"}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default flex-1"
+                    />
+                    <Input
+                      value={`₹${Number(pay.value).toLocaleString("en-IN")}`}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default w-40 text-right"
+                    />
+                  </div>
+                ))}
               </div>
             )}
-          </Form>
+
+            {/* Additional Payments */}
+            {updateFormData.additional_payments?.length > 0 && (
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-purple-800 mb-4">
+                  Additional Payments
+                </h3>
+                {updateFormData.additional_payments.map((pay, i) => (
+                  <div key={i} className="flex gap-4 mb-2">
+                    <Input
+                      value={pay.name || "Payment"}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default flex-1"
+                    />
+                    <Input
+                      value={`₹${Number(pay.value).toLocaleString("en-IN")}`}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default w-40 text-right"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Additional Deductions */}
+            {updateFormData.additional_deductions?.length > 0 && (
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-orange-800 mb-4">
+                  Additional Deductions
+                </h3>
+                {updateFormData.additional_deductions.map((ded, i) => (
+                  <div key={i} className="flex gap-4 mb-2">
+                    <Input
+                      value={ded.name || "Deduction"}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default flex-1"
+                    />
+                    <Input
+                      value={`₹${Number(ded.value).toLocaleString("en-IN")}`}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default w-40 text-right"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Total Payable */}
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Total Salary Payable
+              </h3>
+              <Input
+                value={Number(
+                  updateFormData.total_salary_payable || 0
+                ).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+                readOnly
+                className="!bg-gray-100 !text-gray-800 !cursor-default font-bold text-xl"
+              />
+            </div>
+
+            {/* Payment Info */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Payment Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Paid Amount
+                  </label>
+                  <Input
+                    value={Number(
+                      updateFormData.paid_amount || 0
+                    ).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                    readOnly
+                    className="!bg-gray-100 !text-gray-800 !cursor-default"
+                  />
+                </div>
+                { (
+                  <div className="form-group">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Method
+                    </label>
+                    <Input
+                      value={updateFormData.payment_method}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default"
+                    />
+                  </div>
+                )}
+                {updateFormData.transaction_id && (
+                  <div className="form-group">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Transaction ID
+                    </label>
+                    <Input
+                      value={updateFormData.transaction_id}
+                      readOnly
+                      className="!bg-gray-100 !text-gray-800 !cursor-default font-mono"
+                    />
+                  </div>
+                )}
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <Input
+                    value={
+                      (updateFormData.remaining_balance || 0) <= 0
+                        ? "Paid"
+                        : "Pending"
+                    }
+                    readOnly
+                    className="!bg-gray-100 !text-gray-800 !cursor-default"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </Drawer>
         <Modal
           title="Delete Salary"
