@@ -3385,14 +3385,16 @@ const SalarySlipPrint = () => {
       //  paidAmount = fixedEarningsTotal - totalDeductions
       // }
 
-      const originalPaidAmount = Number(payment?.paid_amount || 0);
-      const netSalary = totalEarnings - totalDeductions;
+    const originalPaidAmount = Number(payment?.paid_amount || 0);
+const netSalary = totalEarnings - totalDeductions;
 
-      // Amount actually considered as salary payment
-      const paidAmount = Math.min(originalPaidAmount, netSalary);
+const paidAmount = Math.min(originalPaidAmount, netSalary);
 
-      // Excess paid amount (advance / adjustment)
-      const excessPaid = Math.max(originalPaidAmount - netSalary, 0);
+// Differences
+const underPaidAmount = Math.max(netSalary - originalPaidAmount, 0);
+const excessPaid = Math.max(originalPaidAmount - netSalary, 0);
+const totalOtherEarnings = totalEarnings + excessPaid;
+const totalOtherDeduction = totalDeductions + underPaidAmount;
 
       const additionalDeductionsTotal = additionalDeductions.reduce(
         (sum, d) => sum + Number(d.value || 0),
@@ -3410,7 +3412,7 @@ const SalarySlipPrint = () => {
         });
       };
 
-      const amountInWords = numToWords(paidAmount);
+      const amountInWords = numToWords(originalPaidAmount);
 
       // ================= FORMAT 1 =================
       const format1 = `
@@ -3536,14 +3538,9 @@ const SalarySlipPrint = () => {
   <td>₹${otherAllowances.toFixed(2)}</td>
   <td>Others</td>
  <td>
-₹${(() => {
-  const additionalTotal = additionalDeductions.reduce(
-    (sum, d) => sum + Number(d.value || 0),
-    0
-  );
 
-  return (additionalTotal + excessPaid).toFixed(2);
-})()}
+₹${underPaidAmount > 0 ? underPaidAmount.toFixed(2) : "0.00"}
+
 </td>
 
 </tr>
@@ -3557,11 +3554,9 @@ const SalarySlipPrint = () => {
     <td>Others</td>
     <td>
 
-  ₹${
-    additionalPayments
-      .reduce((sum, p) => sum + parseFloat(p.value || 0), 0)
-      .toFixed(2) || 0
-  }
+
+₹${excessPaid > 0 ? excessPaid.toFixed(2) : "0.00"}
+
 
 </td>
     </tr>
@@ -3572,9 +3567,9 @@ const SalarySlipPrint = () => {
     <!-- TOTALS -->
     <tr class="total-row">
       <td><strong>GROSS EARNINGS</strong></td>
-      <td><strong>₹${totalEarnings.toFixed(2)}</strong></td>
+      <td><strong>₹${totalOtherEarnings.toFixed(2)}</strong></td>
       <td><strong>TOTAL DEDUCTIONS</strong></td>
-      <td><strong>₹${totalDeductions.toFixed(2)}</strong></td>
+      <td><strong>₹${totalOtherDeduction.toFixed(2)}</strong></td>
     </tr>
 
   </tbody>
@@ -3584,7 +3579,7 @@ const SalarySlipPrint = () => {
 
           <div class="net-section">
             <div>NET PAID AMOUNT</div>
-            <div class="net-amount">₹${paidAmount.toFixed(2)}</div>
+            <div class="net-amount">₹${originalPaidAmount.toFixed(2)}</div>
             <div class="words">Amount in words: Indian Rupees ${amountInWords} Only</div>
           </div>
 
