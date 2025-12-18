@@ -411,7 +411,7 @@ const HRSalaryManagement = () => {
           calculated_incentive: salaryData?.calculated_incentive || 0,
           total_salary_payable: salaryData?.total_salary_payable || 0,
           paid_amount: salaryData?.paid_amount || 0,
-          payment_method: salaryData?.payment_method || "Cash",
+          payment_method: salaryData?.payment_method ,
           transaction_id: salaryData?.transaction_id || "",
           pay_date: salaryData?.pay_date
             ? moment(salaryData?.pay_date)
@@ -422,7 +422,7 @@ const HRSalaryManagement = () => {
             total_business_closed: 0,
           },
           status: salaryData?.status,
-          payment_method: salaryData?.payment_method,
+         
         };
         setUpdateFormData(formData);
         updateForm.setFieldsValue(formData);
