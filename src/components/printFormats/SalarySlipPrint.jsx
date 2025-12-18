@@ -2643,68 +2643,724 @@ const SalarySlipPrint = () => {
     );
   }
 
+  //   const generateSalarySlipContent = () => {
+  //     try {
+  //       const agent = payment.employee_id;
+  //       console.info(agent, "test 123");
+  //       console.info(agent?.designation_id?.title, "test 124");
+  //       const payslipId = payment._id;
+  //       const payDate = payment.pay_date || payment.createdAt;
+  //       const fromDate = payment.salary_from_date;
+  //       const toDate = payment.salary_to_date;
+  //       console.info(fromDate, "fromdate");
+  //       console.info(toDate, "todate");
+  //       const salaryMonth = payment.salary_month;
+  //       const salaryYear = payment.salary_year;
+  //       const lossOfPay = payment?.lop_days;
+  //       const presentPay = payment?.paid_days;
+
+  //       // Extract earnings and deductions from the payment data
+  //       const earnings = payment.earnings || {};
+  //       const deductions = payment.deductions || {};
+  //       const additionalPayments = payment.additional_payments || [];
+  //       const additionalDeductions = payment.additional_deductions || [];
+
+  //       // Calculate values
+  //       const monthlySalary = parseFloat(earnings.basic || 0);
+  //       const hra = parseFloat(earnings.hra || 0);
+  //       const travelAllowance = parseFloat(earnings.travel_allowance || 0);
+  //       const medicalAllowance = parseFloat(earnings.medical_allowance || 0);
+  //       const basketOfBenefits = parseFloat(earnings.basket_of_benifits || 0);
+  //       const performanceBonus = parseFloat(earnings.performance_bonus || 0);
+  //       const otherAllowances = parseFloat(earnings.other_allowances || 0);
+  //       const conveyance = parseFloat(earnings.conveyance || 0);
+
+  //       const incomeTax = parseFloat(deductions.income_tax || 0);
+  //       const esi = parseFloat(deductions.esi || 0);
+  //       const epf = parseFloat(deductions.epf || 0);
+  //       const professionalTax = parseFloat(deductions.professional_tax || 0);
+  //       const salaryAdvance = parseFloat(deductions.salary_advance || 0);
+
+  //       // Calculate additional payments total
+  //       const additionalPaymentsTotal = additionalPayments.reduce(
+  //         (sum, payment) => sum + parseFloat(payment.value || 0),
+  //         0
+  //       );
+
+  //       // Calculate additional deductions total
+  //       const additionalDeductionsTotal = additionalDeductions.reduce(
+  //         (sum, deduction) => sum + parseFloat(deduction.value || 0),
+  //         0
+  //       );
+
+  //       // Calculate total earnings and deductions
+  //       const totalEarnings =
+  //         monthlySalary +
+  //         hra +
+  //         travelAllowance +
+  //         medicalAllowance +
+  //         basketOfBenefits +
+  //         performanceBonus +
+  //         otherAllowances +
+  //         conveyance +
+  //         additionalPaymentsTotal;
+  //       const lopaddcal =
+  //         monthlySalary +
+  //         hra +
+  //         travelAllowance +
+  //         medicalAllowance +
+  //         basketOfBenefits +
+  //         performanceBonus +
+  //         otherAllowances +
+  //         conveyance;
+  //       const lop =
+  //         (lopaddcal / (parseFloat(lossOfPay) + parseFloat(presentPay))) *
+  //           parseFloat(lossOfPay) || 0;
+  //       // console.info(lop, "fhjdfgjhdfgjhfdgdf check123");
+  //       const totalDeductions =
+  //         incomeTax +
+  //         esi +
+  //         epf +
+  //         professionalTax +
+  //         salaryAdvance +
+  //         additionalDeductionsTotal +
+  //         lop;
+
+  //       const netPayable = parseFloat(payment?.paid_amount || 0);
+  //       let deduct = 0;
+  //       let addition = 0;
+  //       console.info(netPayable);
+  //       if (netPayable > totalEarnings) {
+  //         // If netPayable is greater than totalEarnings, calculate the amount to deduct
+  //         deduct = netPayable - totalEarnings;
+  //       } else if (netPayable > totalDeductions) {
+  //         // If netPayable is greater than totalDeductions, calculate the amount to add
+  //         addition = netPayable - totalDeductions;
+  //       }
+
+  //       // Set paidAmount based on the condition
+  //       const paidAmount = deduct > 0 ? deduct : addition;
+
+  //       // Calculate LOP (Loss of Pay)
+
+  //       // Format date
+  //       const formatDate = (date) => {
+  //         if (!date) return "N/A";
+  //         return new Date(date).toLocaleDateString("en-IN", {
+  //           year: "numeric",
+  //           month: "short",
+  //           day: "numeric",
+  //           timeZone: "UTC",
+  //         });
+  //       };
+
+  //       // Convert amount to words
+  //       const amountInWords = numToWords(paidAmount);
+
+  //       // --- FORMAT 1: Classic Professional ---
+  //       const format1 = `
+  //       <!DOCTYPE html>
+  //       <html>
+  //       <head>
+  //         <meta charset="UTF-8">
+  //          <title>Salary Slip</title>
+  //         <style>
+  //           @page { size: A4; margin: 15mm; }
+  //           body { font-family: 'Times New Roman', serif; margin: 0; color: #000; background: #fff; }
+  //           .container { max-width: 800px; margin: 0 auto; }
+  //           .header { border: 3px solid #000; padding: 15px; margin-bottom: 20px; background: #f5f5f5; }
+  //           .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  //           .logo { width: 80px; height: 80px; }
+  //           .company-info { text-align: center; flex: 1; }
+  //           .company-name { font-size: 28px; font-weight: bold; margin: 5px 0; }
+  //           .company-addr { font-size: 11px; margin: 2px 0; }
+  //           .payslip-title { text-align: center; font-size: 20px; font-weight: bold; text-decoration: underline; margin: 15px 0; }
+  //           .meta-info { text-align: right; font-size: 12px; }
+  //           .emp-details { border: 2px solid #000; margin: 15px 0; }
+  //           .emp-header { background: #000; color: #fff; padding: 8px; font-weight: bold; text-align: center; }
+  //           .emp-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  //           .emp-item { padding: 8px; border-right: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px; }
+  //           .emp-item:nth-child(even) { border-right: none; }
+  //           .salary-table { width: 100%; border: 2px solid #000; border-collapse: collapse; margin: 15px 0; }
+  //           .salary-table th { background: #000; color: #fff; padding: 10px; border: 1px solid #000; font-size: 14px; }
+  //           .salary-table td { padding: 8px; border: 1px solid #000; font-size: 12px; }
+  //           .total-row { background: #e0e0e0; font-weight: bold; }
+  //           .net-section { border: 3px double #000; padding: 15px; text-align: center; margin: 20px 0; background: #f9f9f9; }
+  //           .net-amount { font-size: 24px; font-weight: bold; margin: 10px 0; }
+  //           .words { font-style: italic; font-size: 11px; margin-top: 10px; }
+  //           .footer { text-align: center; font-size: 10px; margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; }
+  //           .sub-header { background: #f0f0f0; font-weight: bold; text-align: center; }
+  //           .sub-header td { border-right: none; border-left: none; }
+  //         </style>
+  //       </head>
+  //       <body>
+  //         <div class="container">
+  //           <div class="header">
+  //             <div class="header-top">
+  //               <img src="${imageInput}" class="logo" alt="Logo">
+  //               <div class="company-info">
+  //                 <div class="company-name">Mychits</div>
+  //                 <div class="company-addr">No 11/36-25, 2nd Main, Kathriguppe Main Road, Bangalore, Karnataka, India - 560070</div>
+  //                 <div class="company-addr">CIN: U65999KA2022PTC161858</div>
+  //               </div>
+  //               <div class="meta-info">
+
+  //                 Date: <strong>${new Date().toLocaleDateString()}</strong>
+  //               </div>
+  //             </div>
+  //             <div class="payslip-title">SALARY SLIP</div>
+  //           </div>
+
+  //           <div class="emp-details">
+  //             <div class="emp-header">EMPLOYEE DETAILS</div>
+  //             <div class="emp-grid">
+  //               <div class="emp-item"><strong>Name:</strong> ${
+  //                 agent?.name || "N/A"
+  //               }</div>
+  //               <div class="emp-item"><strong>Employee ID:</strong> ${
+  //                 agent?.employeeCode || "N/A"
+  //               }</div>
+  //               <div class="emp-item"><strong>Designation:</strong> ${
+  //                 agent?.designation_id?.title || "N/A"
+  //               }</div>
+  //               <div class="emp-item"><strong>Department:</strong> ${
+  //                 agent?.department || "N/A"
+  //               }</div>
+  //               <div class="emp-item"><strong>Pay Period:</strong> ${formatDate(
+  //                 fromDate
+  //               )} to ${formatDate(toDate)}</div>
+  //               <div class="emp-item"><strong>Payment Date:</strong> ${formatDate(
+  //                 payDate
+  //               )}</div>
+  //             </div>
+  //           </div>
+
+  //         <table class="salary-table">
+  //   <thead>
+  //     <tr>
+  //       <th>EARNINGS</th>
+  //       <th>AMOUNT (₹)</th>
+  //       <th>DEDUCTIONS</th>
+  //       <th>AMOUNT (₹)</th>
+  //     </tr>
+  //   </thead>
+  //   <tbody>
+
+  //     <!-- BASE EARNINGS + DEDUCTIONS -->
+  //     <tr>
+  //       <td>Basic Salary</td><td>₹${monthlySalary.toFixed(2)}</td>
+  //       <td>EPF</td><td>₹${epf.toFixed(2)}</td>
+  //     </tr>
+
+  //     <tr>
+  //       <td>House Rent Allowance</td><td>₹${hra.toFixed(2)}</td>
+  //       <td>ESI</td><td>₹${esi.toFixed(2)}</td>
+  //     </tr>
+
+  //     <tr>
+  //       <td>Travel Allowance</td><td>₹${travelAllowance.toFixed(2)}</td>
+  //       <td>Professional Tax</td><td>₹${professionalTax.toFixed(2)}</td>
+  //     </tr>
+
+  //     <tr>
+  //       <td>Medical Allowance</td><td>₹${medicalAllowance.toFixed(2)}</td>
+  //       <td>Income Tax</td><td>₹${incomeTax.toFixed(2)}</td>
+  //     </tr>
+
+  //     <tr>
+  //       <td>Basket of Benefits</td><td>₹${basketOfBenefits.toFixed(2)}</td>
+  //       <td>Salary Advance</td><td>₹${salaryAdvance.toFixed(2)}</td>
+  //     </tr>
+
+  //     <tr>
+  //       <td>Performance Bonus</td><td>₹${performanceBonus.toFixed(2)}</td>
+  //       <td>LOP</td><td>₹${lop.toFixed(2)}</td>
+  //     </tr>
+  //     <tr>
+  //   <td>
+  //     ${(() => {
+  //       const totalExtraPayments = additionalPayments.reduce(
+  //         (sum, p) => sum + parseFloat(p.value || 0),
+  //         0
+  //       );
+
+  //       // If no extra values, return empty string
+  //       if (totalExtraPayments === 0) return "";
+
+  //       return totalExtraPayments > 0 ? "Others" : "";
+  //     })()}
+  //   </td>
+  //   <td>
+  //     ${(() => {
+  //       const totalExtraPayments = additionalPayments.reduce(
+  //         (sum, p) => sum + parseFloat(p.value || 0),
+  //         0
+  //       );
+
+  //       // If no extra values, return empty string
+  //       if (totalExtraPayments === 0) return "";
+
+  //       return totalExtraPayments > 0 ? `₹${totalExtraPayments.toFixed(2)}` : "";
+  //     })()}
+  //   </td>
+  //   <td>
+  //     ${(() => {
+  //       const totalExtraDeductions = additionalDeductions.reduce(
+  //         (sum, p) => sum + parseFloat(p.value || 0),
+  //         0
+  //       );
+
+  //       // If no extra values, return empty string
+  //       if (totalExtraDeductions === 0) return "";
+
+  //       return totalExtraDeductions > 0 ? "Others" : "";
+  //     })()}
+  //   </td>
+  //   <td>
+  //     ${(() => {
+  //       const totalExtraDeductions = additionalDeductions.reduce(
+  //         (sum, p) => sum + parseFloat(p.value || 0),
+  //         0
+  //       );
+
+  //       // If no extra values, return empty string
+  //       if (totalExtraDeductions === 0) return "";
+
+  //       return totalExtraDeductions > 0
+  //         ? `₹${totalExtraDeductions.toFixed(2)}`
+  //         : "";
+  //     })()}
+  //   </td>
+  // </tr>
+
+  //    <tr>
+  //   <td>Other Allowances</td>
+  //   <td>₹${otherAllowances.toFixed(2)}</td>
+
+  // </tr>
+
+  //     <tr>
+  //       <td>Conveyance</td><td>₹${conveyance.toFixed(2)}</td>
+  //       <td></td><td></td>
+  //     </tr>
+
+  //     <!-- ⭐ MERGED SUM OF ADDITIONAL PAYMENTS + DEDUCTIONS -->
+
+  //     <!-- TOTALS -->
+  //     <tr class="total-row">
+  //       <td><strong>GROSS EARNINGS</strong></td>
+  //       <td><strong>₹${totalEarnings.toFixed(2)}</strong></td>
+  //       <td><strong>TOTAL DEDUCTIONS</strong></td>
+  //       <td><strong>₹${totalDeductions.toFixed(2)}</strong></td>
+  //     </tr>
+
+  //   </tbody>
+  // </table>
+
+  //           <div class="net-section">
+  //             <div>NET PAID AMOUNT</div>
+  //             <div class="net-amount">₹${paidAmount.toFixed(2)}</div>
+  //             <div class="words">Amount in words: Indian Rupees ${amountInWords} Only</div>
+  //           </div>
+
+  //           <div class="footer">This is a system-generated payslip. No signature required.<br>&copy; ${new Date().getFullYear()} Mychits. Confidential.</div>
+  //         </div>
+  //       </body>
+  //       </html>
+  //     `;
+
+  //       // --- FORMAT 2: Modern Gradient (Fixed for Preview) ---
+  //       const format2 = `
+  // <!DOCTYPE html>
+  // <html>
+  // <head>
+  // <style>
+  // @page { size: A4; margin: 12mm; }
+  // body {
+  //   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  //   margin: 0;
+  //   color: #1a202c;
+  //   background: #ffffff;
+  //   padding: 0;
+  //   -webkit-print-color-adjust: exact;
+  //   print-color-adjust: exact;
+  // }
+  // .document {
+  //   background: #ffffff;
+  //   margin: 0 auto;
+  //   width: 100%;
+  //   min-height: 100vh;
+  //   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  //   padding: 0;
+  //   box-sizing: border-box;
+  //   overflow: hidden;
+  //   display: flex;
+  //   flex-direction: column;
+  // }
+  // .header-band {
+  //   background: #667eea;
+  //   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  //   color: #fff;
+  //   padding: 20px;
+  // }
+  // .header-content {
+  //   display: flex;
+  //   align-items: center;
+  //   justify-content: space-between;
+  //   gap: 20px;
+  // }
+  // .logo-circle {
+  //   width: 70px;
+  //   height: 70px;
+  //   background: rgba(255,255,255,0.2);
+  //   border-radius: 6px;
+  //   display: flex;
+  //   align-items: center;
+  //   justify-content: center;
+  // }
+  // .logo-circle img {
+  //   width: 50px;
+  //   height: 50px;
+  //   border-radius: 4px;
+  // }
+  // .header-text { flex: 1; }
+  // .company-title {
+  //   font-size: 22px;
+  //   font-weight: 700;
+  //   margin-bottom: 4px;
+  // }
+  // .company-subtitle {
+  //   font-size: 11px;
+  //   opacity: 0.9;
+  //   line-height: 1.4;
+  // }
+  // .header-meta {
+  //   text-align: right;
+  //   background: rgba(255,255,255,0.15);
+  //   padding: 12px;
+  //   border-radius: 10px;
+  //   font-size: 11px;
+  // }
+  // .meta-line { margin: 2px 0; }
+  // .meta-value { font-weight: 400; }
+  // .content {
+  //   flex: 1;
+  //   padding: 20px;
+  //   background: #ffffff;
+  // }
+  // .payslip-title {
+  //   text-align: center;
+  //   font-size: 24px;
+  //   font-weight: 500;
+  //   color: #4a5568;
+  //   margin: 20px 0;
+  //   letter-spacing: 2px;
+  // }
+  // .card {
+  //   background: #fff;
+  //   border: 1px solid #e2e8f0;
+  //   border-radius: 10px;
+  //   margin-bottom: 20px;
+  //   overflow: hidden;
+  //   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  // }
+  // .card-header {
+  //   background: #f7fafc;
+  //   padding: 12px;
+  //   border-bottom: 1px solid #e2e8f0;
+  //   font-weight: 600;
+  //   color: #4a5568;
+  // }
+  // .card-body { padding: 15px; }
+  // .info-grid {
+  //   display: grid;
+  //   grid-template-columns: 1fr 1fr;
+  //   gap: 12px;
+  // }
+  // .info-pair {
+  //   display: flex;
+  //   justify-content: space-between;
+  //   padding: 6px 0;
+  //   border-bottom: 1px dotted #e2e8f0;
+  //   font-size: 12px;
+  // }
+  // .info-pair:last-child { border-bottom: none; }
+  // .salary-grid {
+  //   display: grid;
+  //   grid-template-columns: 1fr 1fr;
+  //   gap: 20px;
+  // }
+  // .earnings-card { border-left: 4px solid #48bb78; }
+  // .deductions-card { border-left: 4px solid #f56565; }
+  // .item-row {
+  //   display: flex;
+  //   justify-content: space-between;
+  //   padding: 8px 0;
+  //   border-bottom: 1px solid #f7fafc;
+  //   font-size: 12px;
+  // }
+  // .item-row:last-child { border-bottom: 2px solid #e2e8f0; }
+  // .item-name { color: #4a5568; }
+  // .item-amount { color: #2d3748; font-weight: 600; }
+  // .total-amount {
+  //   background: #edf2f7;
+  //   padding: 10px;
+  //   border-radius: 6px;
+  //   font-weight: 700;
+  //   text-align: right;
+  // }
+  // .net-section {
+  //   background: #4299e1;
+  //   background: linear-gradient(135deg, #4299e1, #3182ce);
+  //   color: #fff;
+  //   padding: 20px;
+  //   border-radius: 10px;
+  //   text-align: center;
+  //   margin: 25px 0;
+  // }
+  // .net-title { font-size: 14px; margin-bottom: 8px; }
+  // .net-figure { font-size: 28px; font-weight: 500; margin-bottom: 10px; }
+  // .net-words { font-size: 11px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 6px; }
+  // .signature-section {
+  //   display: grid;
+  //   grid-template-columns: 1fr 1fr;
+  //   gap: 20px;
+  //   margin-top: 15px;
+  // }
+  // .signature-line {
+  //   border-top: 1px solid #cbd5e0;
+  //   margin-top: 40px;
+  //   padding-top: 8px;
+  //   font-size: 11px;
+  //   color: #718096;
+  // }
+  // .footer-text {
+  //   text-align: center;
+  //   color: #a0aec0;
+  //   font-size: 9px;
+  //   margin: 25px 0;
+  // }
+  // .sub-header {
+  //   background: #f0f0f0;
+  //   font-weight: bold;
+  //   text-align: center;
+  //   padding: 6px 0;
+  //   margin-top: 10px;
+  //   border-radius: 4px;
+  // }
+  // @media print {
+  //   body { background: #fff; }
+  //   .document { box-shadow: none; page-break-after: avoid; }
+  // }
+  // </style>
+  // </head>
+  // <body>
+  // <div class="document">
+  //   <div class="header-band">
+  //     <div class="header-content">
+  //       <div class="logo-circle">
+  //         <img src="${imageInput}" alt="Logo">
+  //       </div>
+  //       <div class="header-text">
+  //         <div class="company-title">Mychits</div>
+  //         <div class="company-subtitle">No 11/36-25, 2nd Main, Kathriguppe Main Road, Bangalore, Karnataka, India - 560070</div>
+  //       </div>
+  //       <div class="header-meta">
+  //         <div class="meta-line">Payslip ID: <span class="meta-value">${payslipId}</span></div>
+  //         <div class="meta-line">Period: <span class="meta-value">${salaryMonth} ${salaryYear}</span></div>
+  //         <div class="meta-line">Date: <span class="meta-value">${formatDate(
+  //           payDate
+  //         )}</span></div>
+  //       </div>
+  //     </div>
+  //   </div>
+  //   <div class="content">
+  //     <div class="payslip-title">PAYSLIP</div>
+  //     <div class="card">
+  //       <div class="card-header">Employee Information</div>
+  //       <div class="card-body">
+  //         <div class="info-grid">
+  //           <div class="info-pair"><span>Employee Name</span><span>${
+  //             agent?.name || "N/A"
+  //           }</span></div>
+  //           <div class="info-pair"><span>Employee ID</span><span>${
+  //             agent?.employeeCode || "N/A"
+  //           }</span></div>
+  //           <div class="info-pair"><span>Designation</span><span>${
+  //             agent?.designation_id?.title || "N/A"
+  //           }</span></div>
+  //           <div class="info-pair"><span>Department</span><span>${
+  //             agent?.department || "N/A"
+  //           }</span></div>
+  //           <div class="info-pair"><span>Pay Period</span><span>${formatDate(
+  //             fromDate
+  //           )} to ${formatDate(toDate)}</span></div>
+  //           <div class="info-pair"><span>Payment Method</span><span>${
+  //             payment.payment_method || "N/A"
+  //           }</span></div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //     <div class="salary-grid">
+  //       <div class="card earnings-card">
+  //         <div class="card-header" style="color: #48bb78;">Earnings</div>
+  //         <div class="card-body">
+  //           <div class="item-row"><div class="item-name">Basic Salary</div><div class="item-amount">₹${monthlySalary.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">HRA</div><div class="item-amount">₹${hra.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Travel Allowance</div><div class="item-amount">₹${travelAllowance.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Medical Allowance</div><div class="item-amount">₹${medicalAllowance.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Basket of Benefits</div><div class="item-amount">₹${basketOfBenefits.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Performance Bonus</div><div class="item-amount">₹${performanceBonus.toFixed(
+  //             2
+  //           )}</div></div>
+
+  //           <div class="item-row"><div class="item-name">Other Allowances</div><div class="item-amount">₹${otherAllowances.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Conveyance</div><div class="item-amount">₹${conveyance.toFixed(
+  //             2
+  //           )}</div></div>
+  //           ${
+  //             additionalPayments.length > 0
+  //               ? `<div class="sub-header">Additional Payments</div>`
+  //               : ""
+  //           }
+  //           ${additionalPayments
+  //             .map(
+  //               (payment) =>
+  //                 `<div class="item-row"><div class="item-name">Others</div><div class="item-amount">₹${parseFloat(
+  //                   payment.value || 0
+  //                 ).toFixed(2)}</div></div>`
+  //             )
+  //             .join("")}
+  //           <div class="total-amount">Total: ₹${totalEarnings.toFixed(2)}</div>
+  //         </div>
+  //       </div>
+  //       <div class="card deductions-card">
+  //         <div class="card-header" style="color: #f56565;">Deductions</div>
+  //         <div class="card-body">
+  //           <div class="item-row"><div class="item-name">Loss of Pay</div><div class="item-amount">₹${lop.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">EPF</div><div class="item-amount">₹${epf.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">ESI</div><div class="item-amount">₹${esi.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Professional Tax</div><div class="item-amount">₹${professionalTax.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Income Tax</div><div class="item-amount">₹${incomeTax.toFixed(
+  //             2
+  //           )}</div></div>
+  //           <div class="item-row"><div class="item-name">Salary Advance</div><div class="item-amount">₹${salaryAdvance.toFixed(
+  //             2
+  //           )}</div></div>
+  //           ${
+  //             additionalDeductions.length > 0
+  //               ? `<div class="sub-header">Additional Deductions</div>`
+  //               : ""
+  //           }
+  //           ${additionalDeductions
+  //             .map(
+  //               (deduction) =>
+  //                 `<div class="item-row"><div class="item-name">Others</div><div class="item-amount">₹${parseFloat(
+  //                   deduction.value || 0
+  //                 ).toFixed(2)}</div></div>`
+  //             )
+  //             .join("")}
+  //           <div class="total-amount">Total: ₹${totalDeductions.toFixed(2)}</div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //     <div class="net-section">
+  //       <div class="net-title">Net Paid Amount</div>
+  //       <div class="net-figure">₹${netPayable.toFixed(2)}</div>
+  //       <div class="net-words">Amount in Words: Indian Rupees ${amountInWords} Only</div>
+  //     </div>
+  //     <div class="signature-section">
+  //       <div class="signature-line">Employee Signature</div>
+  //       <div class="signature-line">Authorized Signatory</div>
+  //     </div>
+  //     <div class="footer-text">
+  //       This is a computer generated payslip and does not require signature.<br>
+  //       &copy; ${new Date().getFullYear()} Mychits.
+  //     </div>
+  //   </div>
+  // </div>
+  // </body>
+  // </html>`;
+
+  //       return printFormat === "format1" ? format1 : format2;
+  //     } catch (err) {
+  //       console.error("Error generating salary slip content:", err);
+  //       return "<div>Error generating salary slip content</div>";
+  //     }
+  //   };
+
   const generateSalarySlipContent = () => {
     try {
+      console.info();
       const agent = payment.employee_id;
       console.info(agent, "test 123");
       console.info(agent?.designation_id?.title, "test 124");
+
       const payslipId = payment._id;
       const payDate = payment.pay_date || payment.createdAt;
       const fromDate = payment.salary_from_date;
       const toDate = payment.salary_to_date;
-      console.info(fromDate, "fromdate");
-      console.info(toDate, "todate");
+
       const salaryMonth = payment.salary_month;
       const salaryYear = payment.salary_year;
-      const lossOfPay = payment?.lop_days;
-      const presentPay = payment?.paid_days;
 
-      // Extract earnings and deductions from the payment data
+      const lossOfPay = Number(payment?.attendance_details?.lop_days || 0);
+      console.info(lossOfPay, "loss of pay");
+      const presentPay = Number(payment?.attendance_details?.paid_days || 0);
+      console.info(presentPay, "present of pay");
       const earnings = payment.earnings || {};
       const deductions = payment.deductions || {};
       const additionalPayments = payment.additional_payments || [];
       const additionalDeductions = payment.additional_deductions || [];
+      console.info(additionalDeductions, "testing adjustment");
 
-      // Calculate values
-      const monthlySalary = parseFloat(earnings.basic || 0);
-      const hra = parseFloat(earnings.hra || 0);
-      const travelAllowance = parseFloat(earnings.travel_allowance || 0);
-      const medicalAllowance = parseFloat(earnings.medical_allowance || 0);
-      const basketOfBenefits = parseFloat(earnings.basket_of_benifits || 0);
-      const performanceBonus = parseFloat(earnings.performance_bonus || 0);
-      const otherAllowances = parseFloat(earnings.other_allowances || 0);
-      const conveyance = parseFloat(earnings.conveyance || 0);
+      // ================= EARNINGS =================
+      const monthlySalary = Number(earnings.basic || 0);
+      const hra = Number(earnings.hra || 0);
+      const travelAllowance = Number(earnings.travel_allowance || 0);
+      const medicalAllowance = Number(earnings.medical_allowance || 0);
+      const basketOfBenefits = Number(earnings.basket_of_benifits || 0);
+      const performanceBonus = Number(earnings.performance_bonus || 0);
+      const otherAllowances = Number(earnings.other_allowances || 0);
+      const conveyance = Number(earnings.conveyance || 0);
 
-      const incomeTax = parseFloat(deductions.income_tax || 0);
-      const esi = parseFloat(deductions.esi || 0);
-      const epf = parseFloat(deductions.epf || 0);
-      const professionalTax = parseFloat(deductions.professional_tax || 0);
-      const salaryAdvance = parseFloat(deductions.salary_advance || 0);
+      // ================= DEDUCTIONS =================
+      const incomeTax = Number(deductions.income_tax || 0);
+      const esi = Number(deductions.esi || 0);
+      const epf = Number(deductions.epf || 0);
+      const professionalTax = Number(deductions.professional_tax || 0);
+      const salaryAdvance = Number(deductions.salary_advance || 0);
 
-      // Calculate additional payments total
+      // ================= ADDITIONALS =================
       const additionalPaymentsTotal = additionalPayments.reduce(
-        (sum, payment) => sum + parseFloat(payment.value || 0),
+        (sum, p) => sum + Number(p.value || 0),
         0
       );
 
-      // Calculate additional deductions total
-      const additionalDeductionsTotal = additionalDeductions.reduce(
-        (sum, deduction) => sum + parseFloat(deduction.value || 0),
-        0
-      );
+  
 
-      // Calculate total earnings and deductions
-      const totalEarnings =
-        monthlySalary +
-        hra +
-        travelAllowance +
-        medicalAllowance +
-        basketOfBenefits +
-        performanceBonus +
-        otherAllowances +
-        conveyance +
-        additionalPaymentsTotal;
-      const lopaddcal =
+      // ================= TOTAL EARNINGS =================
+      const fixedEarningsTotal =
         monthlySalary +
         hra +
         travelAllowance +
@@ -2713,24 +3369,40 @@ const SalarySlipPrint = () => {
         performanceBonus +
         otherAllowances +
         conveyance;
+      console.info(fixedEarningsTotal, "total earning");
+
+      // const totalEarnings = fixedEarningsTotal + additionalPaymentsTotal;
+      const totalEarnings = fixedEarningsTotal;
+
+      // ================= LOP =================
       const lop =
-        (lopaddcal / (parseFloat(lossOfPay) + parseFloat(presentPay))) *
-          parseFloat(lossOfPay) || 0;
-      // console.info(lop, "fhjdfgjhdfgjhfdgdf check123");
+        lossOfPay > 0 && presentPay + lossOfPay > 0
+          ? (fixedEarningsTotal / (presentPay + lossOfPay)) * lossOfPay
+          : 0;
       const totalDeductions =
-        incomeTax +
-        esi +
-        epf +
-        professionalTax +
-        salaryAdvance +
-        additionalDeductionsTotal +
-        lop;
+        incomeTax + esi + epf + professionalTax + salaryAdvance + lop;
+      const paidAmount = Number(payment?.paid_amount || 0);
 
-      const netPayable = parseFloat(payment.paid_amount || 0);
+      if(paidAmount > (fixedEarningsTotal - totalDeductions) ){
+       paidAmount = fixedEarningsTotal - totalDeductions
+      }
+       
+      
 
-      // Calculate LOP (Loss of Pay)
+       const additionalDeductionsTotal = additionalDeductions.reduce(
+        (sum, d) => sum + Number(d.value || 0),
+        0
+      );
 
-      // Format date
+     
+
+   
+      
+     
+
+      
+
+      // ================= UTIL =================
       const formatDate = (date) => {
         if (!date) return "N/A";
         return new Date(date).toLocaleDateString("en-IN", {
@@ -2741,10 +3413,9 @@ const SalarySlipPrint = () => {
         });
       };
 
-      // Convert amount to words
-      const amountInWords = numToWords(netPayable);
+      const amountInWords = numToWords(paidAmount);
 
-      // --- FORMAT 1: Classic Professional ---
+      // ================= FORMAT 1 =================
       const format1 = `
       <!DOCTYPE html>
       <html>
@@ -2863,24 +3534,35 @@ const SalarySlipPrint = () => {
       <td>Performance Bonus</td><td>₹${performanceBonus.toFixed(2)}</td>
       <td>LOP</td><td>₹${lop.toFixed(2)}</td>
     </tr>
-
    <tr>
   <td>Other Allowances</td>
   <td>₹${otherAllowances.toFixed(2)}</td>
-
-  ${(() => {
-    const totalExtraDeductions = additionalDeductions.reduce(
-      (sum, d) => sum + parseFloat(d.value || 0),
+  <td>Others</td>
+ <td>
+  ₹${(() => {
+    const additionalTotal = additionalDeductions.reduce(
+      (sum, p) => sum + parseFloat(p.value || 0),
       0
     );
 
-    return `
-      <td>${totalExtraDeductions > 0 ? "Others" : ""}</td>
-      <td>${
-        totalExtraDeductions > 0 ? `₹${totalExtraDeductions.toFixed(2)}` : ""
-      }</td>
-    `;
+    const difference = Math.abs(paidAmount - (totalEarnings - totalDeductions));
+
+    // If additional deductions are zero, just show the difference
+    if (additionalTotal === 0) {
+      return difference.toFixed(2);
+    }
+
+    // If paidAmount is greater, show only additional deductions
+    if (paidAmount > (totalEarnings - totalDeductions)) {
+      return (additionalTotal + difference).toFixed(2);
+    }
+
+    // Otherwise add difference to additional deductions
+    return additionalTotal.toFixed(2);
+    
   })()}
+</td>
+
 </tr>
 
 
@@ -2888,28 +3570,19 @@ const SalarySlipPrint = () => {
       <td>Conveyance</td><td>₹${conveyance.toFixed(2)}</td>
       <td></td><td></td>
     </tr>
+    <tr>
+    <td>Others</td>
+    <td>
+
+  ₹${additionalPayments
+    .reduce((sum, p) => sum + parseFloat(p.value || 0), 0)
+    .toFixed(2) || 0}
+
+</td>
+    </tr>
 
     <!-- ⭐ MERGED SUM OF ADDITIONAL PAYMENTS + DEDUCTIONS -->
-    ${(() => {
-      const totalExtraPayments = additionalPayments.reduce(
-        (sum, p) => sum + parseFloat(p.value || 0),
-        0
-      );
-
-      // If no extra values, return empty string
-      if (totalExtraPayments === 0) return "";
-
-      return `
-        <tr>
-          <td>${totalExtraPayments > 0 ? "Others" : ""}</td>
-          <td>${
-            totalExtraPayments > 0 ? `₹${totalExtraPayments.toFixed(2)}` : ""
-          }</td>
-
-          
-        </tr>
-      `;
-    })()}
+    
 
     <!-- TOTALS -->
     <tr class="total-row">
@@ -2926,7 +3599,7 @@ const SalarySlipPrint = () => {
 
           <div class="net-section">
             <div>NET PAID AMOUNT</div>
-            <div class="net-amount">₹${netPayable.toFixed(2)}</div>
+            <div class="net-amount">₹${paidAmount.toFixed(2)}</div>
             <div class="words">Amount in words: Indian Rupees ${amountInWords} Only</div>
           </div>
 
@@ -2936,337 +3609,11 @@ const SalarySlipPrint = () => {
       </html>
     `;
 
-      // --- FORMAT 2: Modern Gradient (Fixed for Preview) ---
-      const format2 = `
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-@page { size: A4; margin: 12mm; }
-body { 
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-  margin: 0; 
-  color: #1a202c; 
-  background: #ffffff; 
-  padding: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.document { 
-  background: #ffffff; 
-  margin: 0 auto; 
-  width: 100%; 
-  min-height: 100vh;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-  padding: 0; 
-  box-sizing: border-box; 
-  overflow: hidden; 
-  display: flex; 
-  flex-direction: column; 
-}
-.header-band { 
-  background: #667eea; 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-  color: #fff; 
-  padding: 20px; 
-}
-.header-content { 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  gap: 20px; 
-}
-.logo-circle { 
-  width: 70px; 
-  height: 70px; 
-  background: rgba(255,255,255,0.2); 
-  border-radius: 6px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-}
-.logo-circle img { 
-  width: 50px; 
-  height: 50px; 
-  border-radius: 4px; 
-}
-.header-text { flex: 1; }
-.company-title { 
-  font-size: 22px; 
-  font-weight: 700; 
-  margin-bottom: 4px; 
-}
-.company-subtitle { 
-  font-size: 11px; 
-  opacity: 0.9; 
-  line-height: 1.4; 
-}
-.header-meta { 
-  text-align: right; 
-  background: rgba(255,255,255,0.15); 
-  padding: 12px; 
-  border-radius: 10px; 
-  font-size: 11px; 
-}
-.meta-line { margin: 2px 0; }
-.meta-value { font-weight: 400; }
-.content { 
-  flex: 1; 
-  padding: 20px; 
-  background: #ffffff;
-}
-.payslip-title { 
-  text-align: center; 
-  font-size: 24px; 
-  font-weight: 500; 
-  color: #4a5568; 
-  margin: 20px 0; 
-  letter-spacing: 2px; 
-}
-.card { 
-  background: #fff; 
-  border: 1px solid #e2e8f0; 
-  border-radius: 10px; 
-  margin-bottom: 20px; 
-  overflow: hidden; 
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-}
-.card-header { 
-  background: #f7fafc; 
-  padding: 12px; 
-  border-bottom: 1px solid #e2e8f0; 
-  font-weight: 600; 
-  color: #4a5568; 
-}
-.card-body { padding: 15px; }
-.info-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 12px; 
-}
-.info-pair { 
-  display: flex; 
-  justify-content: space-between; 
-  padding: 6px 0; 
-  border-bottom: 1px dotted #e2e8f0; 
-  font-size: 12px; 
-}
-.info-pair:last-child { border-bottom: none; }
-.salary-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 20px; 
-}
-.earnings-card { border-left: 4px solid #48bb78; }
-.deductions-card { border-left: 4px solid #f56565; }
-.item-row { 
-  display: flex; 
-  justify-content: space-between; 
-  padding: 8px 0; 
-  border-bottom: 1px solid #f7fafc; 
-  font-size: 12px; 
-}
-.item-row:last-child { border-bottom: 2px solid #e2e8f0; }
-.item-name { color: #4a5568; }
-.item-amount { color: #2d3748; font-weight: 600; }
-.total-amount { 
-  background: #edf2f7; 
-  padding: 10px; 
-  border-radius: 6px; 
-  font-weight: 700; 
-  text-align: right; 
-}
-.net-section { 
-  background: #4299e1; 
-  background: linear-gradient(135deg, #4299e1, #3182ce); 
-  color: #fff; 
-  padding: 20px; 
-  border-radius: 10px; 
-  text-align: center; 
-  margin: 25px 0; 
-}
-.net-title { font-size: 14px; margin-bottom: 8px; }
-.net-figure { font-size: 28px; font-weight: 500; margin-bottom: 10px; }
-.net-words { font-size: 11px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 6px; }
-.signature-section { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 20px; 
-  margin-top: 15px; 
-}
-.signature-line { 
-  border-top: 1px solid #cbd5e0; 
-  margin-top: 40px; 
-  padding-top: 8px; 
-  font-size: 11px; 
-  color: #718096; 
-}
-.footer-text { 
-  text-align: center; 
-  color: #a0aec0; 
-  font-size: 9px; 
-  margin: 25px 0; 
-}
-.sub-header { 
-  background: #f0f0f0; 
-  font-weight: bold; 
-  text-align: center; 
-  padding: 6px 0; 
-  margin-top: 10px; 
-  border-radius: 4px; 
-}
-@media print { 
-  body { background: #fff; } 
-  .document { box-shadow: none; page-break-after: avoid; } 
-}
-</style>
-</head>
-<body>
-<div class="document">
-  <div class="header-band">
-    <div class="header-content">
-      <div class="logo-circle">
-        <img src="${imageInput}" alt="Logo">
-      </div>
-      <div class="header-text">
-        <div class="company-title">Mychits</div>
-        <div class="company-subtitle">No 11/36-25, 2nd Main, Kathriguppe Main Road, Bangalore, Karnataka, India - 560070</div>
-      </div>
-      <div class="header-meta">
-        <div class="meta-line">Payslip ID: <span class="meta-value">${payslipId}</span></div>
-        <div class="meta-line">Period: <span class="meta-value">${salaryMonth} ${salaryYear}</span></div>
-        <div class="meta-line">Date: <span class="meta-value">${formatDate(
-          payDate
-        )}</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="content">
-    <div class="payslip-title">PAYSLIP</div>
-    <div class="card">
-      <div class="card-header">Employee Information</div>
-      <div class="card-body">
-        <div class="info-grid">
-          <div class="info-pair"><span>Employee Name</span><span>${
-            agent?.name || "N/A"
-          }</span></div>
-          <div class="info-pair"><span>Employee ID</span><span>${
-            agent?.employeeCode || "N/A"
-          }</span></div>
-          <div class="info-pair"><span>Designation</span><span>${
-            agent?.designation_id?.title || "N/A"
-          }</span></div>
-          <div class="info-pair"><span>Department</span><span>${
-            agent?.department || "N/A"
-          }</span></div>
-          <div class="info-pair"><span>Pay Period</span><span>${formatDate(
-            fromDate
-          )} to ${formatDate(toDate)}</span></div>
-          <div class="info-pair"><span>Payment Method</span><span>${
-            payment.payment_method || "N/A"
-          }</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="salary-grid">
-      <div class="card earnings-card">
-        <div class="card-header" style="color: #48bb78;">Earnings</div>
-        <div class="card-body">
-          <div class="item-row"><div class="item-name">Basic Salary</div><div class="item-amount">₹${monthlySalary.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">HRA</div><div class="item-amount">₹${hra.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Travel Allowance</div><div class="item-amount">₹${travelAllowance.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Medical Allowance</div><div class="item-amount">₹${medicalAllowance.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Basket of Benefits</div><div class="item-amount">₹${basketOfBenefits.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Performance Bonus</div><div class="item-amount">₹${performanceBonus.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Other Allowances</div><div class="item-amount">₹${otherAllowances.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Conveyance</div><div class="item-amount">₹${conveyance.toFixed(
-            2
-          )}</div></div>
-          ${
-            additionalPayments.length > 0
-              ? `<div class="sub-header">Additional Payments</div>`
-              : ""
-          }
-          ${additionalPayments
-            .map(
-              (payment) =>
-                `<div class="item-row"><div class="item-name">Others</div><div class="item-amount">₹${parseFloat(
-                  payment.value || 0
-                ).toFixed(2)}</div></div>`
-            )
-            .join("")}
-          <div class="total-amount">Total: ₹${totalEarnings.toFixed(2)}</div>
-        </div>
-      </div>
-      <div class="card deductions-card">
-        <div class="card-header" style="color: #f56565;">Deductions</div>
-        <div class="card-body">
-          <div class="item-row"><div class="item-name">Loss of Pay</div><div class="item-amount">₹${lop.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">EPF</div><div class="item-amount">₹${epf.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">ESI</div><div class="item-amount">₹${esi.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Professional Tax</div><div class="item-amount">₹${professionalTax.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Income Tax</div><div class="item-amount">₹${incomeTax.toFixed(
-            2
-          )}</div></div>
-          <div class="item-row"><div class="item-name">Salary Advance</div><div class="item-amount">₹${salaryAdvance.toFixed(
-            2
-          )}</div></div>
-          ${
-            additionalDeductions.length > 0
-              ? `<div class="sub-header">Additional Deductions</div>`
-              : ""
-          }
-          ${additionalDeductions
-            .map(
-              (deduction) =>
-                `<div class="item-row"><div class="item-name">Others</div><div class="item-amount">₹${parseFloat(
-                  deduction.value || 0
-                ).toFixed(2)}</div></div>`
-            )
-            .join("")}
-          <div class="total-amount">Total: ₹${totalDeductions.toFixed(2)}</div>
-        </div>
-      </div>
-    </div>
-    <div class="net-section">
-      <div class="net-title">Net Paid Amount</div>
-      <div class="net-figure">₹${netPayable.toFixed(2)}</div>
-      <div class="net-words">Amount in Words: Indian Rupees ${amountInWords} Only</div>
-    </div>
-    <div class="signature-section">
-      <div class="signature-line">Employee Signature</div>
-      <div class="signature-line">Authorized Signatory</div>
-    </div>
-    <div class="footer-text">
-      This is a computer generated payslip and does not require signature.<br>
-      &copy; ${new Date().getFullYear()} Mychits.
-    </div>
-  </div>
-</div>
-</body>
-</html>`;
+      // ================= FORMAT 2 (FIXED) =================
+      const format2 = format1.replace(
+        `₹${paidAmount.toFixed(2)}`,
+        `₹${paidAmount.toFixed(2)}`
+      );
 
       return printFormat === "format1" ? format1 : format2;
     } catch (err) {
@@ -3428,7 +3775,7 @@ body {
 
       const netPayable = parseFloat(payment.net_payable || 0);
 
-      const lop = totalEarnings - netPayable - totalDeductions;
+     // const lop = totalEarnings - netPayable - totalDeductions;
 
       const formatDate = (date) => {
         if (!date) return "N/A";
@@ -3776,11 +4123,11 @@ body {
       label: "Classic Professional",
       description: "Traditional formal style",
     },
-    {
-      key: "format2",
-      label: "Modern Gradient",
-      description: "Contemporary colorful design",
-    },
+    // {
+    //   key: "format2",
+    //   label: "Modern Gradient",
+    //   description: "Contemporary colorful design",
+    // },
   ];
 
   return (
@@ -3813,7 +4160,7 @@ body {
         </div>
       </Card>
 
-      {/* Preview Section */}
+    
       <Card
         title={`Preview: ${
           formatButtons.find((f) => f.key === printFormat)?.label
