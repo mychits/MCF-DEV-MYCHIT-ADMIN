@@ -18,8 +18,10 @@ import { useEffect, useState, useMemo } from "react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
 import { IoMdMore } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { MdOutlineMan } from "react-icons/md";
+import { RiMoneyRupeeCircleFill } from "react-icons/ri";
 import { Flex, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import moment from "moment";
@@ -304,11 +306,10 @@ const SalaryPayment = () => {
   const handleUpdateSubmit = async () => {
     try {
       setUpdateLoading(true);
-      
+
       const updateData = {
         ...updateFormData,
       };
-      
 
       await API.put(`/salary-payment/${currentSalaryId}`, updateData);
       message.success("Salary updated successfully");
@@ -493,6 +494,29 @@ const SalaryPayment = () => {
         <Navbar visibility={true} />
         <Sidebar />
         <div className="flex-grow p-7">
+          <div className="mb-8">
+            <h1 className="text-lg text-black font-bold font-mono p-2">Quick Navigator</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link
+                to="/hr-menu/salary-management"
+                className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                <RiMoneyRupeeCircleFill   className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
+                <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                 HR / Salary Management
+                </span>
+              </Link>
+              <Link
+                to="/staff-menu/employee-menu/employee-statement"
+                className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                <MdOutlineMan className="text-blue-600 group-hover:scale-110 transition-transform text-lg" />
+                <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                Employees / Employee Statement
+                </span>
+              </Link>
+             
+             
+            </div>
+          </div>
           <h1 className="text-2xl font-semibold">Salary Payment</h1>
           <div className="mt-6 mb-8">
             <div className="mb-10"></div>
@@ -738,7 +762,6 @@ const SalaryPayment = () => {
                 <h3 className="text-lg font-semibold text-indigo-800">
                   Advance Payments
                 </h3>
-                
               </div>
               <Form.List name="advance_payments">
                 {(fields, { add, remove }) => (
@@ -785,7 +808,6 @@ const SalaryPayment = () => {
                 <h3 className="text-lg font-semibold text-purple-800">
                   Additional Payments
                 </h3>
-                
               </div>
               <Form.List name="additional_payments">
                 {(fields, { add, remove }) => (
@@ -831,7 +853,6 @@ const SalaryPayment = () => {
                 <h3 className="text-lg font-semibold text-orange-800">
                   Additional Deductions
                 </h3>
-                
               </div>
               <Form.List name="additional_deductions">
                 {(fields, { remove }) => (
@@ -880,7 +901,7 @@ const SalaryPayment = () => {
                 <Form.Item
                   name="total_salary_payable"
                   label="Total Salary Payable">
-                  <Input type="number" disabled/>
+                  <Input type="number" disabled />
                 </Form.Item>
                 <Form.Item name="paid_amount" label="Payable Amount">
                   <Input type="number" />

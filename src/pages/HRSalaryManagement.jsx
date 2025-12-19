@@ -31,6 +31,8 @@ import { numberToIndianWords } from "../helpers/numberToIndianWords";
 import moment from "moment";
 import utc from "dayjs/plugin/utc";
 import { LoadingOutlined } from "@ant-design/icons";
+import { MdOutlineMan } from "react-icons/md";
+import { RiMoneyRupeeCircleFill } from "react-icons/ri";
 dayjs.extend(utc);
 const HRSalaryManagement = () => {
   const navigate = useNavigate();
@@ -554,8 +556,7 @@ const HRSalaryManagement = () => {
           <div
             key={salaryPayment?._id}
             className="text-blue-600"
-            onClick={() => handlePrint(salaryPayment?._id)}
-          >
+            onClick={() => handlePrint(salaryPayment?._id)}>
             Print
           </div>
         ),
@@ -566,8 +567,7 @@ const HRSalaryManagement = () => {
           <div
             key={salaryPayment?._id}
             className="text-green-600"
-            onClick={() => handleEdit(salaryPayment._id)}
-          >
+            onClick={() => handleEdit(salaryPayment._id)}>
             View
           </div>
         ),
@@ -581,8 +581,7 @@ const HRSalaryManagement = () => {
             onClick={() => {
               setDeleteId(salaryPayment?._id);
               setDeleteModalOpen(true);
-            }}
-          >
+            }}>
             Delete
           </div>
         ),
@@ -966,8 +965,7 @@ const HRSalaryManagement = () => {
               menu={{
                 items: dropDownItems(data),
               }}
-              placement="bottomLeft"
-            >
+              placement="bottomLeft">
               <IoMdMore className="text-bold" />
             </Dropdown>
           </div>
@@ -1011,10 +1009,35 @@ const HRSalaryManagement = () => {
                 <div>
                   <button
                     onClick={() => setIsOpenAddModal(true)}
-                    className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200"
-                  >
+                    className="ml-4 bg-blue-950 text-white px-4 py-2 rounded shadow-md hover:bg-blue-800 transition duration-200">
                     + Add Salary
                   </button>
+                </div>
+              </div>
+              <div className="mb-8">
+                <h1 className="text-lg text-black font-bold font-mono p-2">
+                  Quick Navigator
+                </h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Link
+                    to="/payment-menu/payment-in-out-menu/payment-out/salary-payment"
+                    className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                    <RiMoneyRupeeCircleFill
+                      className="text-blue-600 group-hover:scale-110 transition-transform"
+                      size={24}
+                    />
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Accounts / Salary Payment
+                    </span>
+                  </Link>
+                  <Link
+                    to="/staff-menu/employee-menu/employee-statement"
+                    className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                    <MdOutlineMan className="text-blue-600 group-hover:scale-110 transition-transform text-lg" />
+                    <span className="font-medium text-gray-700 group-hover:text-blue-600">
+                      Employees / Employee Statement
+                    </span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -1045,8 +1068,7 @@ const HRSalaryManagement = () => {
             <div className="flex justify-end gap-2">
               <Button
                 onClick={() => setIsOpenAddModal(false)}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
+                className="bg-red-600 hover:bg-red-700 text-white">
                 Cancel
               </Button>
               {calculatedSalary && (
@@ -1055,8 +1077,7 @@ const HRSalaryManagement = () => {
                 </Button>
               )}
             </div>
-          }
-        >
+          }>
           <div className="space-y-6">
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1580,8 +1601,7 @@ const HRSalaryManagement = () => {
                       }
                       style={{
                         backgroundColor: "#16a34a",
-                      }}
-                    >
+                      }}>
                       Continue
                     </Button>
                   </div>
@@ -1790,16 +1810,14 @@ const HRSalaryManagement = () => {
                         <Button
                           type="primary"
                           icon={<PlusOutlined />}
-                          onClick={addAdvancePayment}
-                        >
+                          onClick={addAdvancePayment}>
                           Add Advance
                         </Button>
                       </div>
                       {formData.advance_payments.map((payment, index) => (
                         <div
                           key={`advance-${index}`}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                        >
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div className="form-group">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Advance Name
@@ -1857,16 +1875,14 @@ const HRSalaryManagement = () => {
                         <Button
                           type="primary"
                           icon={<PlusOutlined />}
-                          onClick={addAdditionalPayment}
-                        >
+                          onClick={addAdditionalPayment}>
                           Add Payment
                         </Button>
                       </div>
                       {formData.additional_payments.map((payment, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                        >
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div className="form-group">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Payment Name
@@ -1925,8 +1941,7 @@ const HRSalaryManagement = () => {
                           type="primary"
                           danger
                           icon={<PlusOutlined />}
-                          onClick={addAdditionalDeduction}
-                        >
+                          onClick={addAdditionalDeduction}>
                           Add Deduction
                         </Button>
                       </div>
@@ -1934,8 +1949,7 @@ const HRSalaryManagement = () => {
                         (deduction, index) => (
                           <div
                             key={index}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                          >
+                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="form-group">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Deduction Name
@@ -2091,8 +2105,7 @@ const HRSalaryManagement = () => {
             <div className="flex justify-end">
               <Button onClick={() => setIsOpenUpdateModal(false)}>Close</Button>
             </div>
-          }
-        >
+          }>
           <div className="space-y-6">
             {/* Employee Info */}
             <div className="form-group">
@@ -2428,12 +2441,10 @@ const HRSalaryManagement = () => {
               type="primary"
               danger
               loading={deleteLoading}
-              onClick={() => handleDeleteConfirm(deleteId)}
-            >
+              onClick={() => handleDeleteConfirm(deleteId)}>
               Delete
             </Button>,
-          ]}
-        >
+          ]}>
           <p>
             Are you sure you want to delete this salary ? This action cannot be
             undone.
@@ -2466,8 +2477,7 @@ const HRSalaryManagement = () => {
                 onClick={() => {
                   handleEdit(existingSalaryRecord._id);
                   setAlreadyPaidModalOpen(false);
-                }}
-              >
+                }}>
                 Edit Record
               </Button>
             ),
@@ -2477,8 +2487,7 @@ const HRSalaryManagement = () => {
             maxHeight: "70vh",
             overflowY: "auto",
             backgroundColor: "#fafafa",
-          }}
-        >
+          }}>
           {existingSalaryRecord ? (
             <div className="space-y-5">
               {/* Salary Period */}
@@ -2531,8 +2540,7 @@ const HRSalaryManagement = () => {
                   ).map(([key, val]) => (
                     <li
                       key={key}
-                      className="flex justify-between items-center bg-white p-4 rounded-lg border border-purple-100 hover:border-purple-200 transition-colors"
-                    >
+                      className="flex justify-between items-center bg-white p-4 rounded-lg border border-purple-100 hover:border-purple-200 transition-colors">
                       <span className="capitalize text-slate-700 font-medium">
                         {key.replace(/_/g, " ")}
                       </span>
@@ -2558,8 +2566,7 @@ const HRSalaryManagement = () => {
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-green-100 hover:border-green-200 transition-colors"
-                      >
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
                         <span className="capitalize text-slate-700 font-medium">
                           {key.replace(/_/g, " ")}
                         </span>
@@ -2586,8 +2593,7 @@ const HRSalaryManagement = () => {
                     ([key, val]) => (
                       <li
                         key={key}
-                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-red-100 hover:border-red-200 transition-colors"
-                      >
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-red-100 hover:border-red-200 transition-colors">
                         <span className="capitalize text-slate-700 font-medium">
                           {key.replace(/_/g, " ")}
                         </span>
@@ -2614,8 +2620,7 @@ const HRSalaryManagement = () => {
                   ).map(([key, val]) => (
                     <li
                       key={key}
-                      className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors"
-                    >
+                      className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
                       <span className="capitalize text-slate-700 font-medium">
                         {key.replace(/_/g, " ")}
                       </span>
@@ -2641,8 +2646,7 @@ const HRSalaryManagement = () => {
                     {existingSalaryRecord.advance_payments.map((pay, i) => (
                       <li
                         key={i}
-                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors"
-                      >
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
                         <span className="text-slate-700 font-medium">
                           {pay.name || "Advance Payment"}
                         </span>
@@ -2669,8 +2673,7 @@ const HRSalaryManagement = () => {
                     {existingSalaryRecord.additional_payments.map((pay, i) => (
                       <li
                         key={i}
-                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors"
-                      >
+                        className="flex justify-between items-center bg-white p-4 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
                         <span className="text-slate-700 font-medium">
                           {pay.name || "Payment"}
                         </span>
@@ -2698,8 +2701,7 @@ const HRSalaryManagement = () => {
                       (ded, i) => (
                         <li
                           key={i}
-                          className="flex justify-between items-center bg-white p-4 rounded-lg border border-orange-100 hover:border-orange-200 transition-colors"
-                        >
+                          className="flex justify-between items-center bg-white p-4 rounded-lg border border-orange-100 hover:border-orange-200 transition-colors">
                           <span className="text-slate-700 font-medium">
                             {ded.name || "Deduction"}
                           </span>
@@ -2732,8 +2734,7 @@ const HRSalaryManagement = () => {
                         existingSalaryRecord.calculated_incentive > 0
                           ? "text-green-700"
                           : "text-red-700"
-                      }`}
-                    >
+                      }`}>
                       ₹
                       {Math.abs(
                         existingSalaryRecord.calculated_incentive
@@ -2837,8 +2838,7 @@ const HRSalaryManagement = () => {
                           existingSalaryRecord.calculated_incentive > 0
                             ? "text-green-700"
                             : "text-red-700"
-                        }`}
-                      >
+                        }`}>
                         ₹
                         {Math.abs(
                           existingSalaryRecord.calculated_incentive
@@ -2891,8 +2891,7 @@ const HRSalaryManagement = () => {
                         Number(existingSalaryRecord.remaining_balance) > 0
                           ? "text-red-600"
                           : "text-green-600"
-                      }`}
-                    >
+                      }`}>
                       ₹
                       {Number(
                         existingSalaryRecord.remaining_balance
@@ -2909,8 +2908,7 @@ const HRSalaryManagement = () => {
                         existingSalaryRecord.status === "Paid"
                           ? "bg-green-100 text-green-800 border border-green-300"
                           : "bg-amber-100 text-amber-800 border border-amber-300"
-                      }`}
-                    >
+                      }`}>
                       {existingSalaryRecord.status}
                     </span>
                   </div>
@@ -2946,4 +2944,3 @@ const HRSalaryManagement = () => {
   );
 };
 export default HRSalaryManagement;
-
