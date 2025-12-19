@@ -27,17 +27,7 @@ const StaffMenu = () => {
       href: "/staff-menu/employee-menu",
       stats: "Active Employees",
     },
-     {
-      id: 3,
-      title: "Employee Statement",
-      description: "Manage employee Salary ledger",
-      icon: <Briefcase className="w-8 h-8" />,
-      color: "from-amber-600 to-amber-700",
-      lightColor: "bg-amber-50",
-      borderColor: "border-amber-200",
-      href: "/staff-menu/employee-menu/employee-statement",
-      stats: "Employee Statement",
-    },
+     
   ];
 
   return (

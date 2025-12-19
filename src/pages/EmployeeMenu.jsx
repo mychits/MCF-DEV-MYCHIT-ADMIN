@@ -8,7 +8,7 @@ const StaffMenu = () => {
   const staffCategories = [
    
     {
-      id: 2,
+      id: 1,
       title: "Add/Update Employee",
       description: "Manage employee records, roles and assignments",
       icon: <Briefcase className="w-8 h-8" />,
@@ -19,7 +19,7 @@ const StaffMenu = () => {
       stats: "Active Employees",
     },
      {
-      id: 1,
+      id: 2,
       title: "Attendance",
       description: "Manage Employee Attendance records",
       icon: <SlCalender className="w-8 h-8" />,
@@ -28,6 +28,17 @@ const StaffMenu = () => {
       borderColor: "border-green-200",
       href: "/staff-menu/employee-menu/add-employee-attendance",
       stats: "Attendance Information",
+    },
+    {
+      id: 3,
+      title: "Salary Ledger",
+      description: "Manage employee Salary ledger",
+      icon: <Briefcase className="w-8 h-8" />,
+      color: "from-amber-600 to-amber-700",
+      lightColor: "bg-amber-50",
+      borderColor: "border-amber-200",
+      href: "/staff-menu/employee-menu/employee-statement",
+      stats: "Employee Statement",
     },
   ];
 
