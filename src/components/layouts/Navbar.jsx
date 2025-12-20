@@ -99,6 +99,24 @@ const Navbar = ({
           </NavLink>
           <NavLink
             className={({ isActive }) =>
+              isActive ? "text-white font-bold " : "text-white font-medium "
+            }
+            to={"/reports"}
+          >
+            {({ isActive }) => (
+              <Button
+                className={` pl-5  pr-4 py-2  w-30 h-12 rounded-full  focus:rounded-full px-4  border ${
+                  isActive
+                    ? "bg-blue-200 text-blue-900 font-bold"
+                    : "font-semibold"
+                }  `}
+              >
+                Reports
+              </Button>
+            )}
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
               isActive ? "text-white font-bold" : "text-white font-medium "
             }
             to={"/reports/receipt"}

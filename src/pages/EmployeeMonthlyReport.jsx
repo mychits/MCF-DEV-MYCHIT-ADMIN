@@ -117,7 +117,7 @@ const EmployeeMonthlyReport = () => {
     { header: "Sl No", key: "slNo" },
     { header: "Date", key: "date" },
     { header: "in-Time", key: "time" },
-    {header: "out-Time", key: "logout_time"},
+    {header: "out-Time", key: "outTime"},
     { header: "Day", key: "day" },
     {header: "Note", key: "Note"},
     {
