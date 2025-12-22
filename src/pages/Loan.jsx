@@ -26,6 +26,13 @@ const Loan = () => {
   const [currentUpdateBorrower, setCurrentUpdateBorrower] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [removeReason, setRemoveReason] = useState("");
+  const [customRemoveReason, setCustomRemoveReason] = useState("");
+
+
+
   const onGlobalSearchChangeHandler = (e) => {
     const { value } = e.target;
     setSearchText(value);
@@ -67,6 +74,55 @@ const Loan = () => {
     referred_agent: "",
     referred_type: "",
   });
+
+  const handleRemoveModalOpen = async (borrowerId) => {
+    try {
+      const response = await api.get(`/loans/get-borrower/${borrowerId}`);
+      setCurrentBorrower(response.data);
+      setRemoveReason("");
+      setShowRemoveModal(true);
+    } catch (error) {
+      console.error("Error fetching borrower:", error);
+    }
+  };
+
+const handleRemoveBorrower = async () => {
+  if (!removeReason || (removeReason === "Other" && !customRemoveReason.trim())) {
+    setAlertConfig({
+      visibility: true,
+      message: "Please select and specify removal reason",
+      type: "warning",
+    });
+    return;
+  }
+
+  try {
+    await api.patch(
+      `/loans/${currentBorrower._id}/remove`,
+      {
+        removal_reason:
+          removeReason === "Other" ? customRemoveReason : removeReason,
+      }
+    );
+
+    setAlertConfig({
+      visibility: true,
+      message: "Loan removed successfully",
+      type: "success",
+    });
+
+    setShowRemoveModal(false);
+    setRemoveReason("");
+    setCustomRemoveReason("");
+    setCurrentBorrower(null);
+    setReloadTrigger((prev) => prev + 1);
+
+  } catch (error) {
+    console.error("Error removing loan:", error);
+  }
+};
+
+
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -128,14 +184,14 @@ const Loan = () => {
           referred_type: borrower?.referred_type,
           referred_by:
             borrower?.referred_employee?.name &&
-            borrower?.referred_employee?.phone_number
+              borrower?.referred_employee?.phone_number
               ? `${borrower.referred_employee.name} | ${borrower?.referred_employee?.phone_number}`
               : borrower?.referred_agent?.name
-    ? `${borrower.referred_agent.name} | ${borrower.referred_agent.phone_number}`
-              : borrower?.referred_customer?.full_name &&
-                borrower?.referred_customer?.phone_number
-              ? `${borrower.referred_customer.full_name} | ${borrower?.referred_customer?.phone_number}`
-              : "N/A",
+                ? `${borrower.referred_agent.name} | ${borrower.referred_agent.phone_number}`
+                : borrower?.referred_customer?.full_name &&
+                  borrower?.referred_customer?.phone_number
+                  ? `${borrower.referred_customer.full_name} | ${borrower?.referred_customer?.phone_number}`
+                  : "N/A",
           action: (
             <div className="flex justify-center gap-2" key={borrower._id}>
               <Dropdown
@@ -157,13 +213,14 @@ const Loan = () => {
                       key: "2",
                       label: (
                         <div
-                          className="text-red-600"
-                          onClick={() => handleDeleteModalOpen(borrower._id)}
+                          className="text-orange-600"
+                          onClick={() => handleRemoveModalOpen(borrower._id)}
                         >
-                          Delete
+                          Remove
                         </div>
                       ),
                     },
+
                   ],
                 }}
                 placement="bottomLeft"
@@ -310,8 +367,8 @@ const Loan = () => {
         start_date: formattedStartDate,
         end_date: formattedEndDate,
         note: response?.data?.note,
-        referred_employee: response?.data?.referred_employee?._id  || "",
-        referred_customer: response?.data?.referred_customer?._id  || "",
+        referred_employee: response?.data?.referred_employee?._id || "",
+        referred_customer: response?.data?.referred_customer?._id || "",
         referred_agent: response?.data?.referred_agent?._id || "",
         referred_type: response?.data?.referred_type || "",
       });
@@ -377,7 +434,7 @@ const Loan = () => {
     { key: "service_charges", header: "Service Charges" },
     { key: "start_date", header: "Start Date" },
     { key: "end_date", header: "Due Date" },
-     { key: "referred_type", header: "Referred Type" },
+    { key: "referred_type", header: "Referred Type" },
     { key: "referred_by", header: "Referred By" },
     { key: "note", header: "Note" },
     { key: "action", header: "Action" },
@@ -478,7 +535,7 @@ const Loan = () => {
                 >
                   {users.map((user) => (
                     <Select.Option key={user._id} value={user._id}>
-                     {user.customer_id} | {user.full_name} | {user.phone_number} 
+                      {user.customer_id} | {user.full_name} | {user.phone_number}
                     </Select.Option>
                   ))}
                 </Select>
@@ -1242,6 +1299,86 @@ const Loan = () => {
             )}
           </div>
         </Modal>
+
+        <Modal
+          isVisible={showRemoveModal}
+          onClose={() => {
+            setShowRemoveModal(false);
+            setCurrentBorrower(null);
+          }}
+        >
+          <div className="py-6 px-5 text-left">
+            <h3 className="mb-2 text-xl font-bold text-gray-900">
+              Remove Loan
+            </h3>
+
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to remove this loan?
+            </p>
+
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900">
+                Removal Reason <span className="text-red-500">*</span>
+              </label>
+
+              <Select
+                placeholder="Select reason"
+                value={removeReason || undefined}
+                onChange={(value) => {
+                  setRemoveReason(value);
+                  setCustomRemoveReason("");
+                }}
+                className="w-full"
+              >
+                {[
+                  "Loan Completed Successfully",
+                  "All EMIs Paid",
+                  "Loan Closed Early",
+                  "Customer Request",
+                  "Duplicate Loan Entry",
+                  "Verification Failed",
+                  "Loan Replaced With New Loan",
+                  "Written Off",
+                  "Other",
+                ].map((reason) => (
+                  <Select.Option key={reason} value={reason}>
+                    {reason}
+                  </Select.Option>
+                ))}
+              </Select>
+              {removeReason === "Other" && (
+                <div className="mt-3">
+                  <label className="block mb-2 text-sm font-medium text-gray-900">
+                    Specify Reason <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter removal reason"
+                    value={customRemoveReason}
+                    onChange={(e) => setCustomRemoveReason(e.target.value)}
+                  />
+                </div>
+              )}
+
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowRemoveModal(false)}
+                className="px-4 py-2 border rounded-md"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleRemoveBorrower}
+                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+              >
+                Confirm Remove
+              </button>
+            </div>
+          </div>
+        </Modal>
+
       </div>
     </>
   );
