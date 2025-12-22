@@ -50,7 +50,7 @@ const PaymentReport = () => {
   const todayString = now.toISOString().split("T")[0];
   const [selectedFromDate, setSelectedFromDate] = useState(todayString);
   const [selectedDate, setSelectedDate] = useState(todayString);
-  const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState([]);
   const [hideAccountType, setHideAccountType] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
@@ -353,16 +353,14 @@ const PaymentReport = () => {
                           <Link
                             target="_blank"
                             to={`/print/${group._id}`}
-                            className="text-blue-600 "
-                          >
+                            className="text-blue-600 ">
                             Print
                           </Link>
                         ),
                       },
                     ],
                   }}
-                  placement="bottomLeft"
-                >
+                  placement="bottomLeft">
                   <IoMdMore className="text-bold" />
                 </Dropdown>
               </div>
@@ -558,8 +556,7 @@ const PaymentReport = () => {
                     className="w-5 h-5 text-indigo-600"
                     fill="none"
                     stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                    viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -588,8 +585,7 @@ const PaymentReport = () => {
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
-                      className="w-full h-11"
-                    >
+                      className="w-full h-11">
                       {groupOptions.map((time) => (
                         <Select.Option key={time.value} value={time.value}>
                           {time.label}
@@ -643,8 +639,7 @@ const PaymentReport = () => {
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
-                      className="w-full h-11"
-                    >
+                      className="w-full h-11">
                       <Select.Option value={""}>All</Select.Option>
                       {groups.map((group) => (
                         <Select.Option key={group._id} value={group._id}>
@@ -671,8 +666,7 @@ const PaymentReport = () => {
                       }
                       placeholder="Search Or Select Customer"
                       onChange={(groupId) => setSelectedCustomers(groupId)}
-                      className="w-full h-11"
-                    >
+                      className="w-full h-11">
                       <Select.Option value="">All</Select.Option>
                       {filteredUsers.map((group) => (
                         <Select.Option key={group?._id} value={group?._id}>
@@ -682,33 +676,35 @@ const PaymentReport = () => {
                     </Select>
                   </div>
 
-                  {/* Payment Mode Filter */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-slate-700">
                       Payment Mode
                     </label>
+
                     <Select
+                      mode="multiple"
                       value={selectedPaymentMode}
                       showSearch
-                      placeholder="Search Or Select Payment"
+                      placeholder="Select payment mode"
                       popupMatchSelectWidth={false}
-                      onChange={(groupId) => setSelectedPaymentMode(groupId)}
+                      onChange={(modes) => {
+                        setSelectedPaymentMode(modes);
+                      }}
                       filterOption={(input, option) =>
                         option.children
                           .toString()
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
-                      className="w-full h-11"
-                    >
-                      <Select.Option value="">All</Select.Option>
-                      <Select.Option value="cash">Cash</Select.Option>
-                      <Select.Option value="online">Online</Select.Option>
-                      <Select.Option value="Payment Link">
-                        Payment Link
-                      </Select.Option>
-                     
-                    </Select>
+                      className="w-full"
+                      style={{ height: "44px" }}
+                      defaultValue={["a10", "c12"]}
+                      options={[
+                        { label: "Cash", value: "cash" },
+                        { label: "Online", value: "online" },
+                        { label: "Payment Link", value: "Payment Link" },
+                      ]}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -735,8 +731,7 @@ const PaymentReport = () => {
 
                         // Default search behavior
                         return text.includes(search);
-                      }}
-                    >
+                      }}>
                       <Select.Option value="">All</Select.Option>
                       <Select.Option value="Chit">Chit</Select.Option>
                       <Select.Option value="Pigme">Pigme</Select.Option>
@@ -762,8 +757,7 @@ const PaymentReport = () => {
                             .toLowerCase()
                             .includes(input.toLowerCase())
                         }
-                        className="w-full h-11"
-                      >
+                        className="w-full h-11">
                         <Select.Option value="">
                           Select Account Type
                         </Select.Option>
@@ -805,14 +799,12 @@ const PaymentReport = () => {
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
-                      className="w-full h-11"
-                    >
+                      className="w-full h-11">
                       <Select.Option value="">All</Select.Option>
                       {[...new Set(agents), ...new Set(admins)].map((dt) => (
                         <Select.Option
                           key={dt?._id}
-                          value={`${dt._id}|${dt.selected_type}`}
-                        >
+                          value={`${dt._id}|${dt.selected_type}`}>
                           {dt.selected_type === "admin_type"
                             ? "Admin | "
                             : "Agent | "}
@@ -859,8 +851,7 @@ const PaymentReport = () => {
                       className="w-5 h-5 text-indigo-600"
                       fill="none"
                       stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                      viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -902,7 +893,6 @@ const PaymentReport = () => {
               )}
             </div>
           </div>
-          
         </div>
       </div>
     </>

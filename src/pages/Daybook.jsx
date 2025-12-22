@@ -43,7 +43,7 @@ const Daybook = () => {
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [showFilterField, setShowFilterField] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState([]);
   const [selectedPaymentFor, setSelectedPaymentFor] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [hideAccountType, setHideAccountType] = useState("");
@@ -247,8 +247,8 @@ const Daybook = () => {
             admin_type: collectionAdmin,
             pay_for: selectedPaymentFor,
           },
-          signal:abortController.signal
-        },);
+          signal: abortController.signal,
+        });
         if (response.data && response.data.length > 0) {
           setFilteredAuction(response.data);
           const paymentData = response.data;
@@ -291,7 +291,11 @@ const Daybook = () => {
             name: group?.user_id?.full_name,
             category: group?.pay_for || "Chit",
             phone_number: group?.user_id?.phone_number,
-            ticket:group?.loan?group.loan?.loan_id:group?.pigme?group.pigme?.pigme_id: group?.ticket,
+            ticket: group?.loan
+              ? group.loan?.loan_id
+              : group?.pigme
+              ? group.pigme?.pigme_id
+              : group?.ticket,
             receipt: group?.receipt_no,
             old_receipt_no: group?.old_receipt_no,
             amount: group?.amount,
@@ -314,16 +318,14 @@ const Daybook = () => {
                         <Link
                           target="_blank"
                           to={`/print/${group._id}`}
-                          className="text-blue-600 "
-                        >
+                          className="text-blue-600 ">
                           Print
                         </Link>
                       ),
                     },
                   ],
                 }}
-                placement="bottomLeft"
-              >
+                placement="bottomLeft">
                 <IoMdMore className="text-bold" />
               </Dropdown>
             ),
@@ -333,19 +335,17 @@ const Daybook = () => {
           setFilteredAuction([]);
         }
       } catch (error) {
-       
-     setFilteredAuction([]);
+        setFilteredAuction([]);
         setPayments(0);
-      
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchPayments();
-    return ()=>{
+    return () => {
       abortController.abort();
-    }
+    };
   }, [
     selectedAuctionGroupId,
     selectedDate,
@@ -526,14 +526,14 @@ const Daybook = () => {
           <div className="flex-grow p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
             <div className="flex-grow ">
               {/* Header Section */}
-               <div className="mb-8">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent p-2">
-                Reports - Daybook
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Track and manage all receipt transactions
-              </p>
-            </div>
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent p-2">
+                  Reports - Daybook
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Track and manage all receipt transactions
+                </p>
+              </div>
 
               {/* Filters Card */}
               <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-6">
@@ -542,8 +542,7 @@ const Daybook = () => {
                     className="w-5 h-5 text-blue-600"
                     fill="none"
                     stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                    viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -573,8 +572,7 @@ const Daybook = () => {
                           .includes(input.toLowerCase())
                       }
                       className="w-full"
-                      style={{ height: "44px" }}
-                    >
+                      style={{ height: "44px" }}>
                       {dayGroup.map((time) => (
                         <Select.Option key={time.value} value={time.value}>
                           {time.label}
@@ -616,8 +614,7 @@ const Daybook = () => {
                           .includes(input.toLowerCase())
                       }
                       className="w-full"
-                      style={{ height: "44px" }}
-                    >
+                      style={{ height: "44px" }}>
                       <Select.Option value={""}>All Groups</Select.Option>
                       {groups.map((group) => (
                         <Select.Option key={group._id} value={group._id}>
@@ -645,8 +642,7 @@ const Daybook = () => {
                       placeholder="Select customer"
                       onChange={(groupId) => setSelectedCustomers(groupId)}
                       className="w-full"
-                      style={{ height: "44px" }}
-                    >
+                      style={{ height: "44px" }}>
                       <Select.Option value="">All Customers</Select.Option>
                       {filteredUsers.map((group) => (
                         <Select.Option key={group?._id} value={group?._id}>
@@ -685,14 +681,12 @@ const Daybook = () => {
                           .includes(input.toLowerCase())
                       }
                       className="w-full"
-                      style={{ height: "44px" }}
-                    >
+                      style={{ height: "44px" }}>
                       <Select.Option value="">All Employees</Select.Option>
                       {[...new Set(agents), ...new Set(admins)].map((dt) => (
                         <Select.Option
                           key={dt?._id}
-                          value={`${dt._id}|${dt.selected_type}`}
-                        >
+                          value={`${dt._id}|${dt.selected_type}`}>
                           {dt.selected_type === "admin_type"
                             ? "Admin | "
                             : "Employee | "}
@@ -707,12 +701,16 @@ const Daybook = () => {
                     <label className="block text-sm font-medium text-slate-700">
                       Payment Mode
                     </label>
+
                     <Select
+                      mode="multiple"
                       value={selectedPaymentMode}
                       showSearch
                       placeholder="Select payment mode"
                       popupMatchSelectWidth={false}
-                      onChange={(groupId) => setSelectedPaymentMode(groupId)}
+                      onChange={(modes) => {
+                        setSelectedPaymentMode(modes);
+                      }}
                       filterOption={(input, option) =>
                         option.children
                           .toString()
@@ -721,49 +719,44 @@ const Daybook = () => {
                       }
                       className="w-full"
                       style={{ height: "44px" }}
-                    >
-                      <Select.Option value="">All Modes</Select.Option>
-                      <Select.Option value="cash">Cash</Select.Option>
-                      <Select.Option value="online">Online</Select.Option>
-                      <Select.Option value="Payment Link">
-                        Payment Link
-                      </Select.Option>
-                      
-                    </Select>
+                      defaultValue={["a10", "c12"]}
+                      options={[
+                        { label: "Cash", value: "cash" },
+                        { label: "Online", value: "online" },
+                        { label: "Payment Link", value: "Payment Link" },
+                      ]}
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700">
                       Payment For
                     </label>
                     <Select
-  value={selectedPaymentFor}
-  showSearch
-  placeholder="Select payment mode"
-  popupMatchSelectWidth={false}
-  onChange={(groupId) => setSelectedPaymentFor(groupId)}
-  className="w-full"
-  style={{ height: "44px" }}
+                      value={selectedPaymentFor}
+                      showSearch
+                      placeholder="Select payment mode"
+                      popupMatchSelectWidth={false}
+                      onChange={(groupId) => setSelectedPaymentFor(groupId)}
+                      className="w-full"
+                      style={{ height: "44px" }}
+                      // 🔥 Custom filter logic
+                      filterOption={(input, option) => {
+                        const text = option.children.toLowerCase();
+                        const search = input.toLowerCase();
 
-  // 🔥 Custom filter logic
-  filterOption={(input, option) => {
-    
-    const text = option.children.toLowerCase();
-    const search = input.toLowerCase();
+                        // When searching "chit", exclude Pigme & Loan
+                        if (search === "chit") {
+                          return text.includes("chit") || text.includes("all");
+                        }
 
-    // When searching "chit", exclude Pigme & Loan
-    if (search === "chit") {
-      return text.includes("chit") || text.includes("all");
-    }
-
-    // Default search behavior
-    return text.includes(search);
-  }}
->
-  <Select.Option value="">All</Select.Option>
-  <Select.Option value="Chit">Chit</Select.Option>
-  <Select.Option value="Pigme">Pigme</Select.Option>
-  <Select.Option value="Loan">Loan</Select.Option>
-</Select>
+                        // Default search behavior
+                        return text.includes(search);
+                      }}>
+                      <Select.Option value="">All</Select.Option>
+                      <Select.Option value="Chit">Chit</Select.Option>
+                      <Select.Option value="Pigme">Pigme</Select.Option>
+                      <Select.Option value="Loan">Loan</Select.Option>
+                    </Select>
                   </div>
 
                   {/* Account Type */}
@@ -785,8 +778,7 @@ const Daybook = () => {
                             .includes(input.toLowerCase())
                         }
                         className="w-full"
-                        style={{ height: "44px" }}
-                      >
+                        style={{ height: "44px" }}>
                         <Select.Option value="">All Types</Select.Option>
                         <Select.Option value="suspense">Suspense</Select.Option>
                         <Select.Option value="credit">Credit</Select.Option>
@@ -852,10 +844,6 @@ const Daybook = () => {
               )}
             </div>
           </div>
-
-         
-         
-          
         </div>
       </div>
     </>
