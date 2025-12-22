@@ -716,7 +716,7 @@ const UserReport = () => {
     if (groupId) {
       try {
         const response = await api.post(
-          `/enroll/get-user-refer-report/${groupId}`
+          `/enroll/account/${groupId}`
         );
 
         if (response.data && response.data.length > 0) {
