@@ -55,7 +55,7 @@ const PaymentReport = () => {
   const [selectedAccountType, setSelectedAccountType] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [payments, setPayments] = useState([]);
-  const [selectedPaymentFor, setSelectedPaymentFor] = useState("");
+  const [selectedPaymentFor, setSelectedPaymentFor] = useState([]);
   const [collectionAgent, setCollectionAgent] = useState("");
   const [collectionAdmin, setCollectionAdmin] = useState("");
   const [agents, setAgents] = useState([]);
@@ -712,31 +712,28 @@ const PaymentReport = () => {
                       Payment For
                     </label>
                     <Select
+                      mode="multiple"
                       value={selectedPaymentFor}
                       showSearch
-                      placeholder="Select payment mode"
+                      placeholder="Select payment for"
                       popupMatchSelectWidth={false}
-                      onChange={(groupId) => setSelectedPaymentFor(groupId)}
+                      onChange={(modes) => {
+                        setSelectedPaymentFor(modes);
+                      }}
+                      filterOption={(input, option) =>
+                        option.label
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                       className="w-full"
                       style={{ height: "44px" }}
-                      // 🔥 Custom filter logic
-                      filterOption={(input, option) => {
-                        const text = option.children.toLowerCase();
-                        const search = input.toLowerCase();
-
-                        // When searching "chit", exclude Pigme & Loan
-                        if (search === "chit") {
-                          return text.includes("chit") || text.includes("all");
-                        }
-
-                        // Default search behavior
-                        return text.includes(search);
-                      }}>
-                      <Select.Option value="">All</Select.Option>
-                      <Select.Option value="Chit">Chit</Select.Option>
-                      <Select.Option value="Pigme">Pigme</Select.Option>
-                      <Select.Option value="Loan">Loan</Select.Option>
-                    </Select>
+                      options={[
+                        { label: "Chit", value: "Chit" },
+                        { label: "Pigme", value: "Pigme" },
+                        { label: "Loan", value: "Loan" },
+                      ]}
+                    />
                   </div>
 
                   {/* Account Type Filter */}

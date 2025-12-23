@@ -44,7 +44,7 @@ const Daybook = () => {
   const [showFilterField, setShowFilterField] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState([]);
-  const [selectedPaymentFor, setSelectedPaymentFor] = useState("");
+  const [selectedPaymentFor, setSelectedPaymentFor] = useState([]);
   const [selectedCustomers, setSelectedCustomers] = useState("");
   const [hideAccountType, setHideAccountType] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
@@ -719,7 +719,6 @@ const Daybook = () => {
                       }
                       className="w-full"
                       style={{ height: "44px" }}
-                    
                       options={[
                         { label: "Cash", value: "cash" },
                         { label: "Online", value: "online" },
@@ -731,34 +730,31 @@ const Daybook = () => {
                     <label className="block text-sm font-medium text-slate-700">
                       Payment For
                     </label>
+
                     <Select
+                      mode="multiple"
                       value={selectedPaymentFor}
                       showSearch
-                      placeholder="Select payment mode"
+                      placeholder="Select payment for"
                       popupMatchSelectWidth={false}
-                      onChange={(groupId) => setSelectedPaymentFor(groupId)}
+                      onChange={(modes) => {
+                        setSelectedPaymentFor(modes);
+                      }}
+                      filterOption={(input, option) =>
+                        option.label
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                       className="w-full"
                       style={{ height: "44px" }}
-                      // 🔥 Custom filter logic
-                      filterOption={(input, option) => {
-                        const text = option.children.toLowerCase();
-                        const search = input.toLowerCase();
-
-                        // When searching "chit", exclude Pigme & Loan
-                        if (search === "chit") {
-                          return text.includes("chit") || text.includes("all");
-                        }
-
-                        // Default search behavior
-                        return text.includes(search);
-                      }}>
-                      <Select.Option value="">All</Select.Option>
-                      <Select.Option value="Chit">Chit</Select.Option>
-                      <Select.Option value="Pigme">Pigme</Select.Option>
-                      <Select.Option value="Loan">Loan</Select.Option>
-                    </Select>
+                      options={[
+                        { label: "Chit", value: "chit" },
+                        { label: "Pigme", value: "Pigme" },
+                        { label: "Loan", value: "Loan" },
+                      ]}
+                    />
                   </div>
-
                   {/* Account Type */}
                   {showAllPaymentModes && (
                     <div className="space-y-2">

@@ -42,6 +42,7 @@ const Receipt = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showFilterField, setShowFilterField] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("Today");
+  const [selectedPaymentFor,setSelectedPaymentFor] = useState([]);
 
   const now = new Date();
   const onGlobalSearchChangeHandler = (e) => {
@@ -298,6 +299,7 @@ const Receipt = () => {
             account_type: selectedAccountType,
             collected_by: collectionAgent,
             admin_type: collectionAdmin,
+            pay_for:selectedPaymentFor
           },
           signal: abortController.signal,
         });
@@ -392,6 +394,7 @@ const Receipt = () => {
     selectedAccountType,
     collectionAgent,
     collectionAdmin,
+    selectedPaymentFor
   ]);
 
   const columns = [
@@ -705,7 +708,35 @@ const Receipt = () => {
                       ]}
                     />
                   </div>
+<div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Payment For
+                    </label>
 
+                    <Select
+                      mode="multiple"
+                      value={selectedPaymentFor}
+                      showSearch
+                      placeholder="Select payment for"
+                      popupMatchSelectWidth={false}
+                      onChange={(modes) => {
+                        setSelectedPaymentFor(modes);
+                      }}
+                      filterOption={(input, option) =>
+                        option.label
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      className="w-full"
+                      style={{ height: "44px" }}
+                      options={[
+                        { label: "Chit", value: "Chit" },
+                        { label: "Pigme", value: "Pigme" },
+                        { label: "Loan", value: "Loan" },
+                      ]}
+                    />
+                  </div>
                   {/* Account Type Filter */}
                   {showAllPaymentModes && (
                     <div className="space-y-2">
