@@ -539,7 +539,7 @@ const Receipt = () => {
             message={alertConfig.message}
           />
           <div className="flex-grow p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
-            {/* Header Section */}
+           
             <div className="mb-8">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                 Reports - Receipt
@@ -550,7 +550,7 @@ const Receipt = () => {
             </div>
 
             <div className="mt-6 mb-8">
-              {/* Filters Section */}
+             
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
                   <svg

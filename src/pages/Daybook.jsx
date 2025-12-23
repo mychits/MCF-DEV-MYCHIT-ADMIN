@@ -749,7 +749,7 @@ const Daybook = () => {
                       className="w-full"
                       style={{ height: "44px" }}
                       options={[
-                        { label: "Chit", value: "chit" },
+                        { label: "Chit", value: "Chit" },
                         { label: "Pigme", value: "Pigme" },
                         { label: "Loan", value: "Loan" },
                       ]}
