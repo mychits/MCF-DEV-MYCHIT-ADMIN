@@ -15,6 +15,7 @@ import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
 import DataTable from "../components/layouts/Datatable";
 import { useEffect, useState, useMemo } from "react";
+import { TrendingUp, Target, CheckCircle, BarChart3 } from "lucide-react";
 import API from "../instance/TokenInstance";
 import dayjs from "dayjs";
 import {
@@ -84,10 +85,17 @@ const HRSalaryManagement = () => {
     transaction_id: "",
     monthly_business_info: {
       target: 0,
+      previous_remaining_target: 0,
+      total_target: 0,
       total_business_closed: 0,
+      current_remaining_target: 0,
     },
     status: "",
   });
+  
+  // New state for business as salary confirmation modal
+  const [addBusinessAsSalaryModalOpen, setAddBusinessAsSalaryModalOpen] = useState(false);
+
   const thisYear = dayjs().format("YYYY");
   const earningsObject = {
     basic: 0,
@@ -163,10 +171,70 @@ const HRSalaryManagement = () => {
     paid_amount: 0,
     payment_method: "",
     transaction_id: "",
-    target: 0,
-    incentive: 0,
+    monthly_business_info: {
+      target: 0,
+      previous_remaining_target: 0,
+      total_target: 0,
+      total_business_closed: 0,
+      current_remaining_target: 0,
+    },
     total_salary: 0,
   });
+  
+  // Handler for Salary Payable button
+  const handleAddSalaryPayable = () => {
+    const totalTarget = Number(formData.monthly_business_info.total_target || 0);
+    const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
+    const previousRemainingTarget = Number(formData.monthly_business_info.previous_remaining_target || 0);
+    
+    // Calculate the salary payable amount
+    const salaryPayable = Math.abs(totalTarget - currentRemainingTarget) / 100;
+    
+    // Add the previous remaining target as well
+    const totalAmount = salaryPayable + previousRemainingTarget;
+    
+    // Add as an additional payment
+    setFormData(prev => ({
+      ...prev,
+      additional_payments: [
+        ...prev.additional_payments,
+        {
+          name: "Salary Payable",
+          value: totalAmount
+        }
+      ],
+      // Set current_remaining_target to 0
+      monthly_business_info: {
+        ...prev.monthly_business_info,
+        current_remaining_target: 0
+      }
+    }));
+    
+    message.success("Salary payable amount added successfully");
+  };
+  
+  // Handler for Incentive Payable button
+  const handleAddIncentivePayable = () => {
+    const totalTarget = Number(formData.monthly_business_info.total_target || 0);
+    const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
+    
+    // Calculate the incentive payable amount
+    const incentivePayable = Math.abs(totalTarget - currentRemainingTarget) / 100;
+    
+    // Update the calculated_incentive field
+    setFormData(prev => ({
+      ...prev,
+      calculated_incentive: incentivePayable,
+      // Set current_remaining_target to 0
+      monthly_business_info: {
+        ...prev.monthly_business_info,
+        current_remaining_target: 0
+      }
+    }));
+    
+    message.success("Incentive payable amount added successfully");
+  };
+
   async function fetchEmployees() {
     try {
       const responseData = await API.get("/employee");
@@ -202,13 +270,29 @@ const HRSalaryManagement = () => {
       return 0;
     }
   };
-  const fetchEmployeeIncentive = async (employeeId, start_date, end_date) => {
+  const fetchPreviousRemainingTarget = async (employeeId) => {
+    try {
+      const response = await API.get(
+        `/salary-payment/employees/${employeeId}?month=${formData.month}&year=${formData.year}`
+      );
+      console.log(response.data?.data);
+      return response.data?.data.remainingTarget || 0;
+    } catch (err) {
+      console.error("Failed to fetch Remaining Target:", err);
+      return 0;
+    }
+  };
+  const fetchEmployeeBusinessClosed = async (
+    employeeId,
+    start_date,
+    end_date
+  ) => {
     try {
       const response = await API.get(
         `/enroll/employee/${employeeId}/incentive`,
         { params: { start_date, end_date } }
       );
-      return response.data?.incentiveSummary?.total_incentive_value || 0;
+      return response.data?.incentiveSummary?.total_group_value || 0;
     } catch (err) {
       console.error("Failed to fetch incentive:", err);
       return 0;
@@ -260,138 +344,6 @@ const HRSalaryManagement = () => {
       }
     }
   }, [formData.year, formData.employee_id, employeeDetails?.joining_date]);
-  const handleRecalculateInEdit = async () => {
-    const {
-      employee_id,
-      month,
-      year,
-      earnings,
-      deductions,
-      monthly_business_info,
-    } = updateFormData;
-    if (!employee_id || !month || !year) {
-      message.warning("Please select employee, month, and year.");
-      return;
-    }
-    try {
-      setUpdateLoading(true);
-      const yearValue = dayjs.isDayjs(year) ? year.format("YYYY") : year;
-      const response = await API.post("/salary-payment/calculate-edit", {
-        employee_id,
-        month,
-        year: yearValue,
-        earnings,
-        deductions,
-      });
-      const calculated = response.data.data;
-      const monthIndex = moment().month(month).month();
-      const start_date = moment()
-        .year(yearValue)
-        .month(monthIndex)
-        .startOf("month")
-        .format("YYYY-MM-DD");
-      const end_date = moment()
-        .year(yearValue)
-        .month(monthIndex)
-        .endOf("month")
-        .format("YYYY-MM-DD");
-
-      let targetValue = monthly_business_info?.target || 0;
-      let incentiveValue = monthly_business_info?.total_business_closed || 0;
-
-      if (!targetValue) {
-        targetValue = await fetchEmployeeTarget(
-          employee_id,
-          start_date,
-          end_date
-        );
-      }
-
-      if (!incentiveValue) {
-        incentiveValue = await fetchEmployeeIncentive(
-          employee_id,
-          start_date,
-          end_date
-        );
-      }
-
-      let calculatedIncentive = 0;
-      const target = Number(targetValue || 0);
-      const incentive = Number(incentiveValue || 0);
-
-      if (incentive * 100 < target) {
-        calculatedIncentive = 0;
-      } else if (target > 0) {
-        const incentiveValueNum = incentive * 100;
-        calculatedIncentive = (incentiveValueNum - target) / 100;
-      }
-
-      const advanceTotal = updateFormData.advance_payments.reduce(
-        (sum, a) => sum + Number(a.value || 0),
-        0
-      );
-      const additionalPaymentsTotal = updateFormData.additional_payments.reduce(
-        (sum, p) => sum + Number(p.value || 0),
-        0
-      );
-      const additionalDeductionsTotal =
-        updateFormData.additional_deductions.reduce(
-          (sum, d) => sum + Number(d.value || 0),
-          0
-        );
-
-      // Apply business condition to total payable
-      let totalPayable = 0;
-      if (incentive * 100 < target) {
-        // If condition met: zero base salary + additional pay - addition deduction + advance pay
-        totalPayable =
-          advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
-      } else {
-        // Normal calculation
-        totalPayable =
-          calculated.calculated_salary +
-          advanceTotal +
-          additionalPaymentsTotal -
-          additionalDeductionsTotal +
-          calculatedIncentive;
-      }
-
-      const updatedData = {
-        ...updateFormData,
-        year: dayjs(yearValue, "YYYY"),
-        earnings,
-        deductions,
-        calculated_incentive: calculatedIncentive,
-        total_salary_payable: totalPayable,
-        attendance_details: {
-          total_days: calculated.total_days,
-          present_days: calculated.present_days,
-          paid_days: calculated.paid_days,
-          lop_days: calculated.lop_days,
-          per_day_salary: calculated.per_day_salary,
-          calculated_salary: calculated.calculated_salary,
-          absent_days: calculated.absent_days || 0,
-          leave_days: calculated.leave_days || 0,
-          half_days: calculated.half_days || 0,
-          salary_from_date: calculated.salary_from_date,
-          salary_to_date: calculated.salary_to_date,
-        },
-        monthly_business_info: {
-          target: targetValue || 0,
-          total_business_closed: incentiveValue || 0,
-        },
-      };
-      setUpdateFormData(updatedData);
-      updateForm.setFieldsValue(updatedData);
-      setIsEditFormDirty(false);
-      message.success("Salary recalculated successfully");
-    } catch (error) {
-      console.error("Recalculate in edit failed:", error);
-      message.error("Failed to recalculate salary. Please try again.");
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
   const handleEdit = async (id) => {
     try {
       setUpdateLoading(true);
@@ -421,7 +373,10 @@ const HRSalaryManagement = () => {
           attendance_details: salaryData?.attendance_details || {},
           monthly_business_info: salaryData?.monthly_business_info || {
             target: 0,
+            previous_remaining_target: 0,
+            total_target: 0,
             total_business_closed: 0,
+            current_remaining_target: 0,
           },
           status: salaryData?.status,
         };
@@ -445,104 +400,6 @@ const HRSalaryManagement = () => {
       message.error("Failed to delete Salary Management");
     } finally {
       setDeleteLoading(false);
-    }
-  };
-  const handleUpdateChange = (changedValues, allValues) => {
-    if (changedValues.year && dayjs.isDayjs(changedValues.year)) {
-      changedValues.year = changedValues.year.format("YYYY");
-    }
-    const currentEarnings = allValues.earnings || {};
-    const currentDeductions = allValues.deductions || {};
-    const originalEarnings = updateFormData.earnings || {};
-    const originalDeductions = updateFormData.deductions || {};
-    const earningsChanged =
-      JSON.stringify(currentEarnings) !== JSON.stringify(originalEarnings);
-    const deductionsChanged =
-      JSON.stringify(currentDeductions) !== JSON.stringify(originalDeductions);
-    if (earningsChanged || deductionsChanged) {
-      setIsEditFormDirty(true);
-    }
-    setUpdateFormData({
-      ...updateFormData,
-      ...changedValues,
-      ...allValues,
-    });
-  };
-  const handleUpdateSubmit = async () => {
-    try {
-      setUpdateLoading(true);
-      const totalEarnings = Object.values(updateFormData.earnings).reduce(
-        (sum, value) => sum + Number(value),
-        0
-      );
-      const totalDeductions = Object.values(updateFormData.deductions).reduce(
-        (sum, value) => sum + Number(value),
-        0
-      );
-      const advanceTotal = updateFormData.advance_payments.reduce(
-        (sum, a) => sum + Number(a.value || 0),
-        0
-      );
-      const additionalPaymentsTotal = updateFormData.additional_payments.reduce(
-        (sum, payment) => sum + Number(payment.value || 0),
-        0
-      );
-      const additionalDeductionsTotal =
-        updateFormData.additional_deductions.reduce(
-          (sum, deduction) => sum + Number(deduction.value || 0),
-          0
-        );
-
-      // Get business info
-      const target = Number(updateFormData.monthly_business_info?.target || 0);
-      const incentive = Number(
-        updateFormData.monthly_business_info?.total_business_closed || 0
-      );
-
-      // Apply business condition
-      let netPayable = 0;
-      let finalCalculatedIncentive = 0;
-
-      if (incentive < target) {
-        // If condition met: zero base salary + additional pay - addition deduction + advance pay
-        netPayable =
-          advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
-        finalCalculatedIncentive = 0;
-      } else {
-        // Normal calculation
-        netPayable =
-          totalEarnings -
-          totalDeductions +
-          advanceTotal +
-          additionalPaymentsTotal -
-          additionalDeductionsTotal +
-          updateFormData.calculated_incentive;
-        finalCalculatedIncentive = updateFormData.calculated_incentive;
-      }
-
-      const updateData = {
-        ...updateFormData,
-        earnings: updateFormData.earnings,
-        deductions: updateFormData.deductions,
-        calculated_incentive: finalCalculatedIncentive,
-        net_payable: netPayable,
-        total_salary_payable: netPayable,
-        remaining_balance: netPayable - (updateFormData.paid_amount || 0),
-        monthly_business_info: {
-          target: target,
-          total_business_closed: incentive,
-        },
-      };
-
-      await API.put(`/salary-payment/${currentSalaryId}`, updateData);
-      message.success("Salary updated successfully");
-      setIsOpenUpdateModal(false);
-      getAllSalary();
-    } catch (error) {
-      console.error("Error updating salary:", error);
-      message.error("Failed to update salary");
-    } finally {
-      setUpdateLoading(false);
     }
   };
   const handlePrint = (salaryPaymentId) => {
@@ -619,6 +476,7 @@ const HRSalaryManagement = () => {
   useEffect(() => {
     if (formData.employee_id && formData.month && formData.year) {
       loadTargetAndIncentive();
+      fetchSalaryDetails();
     }
   }, [formData.employee_id, formData.month, formData.year]);
   const loadTargetAndIncentive = async () => {
@@ -640,17 +498,28 @@ const HRSalaryManagement = () => {
         start_date,
         end_date
       );
-      const incentiveValue = await fetchEmployeeIncentive(
+      const businessClosedValue = await fetchEmployeeBusinessClosed(
         formData.employee_id,
         start_date,
         end_date
       );
+      const employeePreviousRemainingTarget =
+        await fetchPreviousRemainingTarget(formData.employee_id);
+      const totalTarget =
+        (targetValue || 0) + (employeePreviousRemainingTarget || 0);
+      const remainingTarget = (totalTarget || 0) - (businessClosedValue || 0);
       setFormData((prev) => ({
         ...prev,
-        target: targetValue,
-        incentive: incentiveValue,
+        monthly_business_info: {
+          target: targetValue ?? 0,
+          previous_remaining_target: employeePreviousRemainingTarget ?? 0,
+          total_target: totalTarget ?? 0,
+          total_business_closed: businessClosedValue ?? 0,
+          current_remaining_target: remainingTarget ?? 0,
+        },
       }));
     } catch (err) {
+      console.log("hello this sis ");
       console.error("Failed to auto-load target & incentive", err);
     }
   };
@@ -696,7 +565,6 @@ const HRSalaryManagement = () => {
     setCalculatedSalary(null);
     setShowComponents(false);
   };
-  // Advance Payment Handlers
   const handleAdvancePaymentChange = (index, field, value) => {
     const updatedPayments = [...formData.advance_payments];
     updatedPayments[index] = { ...updatedPayments[index], [field]: value };
@@ -714,7 +582,6 @@ const HRSalaryManagement = () => {
     );
     setFormData((prev) => ({ ...prev, advance_payments: updatedPayments }));
   };
-  // Additional Payment Handlers (kept as manual entries)
   const handleAdditionalPaymentChange = (index, field, value) => {
     const updatedPayments = [...formData.additional_payments];
     updatedPayments[index] = { ...updatedPayments[index], [field]: value };
@@ -735,7 +602,6 @@ const HRSalaryManagement = () => {
     );
     setFormData((prev) => ({ ...prev, additional_payments: updatedPayments }));
   };
-  // Additional Deduction Handlers (kept as manual entries)
   const handleAdditionalDeductionChange = (index, field, value) => {
     const updatedDeductions = [...formData.additional_deductions];
     updatedDeductions[index] = { ...updatedDeductions[index], [field]: value };
@@ -794,19 +660,13 @@ const HRSalaryManagement = () => {
       });
       const calculated = response.data.data;
       setCalculatedSalary(calculated);
-      // Calculate incentive adjustment
-      let calculatedIncentive = 0;
-      const target = Number(formData?.target || 0);
-      const incentive = Number(formData?.incentive || 0);
-
-      // Apply business condition: if total business achieved * 100 is less than target
-      if (incentive * 100 < target) {
-        calculatedIncentive = 0;
-      } else if (target >= 0) {
-        const incentiveValue = incentive * 100;
-        calculatedIncentive = (incentiveValue - target) / 100;
-      }
-
+      
+      // NEW INCENTIVE CALCULATION LOGIC
+      // Calculate incentive as absolute of (total_target - current_remaining_target)
+      const totalTarget = Number(formData.monthly_business_info.total_target || 0);
+      const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
+      const calculatedIncentive = Math.abs(totalTarget - currentRemainingTarget) / 100;
+      
       setFormData((prev) => ({
         ...prev,
         calculated_incentive: calculatedIncentive,
@@ -845,7 +705,6 @@ const HRSalaryManagement = () => {
             (sum, v) => sum + Number(v || 0),
             0
           );
-      // Calculate totals for all payment/deduction types
       const advanceTotal = formData.advance_payments.reduce(
         (sum, a) => sum + Number(a.value || 0),
         0
@@ -858,29 +717,36 @@ const HRSalaryManagement = () => {
         (sum, deduction) => sum + Number(deduction.value || 0),
         0
       );
-
+      
       // Apply business condition
       let totalSalaryPayable = 0;
       let finalCalculatedIncentive = 0;
-
-      const target = Number(formData.target || 0);
-      const incentive = Number(formData.incentive || 0);
-
-      if (incentive * 100 < target) {
-        // If condition met: zero base salary + additional pay - addition deduction + advance pay
+      const target = Number(formData.monthly_business_info.target || 0);
+      const monthlyBusinessClosed = Number(
+        formData.monthly_business_info.total_business_closed || 0
+      );
+      
+      // NEW INCENTIVE LOGIC FOR SALARY CALCULATION
+      const totalTarget = Number(formData.monthly_business_info.total_target || 0);
+      const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
+      finalCalculatedIncentive = Math.abs(totalTarget - currentRemainingTarget) / 100;
+      
+      if (monthlyBusinessClosed < target) {
         totalSalaryPayable =
           advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
-        finalCalculatedIncentive = 0;
       } else {
-        // Normal calculation
         totalSalaryPayable =
-          baseSalary +
+          baseSalary -
+          Object.values(formData.deductions).reduce(
+            (sum, v) => sum + Number(v || 0),
+            0
+          ) +
           advanceTotal +
           additionalPaymentsTotal -
-          additionalDeductionsTotal;
-        finalCalculatedIncentive = formData.calculated_incentive;
+          additionalDeductionsTotal +
+          finalCalculatedIncentive;
       }
-
+      
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
       const attendanceDetails = calculatedSalary
@@ -898,12 +764,18 @@ const HRSalaryManagement = () => {
             salary_to_date: calculatedSalary.salary_to_date,
           }
         : {};
-
       const monthlyTargetIncentive = {
-        target: Number(formData.target || 0),
-        total_business_closed: Number(formData.incentive || 0),
+        target: Number(formData.monthly_business_info.target || 0),
+        total_business_closed: Number(
+          formData.monthly_business_info.total_business_closed || 0
+        ),
+        previous_remaining_target:
+          formData.monthly_business_info.previous_remaining_target,
+        total_target: formData.monthly_business_info.total_target,
+        current_remaining_target:
+          formData.monthly_business_info.current_remaining_target,
       };
-
+      console.log(monthlyTargetIncentive, "this is monthly");
       const salaryData = {
         employee_id: formData?.employee_id,
         salary_from_date: calculatedSalary
@@ -995,7 +867,6 @@ const HRSalaryManagement = () => {
     );
     return baseTotal;
   }, [formData.deductions]);
-
   return (
     <div>
       <div className="flex mt-20">
@@ -1218,12 +1089,10 @@ const HRSalaryManagement = () => {
                         </label>
                         <input
                           type="number"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
                           placeholder="Enter Total Salary"
                           value={formData.total_salary}
-                          onChange={(e) =>
-                            handleChange("total_salary", e.target.value)
-                          }
+                          disabled
                         />
                         <span className="ml-2 font-medium font-mono text-blue-600">
                           {numberToIndianWords(formData.total_salary || 0)}
@@ -1231,38 +1100,160 @@ const HRSalaryManagement = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-6 border p-4 rounded bg-gray-50">
-                    <h3 className="font-semibold text-lg mb-3">
-                      Monthly Target & Incentive
-                    </h3>
-                    <div className="flex gap-6">
+                  <div className="mt-6 bg-gradient-to-br from-white to-slate-50 rounded-2xl border border-slate-200 p-8 shadow-sm">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                          <BarChart3 className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="font-semibold text-xl text-gray-900">
+                          Monthly Target & Incentive
+                        </h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="primary" 
+                          onClick={() => setAddBusinessAsSalaryModalOpen(true)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={!formData.monthly_business_info?.total_business_closed}
+                        >
+                          Pay as Salary
+                        </Button>
+                        <Button 
+                          type="primary" 
+                          onClick={handleAddSalaryPayable}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={formData.monthly_business_info?.current_remaining_target === 0}
+                        >
+                          Salary Payable
+                        </Button>
+                        <Button 
+                          type="primary" 
+                          onClick={handleAddIncentivePayable}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={formData.monthly_business_info?.current_remaining_target === 0}
+                        >
+                          Incentive Payable
+                        </Button>
+                      </div>
+                    </div>
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* Monthly Target */}
                       <div className="flex flex-col">
-                        <label className="font-medium">Total Target</label>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="w-4 h-4 text-blue-600" />
+                          <label className="font-semibold text-gray-700 text-sm">
+                            Monthly Target
+                          </label>
+                        </div>
                         <input
                           type="number"
                           onWheel={(e) => e.target.blur()}
-                          value={formData.target || 0}
-                          onChange={(e) =>
-                            handleChange("target", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
+                          value={formData?.monthly_business_info?.target || 0}
+                          disabled
+                          className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-blue-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
                         />
-                        <span className="ml-2 font-medium font-mono text-blue-600">
-                          {numberToIndianWords(formData?.target || 0)}
+                        <span className="mt-2 font-medium font-mono text-blue-600 text-sm">
+                          {numberToIndianWords(
+                            formData?.monthly_business_info?.target ?? 0
+                          )}
                         </span>
                       </div>
+                      {/* Remaining Target */}
                       <div className="flex flex-col">
-                        <label className="font-medium">
-                          Total Business Closed (1% Each)
-                        </label>
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="w-4 h-4 text-amber-600" />
+                          <label className="font-semibold text-gray-700 text-sm">
+                            Remaining Target
+                          </label>
+                        </div>
                         <input
                           type="number"
-                          value={formData.incentive || 0}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                          onWheel={(e) => e.target.blur()}
+                          value={
+                            formData?.monthly_business_info
+                              ?.previous_remaining_target || 0
+                          }
+                          disabled
+                          className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-amber-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
                         />
-                        <span className="ml-2 font-medium font-mono text-blue-600">
-                          {numberToIndianWords(formData?.incentive || 0)}
+                        <span className="mt-2 font-medium font-mono text-amber-600 text-sm">
+                          {numberToIndianWords(
+                            formData?.monthly_business_info
+                              ?.previous_remaining_target ?? 0
+                          )}
+                        </span>
+                      </div>
+                      {/* Total Target */}
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="w-4 h-4 text-purple-600" />
+                          <label className="font-semibold text-gray-700 text-sm">
+                            Total Target
+                          </label>
+                        </div>
+                        <input
+                          type="number"
+                          onWheel={(e) => e.target.blur()}
+                          value={
+                            formData?.monthly_business_info?.total_target || 0
+                          }
+                          disabled
+                          className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-purple-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
+                        />
+                        <span className="mt-2 font-medium font-mono text-purple-600 text-sm">
+                          {numberToIndianWords(
+                            formData?.monthly_business_info?.total_target ?? 0
+                          )}
+                        </span>
+                      </div>
+                      {/* Total Business Closed */}
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          <label className="font-semibold text-gray-700 text-sm">
+                            Total Business Closed
+                          </label>
+                        </div>
+                        <input
+                          type="number"
+                          value={
+                            formData?.monthly_business_info
+                              ?.total_business_closed ?? 0
+                          }
+                          readOnly
+                          className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-emerald-50 cursor-not-allowed"
+                        />
+                        <span className="mt-2 font-medium font-mono text-emerald-600 text-sm">
+                          {numberToIndianWords(
+                            formData?.monthly_business_info
+                              ?.total_business_closed || 0
+                          )}
+                        </span>
+                      </div>
+                      {/* Current Remaining Target */}
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="w-4 h-4 text-red-600" />
+                          <label className="font-semibold text-gray-700 text-sm">
+                            Current Remaining Target
+                          </label>
+                        </div>
+                        <input
+                          type="number"
+                          onWheel={(e) => e.target.blur()}
+                          value={
+                            formData?.monthly_business_info?.current_remaining_target || 0
+                          }
+                          disabled
+                          className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-red-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
+                        />
+                        <span className="mt-2 font-medium font-mono text-red-600 text-sm">
+                          {numberToIndianWords(
+                            formData?.monthly_business_info?.current_remaining_target ?? 0
+                          )}
                         </span>
                       </div>
                     </div>
@@ -1717,38 +1708,112 @@ const HRSalaryManagement = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="mt-6 border p-4 rounded bg-gray-50">
-                        <h3 className="font-semibold text-lg mb-3">
-                          Monthly Target & Incentive
-                        </h3>
-                        <div className="flex gap-6">
+                      <div className="mt-6 bg-gradient-to-br from-white to-slate-50 rounded-2xl border border-slate-200 p-8 shadow-sm">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                            <BarChart3 className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className="font-semibold text-xl text-gray-900">
+                            Monthly Target & Incentive
+                          </h3>
+                        </div>
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                          {/* Monthly Target */}
                           <div className="flex flex-col">
-                            <label className="font-medium">Total Target</label>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="w-4 h-4 text-blue-600" />
+                              <label className="font-semibold text-gray-700 text-sm">
+                                Monthly Target
+                              </label>
+                            </div>
                             <input
                               type="number"
-                              value={formData.target}
-                              onChange={(e) =>
-                                handleChange("target", e.target.value)
+                              onWheel={(e) => e.target.blur()}
+                              value={
+                                formData?.monthly_business_info?.target || 0
                               }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700"
+                              disabled
+                              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-blue-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
                             />
-                            <span className="ml-2 font-medium font-mono text-blue-600">
-                              {numberToIndianWords(formData.target)}
+                            <span className="mt-2 font-medium font-mono text-blue-600 text-sm">
+                              {numberToIndianWords(
+                                formData?.monthly_business_info?.target ?? 0
+                              )}
                             </span>
                           </div>
+                          {/* Remaining Target */}
                           <div className="flex flex-col">
-                            <label className="font-medium">
-                              Total Business Closed (1% Each)
-                            </label>
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="w-4 h-4 text-amber-600" />
+                              <label className="font-semibold text-gray-700 text-sm">
+                                Remaining Target
+                              </label>
+                            </div>
                             <input
                               type="number"
-                              value={(formData.incentive || 0).toFixed(2)}
-                              readOnly
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                              onWheel={(e) => e.target.blur()}
+                              value={
+                                formData?.monthly_business_info
+                                  ?.previous_remaining_target || 0
+                              }
+                              disabled
+                              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-amber-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
                             />
-                            <span className="ml-2 font-medium font-mono text-blue-600">
+                            <span className="mt-2 font-medium font-mono text-amber-600 text-sm">
                               {numberToIndianWords(
-                                (formData.incentive || 0).toFixed(2) || 0
+                                formData?.monthly_business_info
+                                  ?.previous_remaining_target ?? 0
+                              )}
+                            </span>
+                          </div>
+                          {/* Total Target */}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="w-4 h-4 text-purple-600" />
+                              <label className="font-semibold text-gray-700 text-sm">
+                                Total Target
+                              </label>
+                            </div>
+                            <input
+                              type="number"
+                              onWheel={(e) => e.target.blur()}
+                              value={
+                                formData?.monthly_business_info?.total_target ||
+                                0
+                              }
+                              disabled
+                              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-slate-50 focus:bg-white focus:border-purple-300 focus:outline-none transition-colors disabled:cursor-not-allowed"
+                            />
+                            <span className="mt-2 font-medium font-mono text-purple-600 text-sm">
+                              {numberToIndianWords(
+                                formData?.monthly_business_info?.total_target ??
+                                  0
+                              )}
+                            </span>
+                          </div>
+                          {/* Total Business Closed */}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="w-4 h-4 text-emerald-600" />
+                              <label className="font-semibold text-gray-700 text-sm">
+                                Total Business Closed
+                              </label>
+                            </div>
+                            <input
+                              type="number"
+                              value={
+                                formData?.monthly_business_info
+                                  ?.total_business_closed ?? 0
+                              }
+                              readOnly
+                              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-gray-900 font-semibold bg-emerald-50 cursor-not-allowed"
+                            />
+                            <span className="mt-2 font-medium font-mono text-emerald-600 text-sm">
+                              {numberToIndianWords(
+                                formData?.monthly_business_info
+                                  ?.total_business_closed || 0
                               )}
                             </span>
                           </div>
@@ -1994,7 +2059,9 @@ const HRSalaryManagement = () => {
                                 type="primary"
                                 danger
                                 icon={<DeleteOutlined />}
-                                onClick={() => removeAdditionalDeduction(index)}
+                                onClick={() =>
+                                  removeAdditionalDeduction(index)
+                                }
                               />
                             </div>
                           </div>
@@ -2014,10 +2081,14 @@ const HRSalaryManagement = () => {
                           </label>
                           {(() => {
                             let total = 0;
-                            const target = Number(formData.target || 0);
-                            const incentive = Number(formData.incentive || 0);
-
-                            if (incentive * 100 < target) {
+                            const target = Number(
+                              formData.monthly_business_info.target || 0
+                            );
+                            const incentive = Number(
+                              formData.monthly_business_info
+                                .total_business_closed || 0
+                            );
+                            if (incentive < target) {
                               // If condition met: zero base salary + additional pay - addition deduction + advance pay
                               const advanceTotal =
                                 formData.advance_payments.reduce(
@@ -2061,7 +2132,6 @@ const HRSalaryManagement = () => {
                                 addPayments -
                                 addDeductions;
                             }
-
                             return (
                               <>
                                 <input
@@ -2121,7 +2191,6 @@ const HRSalaryManagement = () => {
                 className="!bg-gray-100 !text-gray-800 !cursor-default"
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-group">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2148,7 +2217,6 @@ const HRSalaryManagement = () => {
                 />
               </div>
             </div>
-
             {/* Earnings */}
             <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-green-800 mb-4">
@@ -2189,7 +2257,6 @@ const HRSalaryManagement = () => {
                 />
               </div>
             </div>
-
             {/* Deductions */}
             <div className="bg-red-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-red-800 mb-4">
@@ -2230,7 +2297,6 @@ const HRSalaryManagement = () => {
                 />
               </div>
             </div>
-
             {/* Monthly Business Info */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-800 mb-4">
@@ -2268,7 +2334,6 @@ const HRSalaryManagement = () => {
                 </div>
               </div>
             </div>
-
             {/* Incentive */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-800 mb-4">
@@ -2284,7 +2349,6 @@ const HRSalaryManagement = () => {
                 className="!bg-gray-100 !text-gray-800 !cursor-default font-semibold text-lg"
               />
             </div>
-
             {/* Advance Payments */}
             {updateFormData.advance_payments?.length > 0 && (
               <div className="bg-indigo-50 p-4 rounded-lg">
@@ -2307,7 +2371,6 @@ const HRSalaryManagement = () => {
                 ))}
               </div>
             )}
-
             {/* Additional Payments */}
             {updateFormData.additional_payments?.length > 0 && (
               <div className="bg-purple-50 p-4 rounded-lg">
@@ -2330,7 +2393,6 @@ const HRSalaryManagement = () => {
                 ))}
               </div>
             )}
-
             {/* Additional Deductions */}
             {updateFormData.additional_deductions?.length > 0 && (
               <div className="bg-orange-50 p-4 rounded-lg">
@@ -2353,7 +2415,6 @@ const HRSalaryManagement = () => {
                 ))}
               </div>
             )}
-
             {/* Total Payable */}
             <div className="bg-gray-100 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -2369,7 +2430,6 @@ const HRSalaryManagement = () => {
                 className="!bg-gray-100 !text-gray-800 !cursor-default font-bold text-xl"
               />
             </div>
-
             {/* Payment Info */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -2390,18 +2450,16 @@ const HRSalaryManagement = () => {
                     className="!bg-gray-100 !text-gray-800 !cursor-default"
                   />
                 </div>
-                {
-                  <div className="form-group">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Payment Method
-                    </label>
-                    <Input
-                      value={updateFormData?.payment_method || "N/A"}
-                      readOnly
-                      className="!bg-gray-100 !text-gray-800 !cursor-default"
-                    />
-                  </div>
-                }
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Method
+                  </label>
+                  <Input
+                    value={updateFormData?.payment_method || "N/A"}
+                    readOnly
+                    className="!bg-gray-100 !text-gray-800 !cursor-default"
+                  />
+                </div>
                 {updateFormData.transaction_id && (
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2939,6 +2997,57 @@ const HRSalaryManagement = () => {
             </div>
           )}
         </Modal>
+        
+        {/* Business as Salary Confirmation Modal */}
+        <Modal
+          title="Confirm Add Business as Salary"
+          open={addBusinessAsSalaryModalOpen}
+          onCancel={() => setAddBusinessAsSalaryModalOpen(false)}
+          footer={[
+            <Button key="cancel" onClick={() => setAddBusinessAsSalaryModalOpen(false)}>
+              Cancel
+            </Button>,
+            <Button 
+              key="confirm" 
+              type="primary" 
+              onClick={() => {
+                const businessAmount = formData.monthly_business_info.total_business_closed || 0;
+                
+                // Add as an additional payment
+                setFormData(prev => ({
+                  ...prev,
+                  additional_payments: [
+                    ...prev.additional_payments,
+                    {
+                      name: "Business as Salary",
+                      value: businessAmount
+                    }
+                  ]
+                }));
+                
+                message.success("Business amount added to salary successfully");
+                setAddBusinessAsSalaryModalOpen(false);
+              }}
+              danger
+            >
+              Confirm
+            </Button>
+          ]}
+        >
+          <p className="text-lg font-medium mb-4">Are you sure you want to add the total business amount as salary?</p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-medium text-gray-700">Total Business Closed:</span>
+              <span className="font-bold text-blue-700 text-lg">
+                ₹{Number(formData.monthly_business_info.total_business_closed || 0).toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">This amount will be added to the total salary payable</span>
+            </div>
+          </div>
+        </Modal>
+        
       </div>
     </div>
   );

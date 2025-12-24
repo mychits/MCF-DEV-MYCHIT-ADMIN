@@ -68,6 +68,13 @@ const SalaryPayment = () => {
     calculated_incentive: 0,
     payment_method: "Cash",
     transaction_id: "",
+    is_salary_paid: true,
+    monthly_business_info: {
+      target: 0,
+      total_business_closed: 0,
+      previous_remaining_target: 0,
+      current_remaining_target: 0
+    }
   });
   const thisYear = dayjs().format("YYYY");
   const earningsObject = {
@@ -268,8 +275,11 @@ const SalaryPayment = () => {
           monthly_business_info: salaryData?.monthly_business_info || {
             target: 0,
             total_business_closed: 0,
+            previous_remaining_target: 0,
+            current_remaining_target: 0
           },
           status: "Paid",
+          is_salary_paid: true
         };
         setUpdateFormData(formData);
         updateForm.setFieldsValue(formData);
@@ -306,11 +316,17 @@ const SalaryPayment = () => {
   const handleUpdateSubmit = async () => {
     try {
       setUpdateLoading(true);
-
+       const remaining_balance = Number(updateFormData.paid_amount || 0) - Number(updateFormData.total_salary_payable || 0);
       const updateData = {
         ...updateFormData,
+        remaining_balance,
+        monthly_business_info: updateFormData.monthly_business_info || {
+          target: 0,
+          total_business_closed: 0,
+          previous_remaining_target: 0,
+          current_remaining_target: 0
+        }
       };
-
       await API.put(`/salary-payment/${currentSalaryId}`, updateData);
       message.success("Salary updated successfully");
       setIsOpenUpdateModal(false);
@@ -435,7 +451,6 @@ const SalaryPayment = () => {
       fetchSalaryDetails();
     }
   }, [formData?.employee_id, formData.month, formData.month]);
-
   const updateTotalEarnings = useMemo(() => {
     const earnings = updateFormData?.earnings || {};
     return Object.values(earnings).reduce((sum, v) => sum + Number(v || 0), 0);
@@ -500,9 +515,9 @@ const SalaryPayment = () => {
               <Link
                 to="/hr-menu/salary-management"
                 className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                <RiMoneyRupeeCircleFill   className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
+                <RiMoneyRupeeCircleFill className="text-blue-600 group-hover:scale-110 transition-transform" size={24} />
                 <span className="font-medium text-gray-700 group-hover:text-blue-600">
-                 HR / Salary Management
+                  HR / Salary Management
                 </span>
               </Link>
               <Link
@@ -510,11 +525,9 @@ const SalaryPayment = () => {
                 className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
                 <MdOutlineMan className="text-blue-600 group-hover:scale-110 transition-transform text-lg" />
                 <span className="font-medium text-gray-700 group-hover:text-blue-600">
-                Employees / Employee Statement
+                  Employees / Employee Statement
                 </span>
               </Link>
-             
-             
             </div>
           </div>
           <h1 className="text-2xl font-semibold">Salary Payment</h1>
@@ -724,25 +737,33 @@ const SalaryPayment = () => {
               </div>
               <div className="bg-gray-50 p-4 rounded-lg mb-4">
                 <h3 className="font-semibold text-lg mb-3">
-                  Monthly Target & Incentive
+                  Monthly Target & Business Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
-                    label="Total Target"
+                    label="Total Target (₹)"
                     name={["monthly_business_info", "target"]}>
                     <Input type="number" disabled />
                   </Form.Item>
                   <Form.Item
-                    label="Total Business Closed (1% Each)"
-                    name={["monthly_business_info", "total_business_closed"]}
-                    getValueProps={(value) => ({ value: (value || 0) / 100 })}
-                    getValueFromEvent={(e) => Number(e.target.value) * 100}>
+                    label="Previous Remaining Target (₹)"
+                    name={["monthly_business_info", "previous_remaining_target"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Total Business Closed (₹)"
+                    name={["monthly_business_info", "total_business_closed"]}>
+                    <Input type="number" disabled />
+                  </Form.Item>
+                  <Form.Item
+                    label="Current Remaining Target (₹)"
+                    name={["monthly_business_info", "current_remaining_target"]}
+                    tooltip="Target minus total business closed">
                     <Input type="number" disabled />
                   </Form.Item>
                 </div>
               </div>
             </div>
-
             <div className="bg-blue-50 p-4 rounded-lg mb-4">
               <h3 className="font-semibold text-lg mb-3">
                 Incentive Adjustment
@@ -756,7 +777,6 @@ const SalaryPayment = () => {
                 </Form.Item>
               </div>
             </div>
-
             <div className="bg-indigo-50 p-4 rounded-lg mb-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-indigo-800">
@@ -802,7 +822,6 @@ const SalaryPayment = () => {
                 )}
               </Form.List>
             </div>
-
             <div className="bg-purple-50 p-4 rounded-lg mb-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-purple-800">
@@ -982,7 +1001,7 @@ const SalaryPayment = () => {
             </Button>,
           ]}>
           <p>
-            Are you sure you want to delete this salary ? This action cannot be
+            Are you sure you want to delete this salary? This action cannot be
             undone.
           </p>
         </Modal>
@@ -1082,6 +1101,26 @@ const SalaryPayment = () => {
                   <div>
                     <strong>Half Days:</strong>{" "}
                     {existingSalaryRecord.half_days || 0}
+                  </div>
+                </div>
+              </section>
+              {/* Monthly Business Info Section */}
+              <section className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-base">
+                  Monthly Target & Business Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700">
+                  <div>
+                    <strong>Total Target:</strong> ₹{Number(existingSalaryRecord.monthly_business_info?.target || 0).toLocaleString('en-IN')}
+                  </div>
+                  <div>
+                    <strong>Previous Remaining Target:</strong> ₹{Number(existingSalaryRecord.monthly_business_info?.previous_remaining_target || 0).toLocaleString('en-IN')}
+                  </div>
+                  <div>
+                    <strong>Total Business Closed:</strong> ₹{Number(existingSalaryRecord.monthly_business_info?.total_business_closed || 0).toLocaleString('en-IN')}
+                  </div>
+                  <div>
+                    <strong>Current Remaining Target:</strong> ₹{Number(existingSalaryRecord.monthly_business_info?.current_remaining_target || 0).toLocaleString('en-IN')}
                   </div>
                 </div>
               </section>
@@ -1404,14 +1443,14 @@ const SalaryPayment = () => {
                   )}
                   <div className="flex justify-between">
                     <span>Payment Method:</span>{" "}
-                    <span>{existingSalaryRecord.payment_method || "—"}</span>
+                    <span>{existingSalaryRecord.payment_method || "N/A"}</span>
                   </div>
                 </div>
               </section>
             </div>
           ) : (
             <div className="flex items-center justify-center h-32 text-gray-500">
-              Loading salary details…
+              Loading salary details...
             </div>
           )}
         </Modal>
