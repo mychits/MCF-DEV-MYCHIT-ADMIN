@@ -34,7 +34,9 @@ import utc from "dayjs/plugin/utc";
 import { LoadingOutlined } from "@ant-design/icons";
 import { MdOutlineMan } from "react-icons/md";
 import { RiMoneyRupeeCircleFill } from "react-icons/ri";
+
 dayjs.extend(utc);
+
 const HRSalaryManagement = () => {
   const navigate = useNavigate();
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
@@ -92,7 +94,7 @@ const HRSalaryManagement = () => {
     },
     status: "",
   });
-  
+
   // New state for business as salary confirmation modal
   const [addBusinessAsSalaryModalOpen, setAddBusinessAsSalaryModalOpen] = useState(false);
 
@@ -180,7 +182,7 @@ const HRSalaryManagement = () => {
     },
     total_salary: 0,
   });
-  
+
   // Handler for Salary Payable button
   const handleAddSalaryPayable = () => {
     const totalTarget = Number(formData.monthly_business_info.total_target || 0);
@@ -660,13 +662,13 @@ const HRSalaryManagement = () => {
       });
       const calculated = response.data.data;
       setCalculatedSalary(calculated);
-      
+
       // NEW INCENTIVE CALCULATION LOGIC
       // Calculate incentive as absolute of (total_target - current_remaining_target)
       const totalTarget = Number(formData.monthly_business_info.total_target || 0);
       const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
       const calculatedIncentive = Math.abs(totalTarget - currentRemainingTarget) / 100;
-      
+
       setFormData((prev) => ({
         ...prev,
         calculated_incentive: calculatedIncentive,
@@ -717,7 +719,7 @@ const HRSalaryManagement = () => {
         (sum, deduction) => sum + Number(deduction.value || 0),
         0
       );
-      
+
       // Apply business condition
       let totalSalaryPayable = 0;
       let finalCalculatedIncentive = 0;
@@ -725,12 +727,12 @@ const HRSalaryManagement = () => {
       const monthlyBusinessClosed = Number(
         formData.monthly_business_info.total_business_closed || 0
       );
-      
+
       // NEW INCENTIVE LOGIC FOR SALARY CALCULATION
       const totalTarget = Number(formData.monthly_business_info.total_target || 0);
       const currentRemainingTarget = Number(formData.monthly_business_info.current_remaining_target || 0);
       finalCalculatedIncentive = Math.abs(totalTarget - currentRemainingTarget) / 100;
-      
+
       if (monthlyBusinessClosed < target) {
         totalSalaryPayable =
           advanceTotal + additionalPaymentsTotal - additionalDeductionsTotal;
@@ -746,7 +748,7 @@ const HRSalaryManagement = () => {
           additionalDeductionsTotal +
           finalCalculatedIncentive;
       }
-      
+
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
       const attendanceDetails = calculatedSalary
@@ -867,6 +869,60 @@ const HRSalaryManagement = () => {
     );
     return baseTotal;
   }, [formData.deductions]);
+
+  // Incentive calculation logic
+  const calculatedIncentive = useMemo(() => {
+    const totalTarget = Number(formData.monthly_business_info.total_target || 0);
+    const totalBusinessClosed = Number(formData.monthly_business_info.total_business_closed || 0);
+    const diff = totalTarget - totalBusinessClosed;
+    
+    if (diff > 0) {
+      return totalBusinessClosed / 100;
+    } else if (diff < 0) {
+      return Math.abs(diff) / 100;
+    } else {
+      return 0;
+    }
+  }, [formData.monthly_business_info.total_target, formData.monthly_business_info.total_business_closed]);
+
+  // Previous month remaining balance
+  const [previousMonthRemainingBalance, setPreviousMonthRemainingBalance] = useState(0);
+
+  const fetchPreviousMonthRemainingBalance = async () => {
+    try {
+      if (!formData.employee_id || !formData.month || !formData.year) return;
+      
+      const monthIndex = moment().month(formData.month).month();
+      const prevMonthStart = moment()
+        .year(formData.year)
+        .month(monthIndex - 1)
+        .startOf("month")
+        .format("YYYY-MM-DD");
+      const prevMonthEnd = moment()
+        .year(formData.year)
+        .month(monthIndex - 1)
+        .endOf("month")
+        .format("YYYY-MM-DD");
+      
+      const response = await API.get(
+        `/salary-payment/employees/${formData.employee_id}?month=${moment().month(monthIndex - 1).format('MMMM')}&year=${formData.year}`
+      );
+      
+      if (response.data?.data?.remaining_balance) {
+        setPreviousMonthRemainingBalance(response.data.data.remaining_balance);
+      } else {
+        setPreviousMonthRemainingBalance(0);
+      }
+    } catch (error) {
+      console.error("Failed to fetch previous month remaining balance:", error);
+      setPreviousMonthRemainingBalance(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchPreviousMonthRemainingBalance();
+  }, [formData.employee_id, formData.month, formData.year]);
+
   return (
     <div>
       <div className="flex mt-20">
@@ -1112,30 +1168,26 @@ const HRSalaryManagement = () => {
                         </h3>
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          type="primary" 
-                          onClick={() => setAddBusinessAsSalaryModalOpen(true)}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!formData.monthly_business_info?.total_business_closed}
-                        >
-                          Pay as Salary
-                        </Button>
-                        <Button 
-                          type="primary" 
-                          onClick={handleAddSalaryPayable}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={formData.monthly_business_info?.current_remaining_target === 0}
-                        >
-                          Salary Payable
-                        </Button>
-                        <Button 
-                          type="primary" 
-                          onClick={handleAddIncentivePayable}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          disabled={formData.monthly_business_info?.current_remaining_target === 0}
-                        >
-                          Incentive Payable
-                        </Button>
+                        {calculatedIncentive > 0 && (
+                          <>
+                            <Button 
+                              type="primary" 
+                              onClick={() => setAddBusinessAsSalaryModalOpen(true)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                              disabled={!formData.monthly_business_info?.total_business_closed}
+                            >
+                              Pay as Salary
+                            </Button>
+                            <Button 
+                              type="primary" 
+                              onClick={handleAddIncentivePayable}
+                              className="bg-purple-600 hover:bg-purple-700"
+                              disabled={formData.monthly_business_info?.current_remaining_target === 0}
+                            >
+                              Pay as Incentive
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                     {/* Metrics Grid */}
@@ -1577,6 +1629,26 @@ const HRSalaryManagement = () => {
                       </div>
                     </div>
                   </div>
+                  {/* Previous Month Remaining Balance */}
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-yellow-800 mb-4">
+                      Previous Month Remaining Balance
+                    </h3>
+                    <div className="form-group">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Remaining Balance from Previous Month
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                        value={previousMonthRemainingBalance.toFixed(2)}
+                        disabled
+                      />
+                      <span className="ml-2 font-medium font-mono text-blue-600">
+                        {numberToIndianWords(previousMonthRemainingBalance.toFixed(2))}
+                      </span>
+                    </div>
+                  </div>
                   {/* Calculate Button */}
                   <div className="flex justify-end pt-4">
                     <Button
@@ -1832,7 +1904,7 @@ const HRSalaryManagement = () => {
                           Calculated Incentive
                         </label>
                         {(() => {
-                          const incentiveValue = formData.calculated_incentive;
+                          const incentiveValue = calculatedIncentive;
                           const isPositive = incentiveValue >= 0;
                           const displayValue =
                             Math.abs(incentiveValue).toFixed(2);
@@ -2106,7 +2178,7 @@ const HRSalaryManagement = () => {
                                   0
                                 );
                               total =
-                                advanceTotal + addPayments - addDeductions;
+                                advanceTotal + addPayments - addDeductions + previousMonthRemainingBalance;
                             } else {
                               // Normal calculation
                               const base =
@@ -2130,7 +2202,8 @@ const HRSalaryManagement = () => {
                                 base +
                                 advanceTotal +
                                 addPayments -
-                                addDeductions;
+                                addDeductions +
+                                previousMonthRemainingBalance;
                             }
                             return (
                               <>

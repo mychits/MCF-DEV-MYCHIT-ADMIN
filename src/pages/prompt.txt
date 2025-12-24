@@ -1,0 +1,91 @@
+
+
+//  previous incentive calculation from the above code  should be removed
+
+
+// “Pay as Salary” and “Pay as Incentive”. remove other buttons
+
+// Incentive Calculation Logic
+
+// Calculate incentive using the formula:
+
+// incentive = (totalTarget - totalBusinessClosed) / 100
+
+
+// If the calculated value is positive, then incentive is totalBusinessClosed/100 use it as-is.
+
+// If the calculated value is negative, convert it to its absolute value which is divided by 100.
+
+// If the calculated value is 0, total_payable should be calculated salary of attendance details
+
+
+// Button Behavior
+// Pay as Salary should be visibe only if incentive is greater than 0
+
+// On click:
+
+// Open a confirmation modal.
+
+// Set current_remaining_target to 0.
+
+// Add the previous "incentive" to Salary Payable.
+
+// Pay as Incentive
+// Pay as Incentive should be visibe only if incentive is greater than 0
+
+// On click:
+
+// Open a confirmation modal.
+
+// Set current_remaining_target to 0.
+
+// Add the calculated incentive amount to Incentive Payable.
+
+// Additional Rules
+
+// Only these two buttons should be visible.
+
+//when  Pay as Incentive salary payable should not be added with incentive
+//when  Pay as Salary payable  incentive payable should not be added with incentive
+
+// Payment action should only occur after modal confirmation.
+
+// fetch previous month salary and return remaining_balance which should be added to salary payable create a input field to show that
+
+// salary payable field should be visible
+
+
+// do not change ui too much
+
+
+// calculate salary route wil return remaining_balance too
+//  return res.status(200).json({
+//       message: "Salary Calculated Successfully",
+//       data: {
+//         employee_id,
+//         salary_from_date: salaryFromDate,
+//         salary_to_date: salaryToDate,
+//         salary_month: month,
+//         salary_year: year,
+
+//         total_days: totalDays,
+//         present_days,
+//         absent_days,
+//         leave_days,
+//         half_days,
+//         paid_days,
+//         lop_days,
+
+//         per_day_salary,
+//         gross_salary: totalEarnings,
+//         total_earnings: totalEarnings,
+//         total_deductions: totalDeductions,
+//         deductions: totalDeductions,
+//         calculated_salary,
+//         remaining_balance:previousMonthResponse.remaining_balance
+//       },
+
+
+
+// Salary Already Processed modal should work properly will all the data
+
