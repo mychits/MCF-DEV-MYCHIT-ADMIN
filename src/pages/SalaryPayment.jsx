@@ -959,30 +959,7 @@ const SalaryPayment = () => {
                 prefix="₹"
               />
             </Form.Item>
-            
-            <Form.Item
-              name="paid_amount"
-              label={<span className="font-medium text-gray-700">Payable Amount</span>}
-              rules={[
-                { required: true, message: "Please enter payable amount" },
-              ]}
-              className="mb-0"
-            >
-              <Input
-                type="number"
-                prefix="₹"
-                className="font-semibold"
-                onChange={(e) => {
-                  const totalPayable =
-                    updateForm.getFieldValue("total_salary_payable") || 0;
-                  const newPaidAmount = Number(e.target.value || 0);
-                  const newAdjustment = newPaidAmount - totalPayable;
-                  setAdjustmentAmount(newAdjustment);
-                }}
-              />
-            </Form.Item>
-            
-            <Form.Item 
+               <Form.Item 
               label={<span className="font-medium text-gray-700">Adjustment Amount</span>}
               className="mb-0"
             >
@@ -1009,6 +986,29 @@ const SalaryPayment = () => {
                 <span>This amount will be added to the payable amount </span>
               </div>
             </Form.Item>
+            <Form.Item
+              name="paid_amount"
+              label={<span className="font-medium text-gray-700">Payable Amount</span>}
+              rules={[
+                { required: true, message: "Please enter payable amount" },
+              ]}
+              className="mb-0"
+            >
+              <Input
+                type="number"
+                prefix="₹"
+                className="font-semibold"
+                onChange={(e) => {
+                  const totalPayable =
+                    updateForm.getFieldValue("total_salary_payable") || 0;
+                  const newPaidAmount = Number(e.target.value || 0);
+                  const newAdjustment = newPaidAmount - totalPayable;
+                  setAdjustmentAmount(newAdjustment);
+                }}
+              />
+            </Form.Item>
+            
+         
           </div>
         </div>
 
