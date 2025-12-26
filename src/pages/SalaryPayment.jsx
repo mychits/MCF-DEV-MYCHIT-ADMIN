@@ -316,7 +316,7 @@ const SalaryPayment = () => {
   const handleUpdateSubmit = async () => {
     try {
       setUpdateLoading(true);
-       const remaining_balance = Number(updateFormData.paid_amount || 0) - Number(updateFormData.total_salary_payable || 0);
+       const remaining_balance = Number(updateFormData.total_salary_payable || 0) - Number(updateFormData.paid_amount || 0) ;
       const updateData = {
         ...updateFormData,
         remaining_balance,
