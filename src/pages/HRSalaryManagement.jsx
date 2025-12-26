@@ -40,7 +40,7 @@ const HRSalaryManagement = () => {
   const navigate = useNavigate();
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
   const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
-  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);  
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [calculateLoading, setCalculateLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
