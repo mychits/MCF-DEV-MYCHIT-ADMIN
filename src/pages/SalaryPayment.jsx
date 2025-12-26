@@ -326,33 +326,41 @@ const SalaryPayment = () => {
       ...allValues,
     });
   };
-  const handleUpdateSubmit = async () => {
-    try {
-      setUpdateLoading(true);
-      const remaining_balance =
-        Number(updateFormData.total_salary_payable || 0) -
-        Number(updateFormData.paid_amount || 0);
-      const updateData = {
-        ...updateFormData,
-        remaining_balance,
-        monthly_business_info: updateFormData.monthly_business_info || {
-          target: 0,
-          total_business_closed: 0,
-          previous_remaining_target: 0,
-          current_remaining_target: 0,
-        },
-      };
-      await API.put(`/salary-payment/${currentSalaryId}`, updateData);
-      message.success("Salary updated successfully");
-      setIsOpenUpdateModal(false);
-      getAllSalary();
-    } catch (error) {
-      console.error("Error updating salary:", error);
-      message.error("Failed to update salary");
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
+ const handleUpdateSubmit = async () => {
+  try {
+    setUpdateLoading(true);
+
+    // Get latest values from form
+    const formValues = updateForm.getFieldsValue();
+    const totalPayable = Number(formValues.total_salary_payable || 0);
+    const adjAmount = adjustmentAmount; // Use your state
+    const computedPaidAmount = totalPayable + adjAmount;
+
+    const remaining_balance = totalPayable - computedPaidAmount;
+
+    const updateData = {
+      ...formValues,
+      paid_amount: computedPaidAmount,
+      remaining_balance,
+      monthly_business_info: formValues.monthly_business_info || {
+        target: 0,
+        total_business_closed: 0,
+        previous_remaining_target: 0,
+        current_remaining_target: 0,
+      },
+    };
+
+    await API.put(`/salary-payment/${currentSalaryId}`, updateData);
+    message.success("Salary updated successfully");
+    setIsOpenUpdateModal(false);
+    getAllSalary();
+  } catch (error) {
+    console.error("Error updating salary:", error);
+    message.error("Failed to update salary");
+  } finally {
+    setUpdateLoading(false);
+  }
+};
   const handlePrint = (salaryPaymentId) => {
     navigate("/salary-slip-print/" + salaryPaymentId);
   };
@@ -936,158 +944,187 @@ const SalaryPayment = () => {
               </Form.List>
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm border border-blue-200 mb-6">
-      <h3 className="text-xl font-bold text-blue-900 mb-6 pb-3 border-b border-blue-300">
-        Payment Details
-      </h3>
-      
-      <div className="space-y-6">
-        {/* Salary Information Section */}
-        <div className="bg-white p-5 rounded-lg shadow-sm">
-          <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
-            Salary Information
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Form.Item
-              name="total_salary_payable"
-              label={<span className="font-medium text-gray-700">Total Salary Payable</span>}
-              className="mb-0"
-            >
-              <Input 
-                type="number" 
-                disabled 
-                className="bg-gray-50 font-semibold"
-                prefix="₹"
-              />
-            </Form.Item>
-               <Form.Item 
-              label={<span className="font-medium text-gray-700">Adjustment Amount</span>}
-              className="mb-0"
-            >
-              <Input
-                type="number"
-                value={adjustmentAmount}
-                prefix="₹"
-                className="font-semibold"
-                onChange={(e) => {
-                  const value =
-                    e.target.value === "" ? 0 : Number(e.target.value);
-                  setAdjustmentAmount(value);
-                  const totalPayable =
-                    updateForm.getFieldValue("total_salary_payable") || 0;
-                  const newPayableAmount = Number(totalPayable) + value;
-                  updateForm.setFieldsValue({
-                    paid_amount: newPayableAmount,
-                  });
-                }}
-                placeholder="Enter adjustment amount"
-              />
-              <div className="text-xs text-amber-600 mt-2 flex items-start gap-1 bg-amber-50 p-2 rounded border border-amber-200">
-                <span className="text-amber-600 font-bold">ⓘ</span>
-                <span>This amount will be added to the payable amount </span>
-              </div>
-            </Form.Item>
-            <Form.Item
-              name="paid_amount"
-              label={<span className="font-medium text-gray-700">Payable Amount</span>}
-              rules={[
-                { required: true, message: "Please enter payable amount" },
-              ]}
-              className="mb-0"
-            >
-              <Input
-                type="number"
-                prefix="₹"
-                className="font-semibold"
-                onChange={(e) => {
-                  const totalPayable =
-                    updateForm.getFieldValue("total_salary_payable") || 0;
-                  const newPaidAmount = Number(e.target.value || 0);
-                  const newAdjustment = newPaidAmount - totalPayable;
-                  setAdjustmentAmount(newAdjustment);
-                }}
-              />
-            </Form.Item>
-            
-         
-          </div>
-        </div>
+              <h3 className="text-xl font-bold text-blue-900 mb-6 pb-3 border-b border-blue-300">
+                Payment Details
+              </h3>
 
-        {/* Payment Transaction Section */}
-        <div className="bg-white p-5 rounded-lg shadow-sm">
-          <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
-            Transaction Details
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Form.Item
-              name="payment_method"
-              label={<span className="font-medium text-gray-700">Payment Mode</span>}
-              rules={[
-                { required: true, message: "Please select payment mode" },
-              ]}
-              className="mb-0"
-            >
-              <Select
-                placeholder="Select payment mode"
-                size="large"
-                options={[
-                  { label: "Cash", value: "Cash" },
-                  { label: "Online / UPI", value: "Online/UPI" },
-                  { label: "Online / NEFT", value: "Online/NEFT" },
-                  { label: "Online / IMPS", value: "Online/IMPS" },
-                  { label: "Online / RTGS", value: "Online/RTGS" },
-                  { label: "Bank Transfer", value: "Bank Transfer" },
-                  { label: "Cheque", value: "Cheque" },
-                  { label: "Direct Deposit", value: "Direct Deposit" },
-                ]}
-              />
-            </Form.Item>
-            
-            {updateForm.getFieldValue("payment_method") !== "Cash" && (
-              <Form.Item
-                name="transaction_id"
-                label={<span className="font-medium text-gray-700">Transaction ID</span>}
-                rules={[
-                  {
-                    required:
-                      updateForm.getFieldValue("payment_method") !== "Cash",
-                    message: "Transaction ID is required",
-                  },
-                ]}
-                className="mb-0"
-              >
-                <Input 
-                  placeholder="Enter transaction reference" 
-                  size="large"
-                  className="font-mono"
-                />
-              </Form.Item>
-            )}
-            
-            <Form.Item
-              name="pay_date"
-              label={<span className="font-medium text-gray-700">Pay Date</span>}
-              rules={[
-                { required: true, message: "Please select pay date" },
-              ]}
-              getValueProps={(value) => ({
-                value: value ? dayjs(value) : null,
-              })}
-              getValueFromEvent={(date) => (date ? date.toDate() : null)}
-              className="mb-0"
-            >
-              <DatePicker
-                style={{ width: "100%" }}
-                size="large"
-                format="DD MMM YYYY"
-                disabledDate={(current) =>
-                  current && current.isAfter(dayjs().endOf("day"))
-                }
-              />
-            </Form.Item>
-          </div>
-        </div>
-      </div>
-    </div>
+              <div className="space-y-6">
+                {/* Salary Information Section */}
+                <div className="bg-white p-5 rounded-lg shadow-sm">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+                    Salary Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Form.Item
+                      name="total_salary_payable"
+                      label={
+                        <span className="font-medium text-gray-700">
+                          Total Salary Payable
+                        </span>
+                      }
+                      className="mb-0">
+                      <Input
+                        type="number"
+                        disabled
+                        className="bg-gray-50 font-semibold"
+                        prefix="₹"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      label={
+                        <span className="font-medium text-gray-700">
+                          Adjustment Amount
+                        </span>
+                      }
+                      className="mb-0">
+                      <Input
+                        type="number"
+                        value={adjustmentAmount}
+                        prefix="₹"
+                        className="font-semibold"
+                        onChange={(e) => {
+                          const value =
+                            e.target.value === "" ? 0 : Number(e.target.value);
+                          setAdjustmentAmount(value);
+                          const totalPayable =
+                            updateForm.getFieldValue("total_salary_payable") ||
+                            0;
+                          const newPayableAmount = Number(totalPayable) + value;
+                          updateForm.setFieldsValue({
+                            paid_amount: newPayableAmount,
+                          });
+                        }}
+                        placeholder="Enter adjustment amount"
+                      />
+                      <div className="text-xs text-amber-600 mt-2 flex items-start gap-1 bg-amber-50 p-2 rounded border border-amber-200">
+                        <span className="text-amber-600 font-bold">ⓘ</span>
+                        <span>
+                          This amount will be added to the payable amount{" "}
+                        </span>
+                      </div>
+                    </Form.Item>
+                    <Form.Item
+                      name="paid_amount"
+                      label={
+                        <span className="font-medium text-gray-700">
+                          Payable Amount
+                        </span>
+                      }
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter payable amount",
+                        },
+                      ]}
+                      className="mb-0">
+                      <Input
+                        type="number"
+                        prefix="₹"
+                        className="font-semibold"
+                        onChange={(e) => {
+                          const totalPayable =
+                            updateForm.getFieldValue("total_salary_payable") ||
+                            0;
+                          const newPaidAmount = Number(e.target.value || 0);
+                          const newAdjustment = newPaidAmount - totalPayable;
+                          setAdjustmentAmount(newAdjustment);
+                        }}
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                {/* Payment Transaction Section */}
+                <div className="bg-white p-5 rounded-lg shadow-sm">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+                    Transaction Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Form.Item
+                      name="payment_method"
+                      label={
+                        <span className="font-medium text-gray-700">
+                          Payment Mode
+                        </span>
+                      }
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select payment mode",
+                        },
+                      ]}
+                      className="mb-0">
+                      <Select
+                        placeholder="Select payment mode"
+                        size="large"
+                        options={[
+                          { label: "Cash", value: "Cash" },
+                          { label: "Online / UPI", value: "Online/UPI" },
+                          { label: "Online / NEFT", value: "Online/NEFT" },
+                          { label: "Online / IMPS", value: "Online/IMPS" },
+                          { label: "Online / RTGS", value: "Online/RTGS" },
+                          { label: "Bank Transfer", value: "Bank Transfer" },
+                          { label: "Cheque", value: "Cheque" },
+                          { label: "Direct Deposit", value: "Direct Deposit" },
+                        ]}
+                      />
+                    </Form.Item>
+
+                    {updateForm.getFieldValue("payment_method") !== "Cash" && (
+                      <Form.Item
+                        name="transaction_id"
+                        label={
+                          <span className="font-medium text-gray-700">
+                            Transaction ID
+                          </span>
+                        }
+                        rules={[
+                          {
+                            required:
+                              updateForm.getFieldValue("payment_method") !==
+                              "Cash",
+                            message: "Transaction ID is required",
+                          },
+                        ]}
+                        className="mb-0">
+                        <Input
+                          placeholder="Enter transaction reference"
+                          size="large"
+                          className="font-mono"
+                        />
+                      </Form.Item>
+                    )}
+
+                    <Form.Item
+                      name="pay_date"
+                      label={
+                        <span className="font-medium text-gray-700">
+                          Pay Date
+                        </span>
+                      }
+                      rules={[
+                        { required: true, message: "Please select pay date" },
+                      ]}
+                      getValueProps={(value) => ({
+                        value: value ? dayjs(value) : null,
+                      })}
+                      getValueFromEvent={(date) =>
+                        date ? date.toDate() : null
+                      }
+                      className="mb-0">
+                      <DatePicker
+                        style={{ width: "100%" }}
+                        size="large"
+                        format="DD MMM YYYY"
+                        disabledDate={(current) =>
+                          current && current.isAfter(dayjs().endOf("day"))
+                        }
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Form>
         </Drawer>
         <Modal
