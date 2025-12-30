@@ -156,6 +156,9 @@ import PromotionWhatsappMessageMenu from "../pages/PromotionWhatsappMessageMenu"
 import DueEmailMenu from "../pages/DueEmailMenu"
 import RCSMarketingMenu from "../pages/RCSMarketingMenu";
 import SMSMarketingMenu from "../pages/SMSMarketingMenu";
+
+import PaymentWithPenalty from "../pages/PaymentWithPenalty";
+
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -221,6 +224,14 @@ const mainRoutes = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Payment />
+      </ProtectedRoute>
+    ),
+  },
+      {
+    path: "/payment-menu/payment-in-out-menu/pay-in-menu/penalty-payment",
+    element: (
+      <ProtectedRoute>
+        <PaymentWithPenalty />
       </ProtectedRoute>
     ),
   },

@@ -28,6 +28,18 @@ const PayInMenu = () => {
        href:"/payment-menu/payment-in-out-menu/pay-in-menu/payment",
        stats: "Payment Receipt Information"
     },
+         {
+      id: "#2",
+      title: "Penalty payment Receipt",
+      description: "Customer Receipt Management.",
+      icon: <HiCurrencyRupee size={28} className="text-yellow-600" />,
+       color: "from-yellow-600 to-yellow-700",
+      lightColor: "bg-yellow-50",
+      borderColor: "border-yellow-200",
+       href:"/payment-menu/payment-in-out-menu/pay-in-menu/penalty-payment",
+       stats: "Payment Receipt Information Including Penalty"
+    },
+    
       {
       id: "#3",
       title: "Suspense Payments",

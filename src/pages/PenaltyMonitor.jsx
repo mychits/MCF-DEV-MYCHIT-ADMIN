@@ -50,7 +50,10 @@ import {
   CalculatorOutlined,
   WalletOutlined,
   ExclamationCircleOutlined,
+  DownloadOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
+import { AiFillBackward } from "react-icons/ai";
 import Sidebar from "../components/layouts/Sidebar";
 import { useNavigate } from 'react-router-dom';
 const { RangePicker } = DatePicker;
@@ -60,38 +63,32 @@ const { Title, Text } = Typography;
 const PenaltyMonitor = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
-  const [screenLoading, setScreenLoading] = useState(true);
+  const [screenLoading, setScreenLoading] = useState(false);
   const [usersData, setUsersData] = useState([]);
   const [groupFilter, setGroupFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [totals, setTotals] = useState({
-    totalCustomers: 0,
-    totalGroups: 0,
-    totalToBePaid: 0,
-    totalPaid: 0,
-    totalBalance: 0,
-    totalPenalty: 0,
-    totalLateFee: 0,
-    totalRegularPenalty: 0,
-    totalVcPenalty: 0,
-  });
 
-  // 🔹 Modal for breakdown
+  const [monthlyCollectedSummary, setMonthlyCollectedSummary] = useState(null);
+  const [monthlyCollectedDetails, setMonthlyCollectedDetails] = useState([]);
+  const [monthlyCollectedLoading, setMonthlyCollectedLoading] = useState(false);
+  const [monthlyDetailsModalVisible, setMonthlyDetailsModalVisible] = useState(false);
+
+  // Modal for breakdown
   const [breakdownModal, setBreakdownModal] = useState(false);
   const [breakdownData, setBreakdownData] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [loadingBreakdown, setLoadingBreakdown] = useState(false);
 
-  // 🔹 WhatsApp Selection & Modal
+  // WhatsApp Selection & Modal
   const [selectedRows, setSelectedRows] = useState([]);
   const [sendModal, setSendModal] = useState({ open: false, type: null });
 
-  // 🔹 Penalty Reversal State
+  // Penalty Reversal State
   const [reversalGroupFilter, setReversalGroupFilter] = useState("");
   const [reversalCustomerFilter, setReversalCustomerFilter] = useState("");
   const [reversalTicketFilter, setReversalTicketFilter] = useState("");
-
+  const [reversalDrawerOpen, setReversalDrawerOpen] = useState(false);
   const [penaltySummaryDrawer, setPenaltySummaryDrawer] = useState(false);
   const [penaltySummary, setPenaltySummary] = useState(null);
   const [selectedReversalType, setSelectedReversalType] = useState(null);
@@ -99,9 +96,19 @@ const PenaltyMonitor = () => {
   const [reverseAmount, setReverseAmount] = useState("");
   const [maxAllowedAmount, setMaxAllowedAmount] = useState(0);
 
+  // Add Penalty State
+  const [addPenaltyDrawerOpen, setAddPenaltyDrawerOpen] = useState(false);
+  const [addPenaltyGroupFilter, setAddPenaltyGroupFilter] = useState("");
+  const [addPenaltyCustomerFilter, setAddPenaltyCustomerFilter] = useState("");
+  const [addPenaltyTicketFilter, setAddPenaltyTicketFilter] = useState("");
+  const [addPenaltyDetails, setAddPenaltyDetails] = useState(null);
+  const [addPenaltyAmount, setAddPenaltyAmount] = useState("");
+  const [addLateFeeAmount, setAddLateFeeAmount] = useState("");
+  const [addPenaltyLoading, setAddPenaltyLoading] = useState(false);
+
   const groupOptions = [...new Set(usersData.map((u) => u.groupName))];
 
-  // 🔹 Customer & Ticket Options for Reversal Filters
+  // Customer & Ticket Options for Reversal Filters
   const customerOptions = useMemo(() => {
     if (!reversalGroupFilter) return [];
     const customers = new Map();
@@ -119,6 +126,24 @@ const PenaltyMonitor = () => {
     return user ? [user.paymentsTicket] : [];
   }, [usersData, reversalGroupFilter, reversalCustomerFilter]);
 
+  // Customer & Ticket Options for Add Penalty
+  const addPenaltyCustomerOptions = useMemo(() => {
+    if (!addPenaltyGroupFilter) return [];
+    const customers = new Map();
+    usersData
+      .filter(u => u.groupName === addPenaltyGroupFilter)
+      .forEach(u => customers.set(u.userName, u));
+    return Array.from(customers.values());
+  }, [usersData, addPenaltyGroupFilter]);
+
+  const addPenaltyTicketOptions = useMemo(() => {
+    if (!addPenaltyCustomerFilter) return [];
+    const user = usersData.find(
+      u => u.groupName === addPenaltyGroupFilter && u.userName === addPenaltyCustomerFilter
+    );
+    return user ? [user.paymentsTicket] : [];
+  }, [usersData, addPenaltyGroupFilter, addPenaltyCustomerFilter]);
+
   const filteredUsers = useMemo(() => {
     return filterOption(
       usersData.filter((u) => {
@@ -132,264 +157,343 @@ const PenaltyMonitor = () => {
     );
   }, [usersData, groupFilter, fromDate, toDate, searchText]);
 
-  // 🔹 Fetch Data Function (extracted for reuse)
-  const fetchData = async () => {
-    try {
-      setScreenLoading(true);
-      const reportResponse = await api.get("/user/all-customers-report");
-      const penaltyResponse = await api.get("/penalty/get-penalty-report");
-      const allPenaltyData = penaltyResponse.data?.data || [];
-      const penaltyMap = new Map();
-      allPenaltyData.forEach((penalty) => {
-        const key = `${penalty.user_id}_${penalty.group_id}`;
-        penaltyMap.set(key, penalty);
-      });
-      const usersList = [];
-      let count = 1;
-      for (const usrData of reportResponse.data || []) {
-        if (usrData?.data) {
-          for (const data of usrData.data) {
-            if (data?.enrollment?.group) {
-              const groupId = data.enrollment.group._id;
-              const userId = usrData._id;
-              const penaltyKey = `${userId}_${groupId}`;
-              const penaltyData = penaltyMap.get(penaltyKey) || {
-                summary: {
-                  total_penalty: 0,
-                  total_late_payment_charges: 0,
-                  grand_total_due_with_penalty: 0,
-                },
-                vacant_grace_days: 90,
-              };
-              const vacantCycles = penaltyData?.cycles?.filter((c) => c.vacant_cycle === true) || [];
-              const summary = penaltyData.summary || {};
-              let vcPenalty = summary.total_vacant_chit_penalty || 0;
-              let regularPenalty = Math.max(0, (summary.total_penalty || 0) - vcPenalty);
-              let totalLateFee = summary.total_late_payment_charges || 0;
+  // Fetch Data Function
+const fetchData = async () => {
+  try {
+    setScreenLoading(true);
+    const reportResponse = await api.get("/user/all-customers-report");
+    const penaltyResponse = await api.get("/penalty/get-penalty-report");
+    const manualPenaltyResponse = await api.get("/penalty/get-manual-penalties");
+    
+    console.log("Manual Penalty API Response:", manualPenaltyResponse);
+    
+    const allPenaltyData = penaltyResponse.data?.data || [];
+    const manualPenalties = manualPenaltyResponse.data?.data || [];
+    
+    // Create penalty map
+    const penaltyMap = new Map();
+    allPenaltyData.forEach((penalty) => {
+      const key = `${String(penalty.user_id)}_${String(penalty.group_id)}`;
+      penaltyMap.set(key, penalty);
+    });
 
-              // Check if the customer is fully paid
-              const isFullyPaid = (summary.total_paid || 0) >= (summary.total_expected || 0);
+    // Create manual penalty map with correct ID extraction
+    const manualPenaltyMap = {};
+    manualPenalties.forEach(p => {
+      // Extract IDs from objects (handle both populated and unpopulated data)
+      const userId = p.user_id?._id || p.user_id;
+      const groupId = p.group_id?._id || p.group_id;
+      const ticket = String(p.ticket || "").trim();
+      
+      if (!userId || !groupId || !ticket) {
+        console.warn("Skipping manual penalty with missing data:", p);
+        return;
+      }
+      
+      const key = `${String(userId)}_${String(groupId)}_${ticket}`;
+      
+      if (!manualPenaltyMap[key]) {
+        manualPenaltyMap[key] = { penalty_amount: 0, late_fee_amount: 0 };
+      }
+      
+      manualPenaltyMap[key].penalty_amount += Number(p.penalty_amount) || 0;
+      manualPenaltyMap[key].late_fee_amount += Number(p.late_fee_amount) || 0;
+      
+      console.log("✅ Added manual penalty for:", p.user_id?.phone_number || "Unknown", 
+                  "Key:", key,
+                  "Penalty:", manualPenaltyMap[key].penalty_amount,
+                  "Late Fee:", manualPenaltyMap[key].late_fee_amount);
+    });
 
-              // If fully paid, zero out all penalties
-              if (isFullyPaid) {
-                vcPenalty = 0;
-                regularPenalty = 0;
-                totalLateFee = 0;
-              }
+    console.log("🗺️ Final Manual Penalty Map:", manualPenaltyMap);
 
-              const amountToBePaid = summary.total_expected || 0;
-              const amountPaid = summary.total_paid || 0;
-              const balanceWithoutPenalty = amountToBePaid - amountPaid;
-              const combinedPenalty = regularPenalty + vcPenalty;
-              const totalOverdueCharges = combinedPenalty + totalLateFee;
-              const totalPenalty = regularPenalty + vcPenalty;
-              const balanceWithPenalty = summary.grand_total_due_with_penalty || 0;
-              const enrollmentDateStr = data.enrollment.createdAt?.split("T")[0] || "";
-              const enrollmentDate = moment(enrollmentDateStr);
-              const today = moment().startOf("day");
-              const vacantGraceDays = Number(penaltyData.vacant_grace_days || 90);
-              const vcGraceEnd = enrollmentDate.clone().add(vacantGraceDays, "days").startOf("day");
-              let isVcWithinGrace = false;
-              let isVcPenaltyApplied = false;
-              if (vacantCycles.length > 0) {
-                if (today.isSameOrBefore(vcGraceEnd, "day")) {
-                  isVcWithinGrace = true;
-                } else {
-                  isVcPenaltyApplied = true;
-                }
-              }
-              const whatsappMenuItems = [];
-              if (isVcWithinGrace) {
-                whatsappMenuItems.push({
-                  key: "vcWithinGrace",
-                  label: "VC Grace Reminder",
-                  icon: <MessageOutlined />,
-                  onClick: () =>
-                    sendSingleWhatsapp(
-                      {
-                        userName: usrData.userName,
-                        groupName: data.enrollment.group.group_name,
-                        paymentsTicket: data.payments.ticket,
-                        totalToBePaid: summary.total_expected || 0,
-                        userPhone: usrData.phone_number,
-                        enrollmentDate: enrollmentDateStr,
-                      },
-                      "vcWithinGrace"
-                    ),
-                });
-              }
-              if (isVcPenaltyApplied) {
-                whatsappMenuItems.push({
-                  key: "vcPenaltyApplied",
-                  label: "VC Penalty Applied",
-                  icon: <WarningOutlined style={{ color: "#faad14" }} />,
-                  danger: true,
-                  onClick: () =>
-                    sendSingleWhatsapp(
-                      {
-                        userName: usrData.userName,
-                        groupName: data.enrollment.group.group_name,
-                        paymentsTicket: data.payments.ticket,
-                        totalToBePaid: summary.total_expected || 0,
-                        userPhone: usrData.phone_number,
-                        enrollmentDate: enrollmentDateStr,
-                        vcPenalty,
-                        balance: balanceWithPenalty,
-                      },
-                      "vcPenaltyApplied"
-                    ),
-                });
-              }
-              if (!isVcWithinGrace && !isVcPenaltyApplied && data.isPrized !== "true") {
-                whatsappMenuItems.push({
-                  key: "latePenaltyWithin",
-                  label: "Late (No Penalty)",
-                  icon: <ClockCircleOutlined />,
-                  onClick: () =>
-                    sendSingleWhatsapp(
-                      {
-                        userName: usrData.userName,
-                        groupName: data.enrollment.group.group_name,
-                        paymentsTicket: data.payments.ticket,
-                        totalToBePaid: summary.total_expected || 0,
-                        userPhone: usrData.phone_number,
-                        enrollmentDate: enrollmentDateStr,
-                      },
-                      "latePenaltyWithin"
-                    ),
-                });
-              }
-              if (regularPenalty > 0 || totalLateFee > 0) {
-                whatsappMenuItems.push({
-                  key: "latePenaltyApplied",
-                  label: "Penalty Applied",
-                  icon: <DollarCircleOutlined style={{ color: "#cf1322" }} />,
-                  danger: true,
-                  onClick: () =>
-                    sendSingleWhatsapp(
-                      {
-                        userName: usrData.userName,
-                        groupName: data.enrollment.group.group_name,
-                        paymentsTicket: data.payments.ticket,
-                        totalToBePaid: summary.total_expected || 0,
-                        userPhone: usrData.phone_number,
-                        enrollmentDate: enrollmentDateStr,
-                        regularPenalty,
-                        totalLateFee,
-                        balance: balanceWithPenalty,
-                      },
-                      "latePenaltyApplied"
-                    ),
-                });
-              }
-              const whatsappActions = (
-                <Space size="small">
-                  <Button
-                    type="primary"
-                    icon={<EyeOutlined />}
-                    size="small"
-                    onClick={() =>
-                      handleShowBreakdown(
-                        userId,
-                        groupId,
-                        usrData.userName,
-                        data.enrollment.group.group_name,
-                        penaltyData
-                      )
-                    }
-                  >
-                    View
-                  </Button>
-                  {/* {whatsappMenuItems.length > 0 && (
-                    <Dropdown menu={{ items: whatsappMenuItems }} placement="bottomRight">
-                      <Button type="dashed" size="small" icon={<SendOutlined />}>
-                        WhatsApp <DownOutlined />
-                      </Button>
-                    </Dropdown>
-                  )} */}
-                </Space>
-              );
-              usersList.push({
-                _id: data.enrollment._id,
-                userId,
-                groupId,
-                sl_no: count,
-                userName: usrData.userName,
-                userPhone: usrData.phone_number,
-                customerId: usrData.customer_id,
-                amountPaid,
-                paymentsTicket: data.payments.ticket,
-                amountToBePaid,
-                groupName: data.enrollment.group.group_name,
-                enrollmentDate: enrollmentDateStr,
-                totalToBePaid: amountToBePaid,
-                balance: balanceWithPenalty,
-                regularPenalty,
-                vcPenalty,
-                totalPenalty: combinedPenalty, // ensures consistency
-                totalLateFee,
-                // ✅ NEWLY ADDED FIELDS
-                balanceWithoutPenalty,
-                combinedPenalty,
-                totalOverdueCharges,
-                actions: whatsappActions,
-                statusDiv: isVcWithinGrace ? (
-                  <Tag color="blue">VC – Within Grace</Tag>
-                ) : isVcPenaltyApplied ? (
-                  <Tag color="gold">VC Penalty Applied</Tag>
-                ) : data.isPrized === "true" ? (
-                  <Tag color="success" icon={<CheckCircleOutlined />}>
-                    Prized
-                  </Tag>
-                ) : (
-                  <Tag color="error" icon={<CloseCircleOutlined />}>
-                    Un Prized
-                  </Tag>
-                ),
-                isVcWithinGrace,
-                isVcPenaltyApplied,
-                hasPenaltyOrLateFee: regularPenalty > 0 || totalLateFee > 0,
-                vacantGraceDays,
-              });
-              count++;
+    const usersList = [];
+    let count = 1;
+    
+    for (const usrData of reportResponse.data || []) {
+      if (usrData?.data) {
+        for (const data of usrData.data) {
+          if (data?.enrollment?.group) {
+            const groupId = String(data.enrollment.group._id);
+            const userId = String(usrData._id);
+            const penaltyKey = `${userId}_${groupId}`;
+            const penaltyData = penaltyMap.get(penaltyKey) || {
+              summary: {
+                total_penalty: 0,
+                total_late_payment_charges: 0,
+                grand_total_due_with_penalty: 0,
+              },
+              vacant_grace_days: 90,
+            };
+            
+            const vacantCycles = penaltyData?.cycles?.filter((c) => c.vacant_cycle === true) || [];
+            const summary = penaltyData.summary || {};
+            let vcPenalty = summary.total_vacant_chit_penalty || 0;
+            let regularPenalty = Math.max(0, (summary.total_penalty || 0) - vcPenalty);
+            let totalLateFee = summary.total_late_payment_charges || 0;
+
+            // Check if customer is fully paid
+            const isFullyPaid = (summary.total_paid || 0) >= (summary.total_expected || 0);
+
+            // If fully paid, zero out all penalties
+            if (isFullyPaid) {
+              vcPenalty = 0;
+              regularPenalty = 0;
+              totalLateFee = 0;
             }
+
+            const amountToBePaid = summary.total_expected || 0;
+            const amountPaid = summary.total_paid || 0;
+            const balanceWithoutPenalty = amountToBePaid - amountPaid;
+            const combinedPenalty = regularPenalty + vcPenalty;
+            const totalOverdueCharges = combinedPenalty + totalLateFee;
+            const totalPenalty = regularPenalty + vcPenalty;
+            const balanceWithPenalty = summary.grand_total_due_with_penalty || 0;
+            const enrollmentDateStr = data.enrollment.createdAt?.split("T")[0] || "";
+            const enrollmentDate = moment(enrollmentDateStr);
+            const today = moment().startOf("day");
+            const vacantGraceDays = Number(penaltyData.vacant_grace_days || 90);
+            const vcGraceEnd = enrollmentDate.clone().add(vacantGraceDays, "days").startOf("day");
+            
+            let isVcWithinGrace = false;
+            let isVcPenaltyApplied = false;
+            if (vacantCycles.length > 0) {
+              if (today.isSameOrBefore(vcGraceEnd, "day")) {
+                isVcWithinGrace = true;
+              } else {
+                isVcPenaltyApplied = true;
+              }
+            }
+
+            // Get manual penalties for this user with consistent key format
+            const ticket = String(data.payments.ticket || "").trim();
+            const manualPenaltyKey = `${userId}_${groupId}_${ticket}`;
+            const manualPenaltiesForUser = manualPenaltyMap[manualPenaltyKey] || { penalty_amount: 0, late_fee_amount: 0 };
+            
+            console.log("👤 User:", usrData.userName, 
+                        "Manual Penalty Key:", manualPenaltyKey,
+                        "Manual Penalties:", manualPenaltiesForUser);
+
+            // WhatsApp menu items (keep your existing code)
+            const whatsappMenuItems = [];
+            if (isVcWithinGrace) {
+              whatsappMenuItems.push({
+                key: "vcWithinGrace",
+                label: "VC Grace Reminder",
+                icon: <MessageOutlined />,
+                onClick: () =>
+                  sendSingleWhatsapp(
+                    {
+                      userName: usrData.userName,
+                      groupName: data.enrollment.group.group_name,
+                      paymentsTicket: data.payments.ticket,
+                      totalToBePaid: summary.total_expected || 0,
+                      userPhone: usrData.phone_number,
+                      enrollmentDate: enrollmentDateStr,
+                    },
+                    "vcWithinGrace"
+                  ),
+              });
+            }
+            if (isVcPenaltyApplied) {
+              whatsappMenuItems.push({
+                key: "vcPenaltyApplied",
+                label: "VC Penalty Applied",
+                icon: <WarningOutlined style={{ color: "#faad14" }} />,
+                danger: true,
+                onClick: () =>
+                  sendSingleWhatsapp(
+                    {
+                      userName: usrData.userName,
+                      groupName: data.enrollment.group.group_name,
+                      paymentsTicket: data.payments.ticket,
+                      totalToBePaid: summary.total_expected || 0,
+                      userPhone: usrData.phone_number,
+                      enrollmentDate: enrollmentDateStr,
+                      vcPenalty,
+                      balance: balanceWithPenalty,
+                    },
+                    "vcPenaltyApplied"
+                  ),
+              });
+            }
+            if (!isVcWithinGrace && !isVcPenaltyApplied && data.isPrized !== "true") {
+              whatsappMenuItems.push({
+                key: "latePenaltyWithin",
+                label: "Late (No Penalty)",
+                icon: <ClockCircleOutlined />,
+                onClick: () =>
+                  sendSingleWhatsapp(
+                    {
+                      userName: usrData.userName,
+                      groupName: data.enrollment.group.group_name,
+                      paymentsTicket: data.payments.ticket,
+                      totalToBePaid: summary.total_expected || 0,
+                      userPhone: usrData.phone_number,
+                      enrollmentDate: enrollmentDateStr,
+                    },
+                    "latePenaltyWithin"
+                  ),
+              });
+            }
+            if (regularPenalty > 0 || totalLateFee > 0) {
+              whatsappMenuItems.push({
+                key: "latePenaltyApplied",
+                label: "Penalty Applied",
+                icon: <DollarCircleOutlined style={{ color: "#cf1322" }} />,
+                danger: true,
+                onClick: () =>
+                  sendSingleWhatsapp(
+                    {
+                      userName: usrData.userName,
+                      groupName: data.enrollment.group.group_name,
+                      paymentsTicket: data.payments.ticket,
+                      totalToBePaid: summary.total_expected || 0,
+                      userPhone: usrData.phone_number,
+                      enrollmentDate: enrollmentDateStr,
+                      regularPenalty,
+                      totalLateFee,
+                      balance: balanceWithPenalty,
+                    },
+                    "latePenaltyApplied"
+                  ),
+              });
+            }
+
+            const whatsappActions = (
+              <Space size="small">
+                <Button
+                  type="primary"
+                  icon={<EyeOutlined />}
+                  size="small"
+                  onClick={() =>
+                    handleShowBreakdown(
+                      userId,
+                      groupId,
+                      usrData.userName,
+                      data.enrollment.group.group_name,
+                      penaltyData
+                    )
+                  }
+                >
+                  View
+                </Button>
+              </Space>
+            );
+
+            const userRecord = {
+              _id: data.enrollment._id,
+              userId,
+              groupId,
+              sl_no: count,
+              userName: usrData.userName,
+              userPhone: usrData.phone_number,
+              customerId: usrData.customer_id,
+              amountPaid,
+              paymentsTicket: data.payments.ticket,
+              amountToBePaid,
+              groupName: data.enrollment.group.group_name,
+              enrollmentDate: enrollmentDateStr,
+              totalToBePaid: amountToBePaid,
+              balance: balanceWithPenalty,
+              regularPenalty,
+              vcPenalty,
+              totalPenalty: combinedPenalty,
+              totalLateFee,
+              balanceWithoutPenalty,
+              combinedPenalty,
+              totalOverdueCharges,
+              manualPenalty: manualPenaltiesForUser.penalty_amount,
+              manualLateFee: manualPenaltiesForUser.late_fee_amount,
+              actions: whatsappActions,
+              statusDiv: isVcWithinGrace ? (
+                <Tag color="blue">VC – Within Grace</Tag>
+              ) : isVcPenaltyApplied ? (
+                <Tag color="gold">VC Penalty Applied</Tag>
+              ) : data.isPrized === "true" ? (
+                <Tag color="success" icon={<CheckCircleOutlined />}>
+                  Prized
+                </Tag>
+              ) : (
+                <Tag color="error" icon={<CloseCircleOutlined />}>
+                  Un Prized
+                </Tag>
+              ),
+              isVcWithinGrace,
+              isVcPenaltyApplied,
+              hasPenaltyOrLateFee: regularPenalty > 0 || totalLateFee > 0,
+              vacantGraceDays,
+            };
+
+            console.log("📝 Final User Record:", userRecord.userName, 
+                        "Manual Penalty:", userRecord.manualPenalty,
+                        "Manual Late Fee:", userRecord.manualLateFee);
+
+            usersList.push(userRecord);
+            count++;
           }
         }
       }
-      const validUsers = usersList.filter((u) => {
-        const amountToBePaid = Number(u.totalToBePaid || 0);
-        const amountPaid = Number(u.amountPaid || 0);
+    }
 
-        // ❌ Hide if fully/overpaid
-        if (amountPaid >= amountToBePaid) {
-          return false;
-        }
+    const validUsers = usersList.filter((u) => {
+      const amountToBePaid = Number(u.totalToBePaid || 0);
+      const amountPaid = Number(u.amountPaid || 0);
 
-        // ❌ Hide if no penalties and no late fees
-        if (
-          (u.regularPenalty || 0) === 0 &&
-          (u.vcPenalty || 0) === 0 &&
-          (u.totalLateFee || 0) === 0
-        ) {
-          return false;
-        }
+      // Hide if fully/overpaid
+      if (amountPaid >= amountToBePaid) {
+        return false;
+      }
 
-        // ✅ Keep only if amount to be paid is positive
-        return amountToBePaid > 0;
-      });
-      setUsersData(validUsers);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      message.error("Failed to load penalty monitor data");
+      // Check if user has any type of penalty
+      const hasAnyPenalty = 
+        (u.regularPenalty || 0) > 0 ||
+        (u.vcPenalty || 0) > 0 ||
+        (u.totalLateFee || 0) > 0 ||
+        (u.manualPenalty || 0) > 0 ||
+        (u.manualLateFee || 0) > 0;
+
+      // Hide if no penalties at all
+      if (!hasAnyPenalty) {
+        return false;
+      }
+
+      return amountToBePaid > 0;
+    });
+
+    console.log("✅ Valid users with manual penalties:", 
+                validUsers.filter(u => (u.manualPenalty || 0) > 0 || (u.manualLateFee || 0) > 0)
+                  .map(u => ({ name: u.userName, penalty: u.manualPenalty, lateFee: u.manualLateFee })));
+
+    setUsersData(validUsers);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    message.error("Failed to load penalty monitor data");
+  } finally {
+    setScreenLoading(false);
+  }
+};
+
+  const fetchMonthlyCollected = async () => {
+    try {
+      setMonthlyCollectedLoading(true);
+      const res = await api.get("/penalty/collected-this-month");
+      if (res.data.success) {
+        setMonthlyCollectedSummary(res?.data?.summary);
+        setMonthlyCollectedDetails(res?.data?.details || []);
+      }
+    } catch (err) {
+      message.error("Failed to load monthly penalty collected data");
+      console.error(err);
     } finally {
-      setScreenLoading(false);
+      setMonthlyCollectedLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+    fetchMonthlyCollected();
   }, []);
-
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -405,9 +509,6 @@ const PenaltyMonitor = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-
-
-  // 🔹 Calculate totals
   useEffect(() => {
     const uniqueCustomerIds = new Set(filteredUsers.map(u => u.userId));
     const totalCustomers = uniqueCustomerIds.size;
@@ -416,11 +517,17 @@ const PenaltyMonitor = () => {
     const totalToBePaid = filteredUsers.reduce((sum, u) => sum + (u.totalToBePaid || 0), 0);
     const totalPaid = filteredUsers.reduce((sum, u) => sum + (u.amountPaid || 0), 0);
     const totalBalance = filteredUsers.reduce((sum, u) => sum + (u.balance || 0), 0);
+    const totalBalanceWithoutPenalty = filteredUsers.reduce((sum, u) => sum + (u.balanceWithoutPenalty || 0), 0);
+    const totalOutstandingWithPenalty = filteredUsers.reduce((sum, u) => sum + (u.balance || 0), 0);
     const totalPenalty = filteredUsers.reduce((sum, u) => sum + (u.totalPenalty || 0), 0);
     const totalLateFee = filteredUsers.reduce((sum, u) => sum + (u.totalLateFee || 0), 0);
+    const totalPenaltyAndLateFee = totalPenalty + totalLateFee;
     const totalRegularPenalty = filteredUsers.reduce((sum, u) => sum + (u.regularPenalty || 0), 0);
     const totalVcPenalty = filteredUsers.reduce((sum, u) => sum + (u.vcPenalty || 0), 0);
-    const totalTickets = filteredUsers.length; // Each row = 1 ticket
+    const totalManualPenalty = filteredUsers.reduce((sum, u) => sum + (u.manualPenalty || 0), 0);
+    const totalManualLateFee = filteredUsers.reduce((sum, u) => sum + (u.manualLateFee || 0), 0);
+    const totalTickets = filteredUsers.length;
+
     setTotals({
       totalCustomers,
       totalGroups,
@@ -432,10 +539,15 @@ const PenaltyMonitor = () => {
       totalRegularPenalty,
       totalVcPenalty,
       totalTickets,
+      totalBalanceWithoutPenalty,
+      totalOutstandingWithPenalty,
+      totalPenaltyAndLateFee,
+      totalManualPenalty,
+      totalManualLateFee,
     });
   }, [filteredUsers, groupFilter]);
 
-  // 🔹 Show penalty breakdown
+  // Show penalty breakdown
   const handleShowBreakdown = async (userId, groupId, userName, groupName, cachedPenaltyData = null) => {
     try {
       setLoadingBreakdown(true);
@@ -472,7 +584,7 @@ const PenaltyMonitor = () => {
     }
   };
 
-  // 🔹 WhatsApp Handlers (unchanged)
+  // WhatsApp Handlers
   const calculateGraceDaysLeft = (enrollmentDateStr, vacantGraceDays = 90) => {
     const enrollmentDate = moment(enrollmentDateStr);
     const today = moment().startOf("day");
@@ -592,7 +704,7 @@ const PenaltyMonitor = () => {
     setSendModal({ open: true, type });
   };
 
-  // 🔹 Reversal Handlers
+  // Reversal Handlers
   const handleGroupSelect = (value) => {
     setReversalGroupFilter(value || "");
     setReversalCustomerFilter("");
@@ -604,22 +716,6 @@ const PenaltyMonitor = () => {
   };
   const handleTicketSelect = (value) => {
     setReversalTicketFilter(value);
-    // const user = usersData.find(
-    //   u => u.groupName === reversalGroupFilter && u.userName === reversalCustomerFilter && u.paymentsTicket === value
-    // );
-    // if (user) {
-    //   setPenaltySummary({
-    //     userName: user.userName,
-    //     groupName: user.groupName,
-    //     paymentsTicket: user.paymentsTicket,
-    //     userId: user.userId,
-    //     groupId: user.groupId,
-    //     lateFee: user.totalLateFee || 0,
-    //     regularPenalty: user.regularPenalty || 0,
-    //     vcPenalty: user.vcPenalty || 0,
-    //   });
-    //   // setPenaltySummaryModal(true);
-    // }
   };
   const openReverseAmountDrawer = (type) => {
     let maxAmount = 0;
@@ -654,12 +750,54 @@ const PenaltyMonitor = () => {
       await api.post("/penalty/reverse-amount", payload);
       message.success("✅ Penalty reversal applied successfully!");
       setReverseAmountDrawer(false);
-      fetchData(); // Refresh
+      fetchData();
     } catch (err) {
       console.error("Reversal error:", err);
       message.error("❌ Failed to apply reversal");
     } finally {
       setScreenLoading(false);
+    }
+  };
+
+  // Add Penalty Handlers
+  const handleAddPenaltyGroupSelect = (value) => {
+    setAddPenaltyGroupFilter(value || "");
+    setAddPenaltyCustomerFilter("");
+    setAddPenaltyTicketFilter("");
+  };
+  const handleAddPenaltyCustomerSelect = (value) => {
+    setAddPenaltyCustomerFilter(value || "");
+    setAddPenaltyTicketFilter("");
+  };
+  const handleAddPenaltyTicketSelect = (value) => {
+    setAddPenaltyTicketFilter(value);
+  };
+  const handleSavePenalty = async () => {
+    if (!addPenaltyDetails || (!addPenaltyAmount && !addLateFeeAmount)) {
+      message.error("Please enter at least one of penalty or late fee amount");
+      return;
+    }
+    try {
+      setAddPenaltyLoading(true);
+      const payload = {
+        user_id: addPenaltyDetails.userId,
+        group_id: addPenaltyDetails.groupId,
+        ticket: addPenaltyDetails.paymentsTicket,
+        penalty_amount: parseFloat(addPenaltyAmount) || 0,
+        late_fee_amount: parseFloat(addLateFeeAmount) || 0,
+      };
+      await api.post("/penalty/add-manual-penalty", payload);
+      message.success("✅ Penalty added successfully!");
+      setAddPenaltyDrawerOpen(false);
+      setAddPenaltyDetails(null);
+      setAddPenaltyAmount("");
+      setAddLateFeeAmount("");
+      fetchData();
+    } catch (err) {
+      console.error("Add penalty error:", err);
+      message.error("❌ Failed to add penalty");
+    } finally {
+      setAddPenaltyLoading(false);
     }
   };
 
@@ -669,7 +807,7 @@ const PenaltyMonitor = () => {
       maximumFractionDigits: 2,
     });
 
-  // ✅ COLUMN DEFINITION (unchanged)
+  // COLUMN DEFINITION
   const columns = [
     {
       key: "sl_no",
@@ -715,8 +853,7 @@ const PenaltyMonitor = () => {
       header: "Amount to be Paid",
       render: (text) => (
         <span className="font-semibold text-green-600">
-          ₹{Number(text || 0).toFixed(2).toLocaleString("en-IN", {
-          })}
+          ₹{Number(text || 0).toFixed(2).toLocaleString("en-IN")}
         </span>
       ),
     },
@@ -725,9 +862,7 @@ const PenaltyMonitor = () => {
       header: "Amount Paid",
       render: (text) => (
         <span className="font-semibold text-indigo-600">
-          ₹{Number(text || 0).toFixed(2).toLocaleString("en-IN", {
-
-          })}
+          ₹{Number(text || 0).toFixed(2).toLocaleString("en-IN")}
         </span>
       ),
     },
@@ -761,6 +896,24 @@ const PenaltyMonitor = () => {
         </span>
       ),
     },
+    // {
+    //   key: "manualPenalty",
+    //   header: "Manual Penalty",
+    //   render: (text, record) => (
+    //     <span className="font-semibold text-indigo-600">
+    //       ₹{Number(record.manualPenalty || 0).toFixed(2).toLocaleString("en-IN")}
+    //     </span>
+    //   ),
+    // },
+    // {
+    //   key: "manualLateFee",
+    //   header: "Manual Late Fee",
+    //   render: (text, record) => (
+    //     <span className="font-semibold text-teal-600">
+    //       ₹{Number(record.manualLateFee || 0).toFixed(2).toLocaleString("en-IN")}
+    //     </span>
+    //   ),
+    // },
     {
       key: "totalOverdueCharges",
       header: "Total Overdue Charges",
@@ -788,6 +941,7 @@ const PenaltyMonitor = () => {
       render: (text, record) => record.actions,
     },
   ];
+
   const breakdownColumns = [
     {
       title: "Auction",
@@ -890,16 +1044,86 @@ const PenaltyMonitor = () => {
         row.vacant_cycle ? <Tag color="gold">VC Rate</Tag> : <span className="text-blue-600">{Number(v || 0)}%</span>,
     },
   ];
-  const filteredTableData = filterOption(
-    usersData.filter((u) => {
-      const matchGroup = groupFilter ? u.groupName === groupFilter : true;
-      const enrollmentDate = new Date(u.enrollmentDate);
-      const matchFromDate = fromDate ? enrollmentDate >= new Date(fromDate) : true;
-      const matchToDate = toDate ? enrollmentDate <= new Date(toDate) : true;
-      return matchGroup && matchFromDate && matchToDate;
-    }),
-    searchText
-  );
+
+  const exportBreakdownToCSV = () => {
+    if (!breakdownData.length) {
+      message.warning("No data to export");
+      return;
+    }
+
+    const headers = [
+      "Auction",
+      "Due Date",
+      "Expected",
+      "Paid",
+      "Balance",
+      "Penalty",
+      "Late Fee",
+      "Penalty Rate (%)",
+    ];
+
+    const csvContent = [
+      headers.join(","),
+      ...breakdownData.map((row) => {
+        const auction = row.vacant_cycle ? "VC" : row.cycle_no;
+        const dueDate = moment(row.to_date).format("DD/MM/YYYY");
+        const expected = Number(row.expected || 0).toFixed(2);
+        const paid = Number(row.paid || 0).toFixed(2);
+        const balance = Number(row.balance || 0).toFixed(2);
+        const penalty = Number(row.penalty || 0).toFixed(2);
+        const lateFee = Number(row.late_payment_charges || 0).toFixed(2);
+        const penaltyRate = row.vacant_cycle ? "VC Rate" : Number(row.penalty_rate_percent || 0);
+
+        const escape = (val) =>
+          typeof val === "string" && (val.includes(",") || val.includes('"'))
+            ? `"${val.replace(/"/g, '""')}"`
+            : val;
+
+        return [
+          escape(auction),
+          escape(dueDate),
+          expected,
+          paid,
+          balance,
+          penalty,
+          lateFee,
+          escape(penaltyRate),
+        ].join(",");
+      }),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `PenaltyBreakdown_${selectedCustomer?.userName || "customer"}_${moment().format("YYYYMMDD")}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const [totals, setTotals] = useState({
+    totalCustomers: 0,
+    totalGroups: 0,
+    totalToBePaid: 0,
+    totalPaid: 0,
+    totalBalance: 0,
+    totalPenalty: 0,
+    totalLateFee: 0,
+    totalRegularPenalty: 0,
+    totalVcPenalty: 0,
+    totalTickets: 0,
+    totalBalanceWithoutPenalty: 0,
+    totalOutstandingWithPenalty: 0,
+    totalPenaltyAndLateFee: 0,
+    totalManualPenalty: 0,
+    totalManualLateFee: 0,
+  });
+
   return (
     <div className="min-h-screen mt-20 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex">
@@ -909,14 +1133,39 @@ const PenaltyMonitor = () => {
           visibility={true}
         />
         {screenLoading ? (
-          <div className=" flex-grow flex items-center justify-center h-screen">
+          <div className="flex-grow flex items-center justify-center h-screen">
             <CircularLoader color="text-green-600" />
           </div>
         ) : (
           <div className="flex-grow w-1/2 p-6">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Penalty & Outstanding Report</h1>
-              <p className="text-gray-600">Monitor and manage customer penalties, late fees, and outstanding amounts</p>
+            {/* Header with buttons */}
+            <div className="mb-8 flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Penalty & Outstanding Report</h1>
+                <p className="text-gray-600">Monitor and manage customer penalties, late fees, and outstanding amounts</p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="dashed"
+                  onClick={() => navigate('/penalty-settings')}
+                >
+                  Go to Penalty Settings
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<CalculatorOutlined />}
+                  onClick={() => setAddPenaltyDrawerOpen(true)}
+                >
+                  Add Penalty
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<AiFillBackward />}
+                  onClick={() => setReversalDrawerOpen(true)}
+                >
+                  Penalty Reversal
+                </Button>
+              </div>
             </div>
 
             {/* Main Filters */}
@@ -948,22 +1197,6 @@ const PenaltyMonitor = () => {
                       ))}
                     </Select>
                   </div>
-                  {/* <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Enrollment Date Range</label>
-                    <RangePicker
-                      className="w-full"
-                      onChange={(dates) => {
-                        if (dates) {
-                          setFromDate(moment(dates[0]).format("YYYY-MM-DD"));
-                          setToDate(moment(dates[1]).format("YYYY-MM-DD"));
-                        } else {
-                          setFromDate("");
-                          setToDate("");
-                        }
-                      }}
-                      format="DD/MM/YYYY"
-                    />
-                  </div> */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Search Customer</label>
                     <Input
@@ -977,236 +1210,202 @@ const PenaltyMonitor = () => {
               </Card>
             </div>
 
-
-            {/* 🔹 PENALTY REVERSAL FILTERS */}
+            {/* Stats Cards Section */}
             <div className="mb-8">
-              <Card
-                className="shadow-sm rounded-lg border border-gray-200"
-                title={
-                  <div className="flex items-center">
-                    <DollarCircleOutlined className="mr-2 text-red-600" />
-                    <span className="font-semibold text-lg">Penalty Reversal</span>
-                  </div>
-                }
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
-                    <Select
-                      className="w-full"
-                      placeholder="Select Group"
-                      value={reversalGroupFilter || undefined}
-                      onChange={handleGroupSelect}
-                      allowClear
-                    >
-                      {groupOptions.map((group) => (
-                        <Option key={group} value={group}>
-                          {group}
-                        </Option>
-                      ))}
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-                    <Select
-                      className="w-full"
-                      placeholder="Select Customer"
-                      value={reversalCustomerFilter || undefined}
-                      onChange={(value) => handleCustomerSelect(value)}
-                      disabled={!reversalGroupFilter}
-                      allowClear
-                    >
-                      {customerOptions.map((user) => (
-                        <Option key={user.userName} value={user.userName}>
-                          {user.userName}
-                        </Option>
-                      ))}
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {reversalGroupFilter
-                        ? "Step 2: Choose a customer from this group"
-                        : "Select a group first"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Ticket</label>
-                    <Select
-                      className="w-full"
-                      placeholder="Select Ticket"
-                      value={reversalTicketFilter || undefined}
-                      onChange={(value) => setReversalTicketFilter(value)}
-                      disabled={!reversalCustomerFilter}
-                      allowClear
-                    >
-                      {ticketOptions.map((ticket) => (
-                        <Option key={ticket} value={ticket}>
-                          {ticket}
-                        </Option>
-                      ))}
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {reversalCustomerFilter
-                        ? "Step 3: Select a ticket to review penalties"
-                        : "Select a customer first"}
-                    </p>
-                  </div>
-                </div>
+              {/* First Row - Compact Overview Cards */}
+              <div className="mb-6">
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={8}>
+                    <Card className="shadow-sm border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                          <UsergroupAddOutlined className="text-blue-500 text-xl" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Total Customers</p>
+                          <p className="text-xl font-bold text-gray-800">{totals.totalCustomers}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Card className="shadow-sm border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="bg-purple-100 p-3 rounded-lg mr-4">
+                          <CalculatorOutlined className="text-purple-500 text-xl" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Total Tickets</p>
+                          <p className="text-xl font-bold text-gray-800">{totals.totalTickets}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Card className="shadow-sm border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="bg-green-100 p-3 rounded-lg mr-4">
+                          <UsergroupAddOutlined className="text-green-500 text-xl" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Total Groups</p>
+                          <p className="text-xl font-bold text-gray-800">{totals.totalGroups}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
 
-                <div className="flex justify-end">
-                  <Button
-                    type="primary"
-                    disabled={!reversalTicketFilter}
-                    onClick={() => {
-                      const user = usersData.find(
-                        (u) =>
-                          u.groupName === reversalGroupFilter &&
-                          u.userName === reversalCustomerFilter &&
-                          u.paymentsTicket === reversalTicketFilter
-                      );
-                      if (user) {
-                        setPenaltySummary({
-                          userName: user.userName,
-                          groupName: user.groupName,
-                          userPhone: user.userPhone,
-                          paymentsTicket: user.paymentsTicket,
-                          userId: user.userId,
-                          groupId: user.groupId,
-                          lateFee: user.totalLateFee || 0,
-                          regularPenalty: user.regularPenalty || 0,
-                          vcPenalty: user.vcPenalty || 0,
-                        });
-                        setPenaltySummaryDrawer(true);
-                      }
-                    }}
-                  >
-                    Review & Reverse Penalties
-                  </Button>
-                </div>
-              </Card>
-            </div>
+              <Row gutter={[12, 16]}>
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-red-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Total Penalty</p>
+                        <p className="text-lg font-bold text-red-600">
+                          ₹{Number(totals.totalPenalty || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
 
-            {/* Stats Cards */}
-            <div className="mb-8">
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Customers"
-                      value={totals.totalCustomers}
-                      prefix={<UsergroupAddOutlined className="text-blue-500" />}
-                      valueStyle={{ color: "#1890ff", fontSize: "1.5rem" }}
-                    />
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-orange-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Total Late Fees</p>
+                        <p className="text-lg font-bold text-orange-600">
+                          ₹{Number(totals.totalLateFee || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total No. of Tickets"
-                      value={totals.totalTickets}
 
-                      valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
-                    />
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-amber-500">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500">Penalty Collected</p>
+                        {monthlyCollectedLoading ? (
+                          <div className="flex justify-center py-1">
+                            <CircularLoader size="small" />
+                          </div>
+                        ) : monthlyCollectedSummary ? (
+                          <p className="text-lg font-bold text-amber-700">
+                            ₹{Number(monthlyCollectedSummary.totalCollected).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">No data</p>
+                        )}
+                      </div>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => setMonthlyDetailsModalVisible(true)}
+                        className="ml-1 p-0 h-auto"
+                      >
+                        <EyeOutlined className="text-amber-600" />
+                      </Button>
+                    </div>
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Groups"
-                      value={totals.totalGroups}
-                      prefix={<UsergroupAddOutlined className="text-green-500" />}
-                      valueStyle={{ color: "#52c41a", fontSize: "1.5rem" }}
-                    />
+
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-blue-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Total Balance</p>
+                        <p className="text-lg font-bold text-blue-600">
+                          ₹{Number(totals.totalBalanceWithoutPenalty || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
-                {/* <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Amount to be Paid"
-                      value={totals.totalToBePaid}
-                      precision={2}
-                      valueStyle={{ color: "#1890ff", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
-                  </Card>
-                </Col> */}
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Penalty"
-                      value={totals.totalPenalty}
-                      precision={2}
-                      valueStyle={{ color: "#ff4d4f", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
+
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-purple-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Outstanding (w/ Penalty)</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          ₹{Number(totals.totalOutstandingWithPenalty || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Late Fees"
-                      value={totals.totalLateFee}
-                      precision={2}
-                      valueStyle={{ color: "#f97316", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
+
+                <Col xs={24} sm={4}>
+                  <Card className="shadow-md border-l-4 border-l-pink-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Penalty + Late Fee</p>
+                        <p className="text-lg font-bold text-pink-600">
+                          ₹{Number(totals.totalPenaltyAndLateFee || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
-                {/* <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Paid"
-                      value={totals.totalPaid}
-                      precision={2}
-                      valueStyle={{ color: "#722ed1", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
-                  </Card>
-                </Col> */}
-                {/* <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="Total Balance"
-                      value={totals.totalBalance}
-                      precision={2}
-                      valueStyle={{ color: "#ff4d4f", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
-                  </Card>
-                </Col> */}
-                {/* <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title=" Penalty"
-                      value={totals.totalRegularPenalty}
-                      precision={2}
-                      valueStyle={{ color: "#ff4d4f", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12} md={4}>
-                  <Card className="shadow-sm border border-gray-200">
-                    <Statistic
-                      title="VC Penalty"
-                      value={totals.totalVcPenalty}
-                      precision={2}
-                      valueStyle={{ color: "#d97706", fontSize: "1.5rem" }}
-                      formatter={(value) => `₹${value?.toLocaleString("en-IN")}`}
-                    />
-                  </Card>
-                </Col> */}
               </Row>
-            </div>
 
-            <Button
-              type="dashed"
-              
-              onClick={() => navigate('/penalty-settings')}
-              style={{ marginBottom: 16 }}
-            >
-              Go to Penalty Settings
-            </Button>
+              {/* Second Row - Manual Penalties */}
+              {/* <Row gutter={[12, 16]} className="mt-4">
+                <Col xs={24} sm={12}>
+                  <Card className="shadow-md border-l-4 border-l-indigo-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Manual Penalty</p>
+                        <p className="text-lg font-bold text-indigo-600">
+                          ₹{Number(totals.totalManualPenalty || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} sm={12}>
+                  <Card className="shadow-md border-l-4 border-l-teal-500">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Manual Late Fee</p>
+                        <p className="text-lg font-bold text-teal-600">
+                          ₹{Number(totals.totalManualLateFee || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              </Row> */}
+            </div>
 
             {/* Data Table */}
             <Card
@@ -1218,7 +1417,7 @@ const PenaltyMonitor = () => {
                     {selectedRows.length > 0 ? (
                       <span className="font-medium text-blue-600">{selectedRows.length} selected</span>
                     ) : (
-                      `Showing ${filteredTableData.length} of ${usersData.length} Records`
+                      `Showing ${filteredUsers.length} of ${usersData.length} Records`
                     )}
                   </span>
                 </div>
@@ -1266,25 +1465,22 @@ const PenaltyMonitor = () => {
                 )
               }
             >
-
               <div className="w-full overflow-x-auto overflow-y-auto max-h-[600px]">
                 <div style={{ width: "max-content" }}>
                   <DataTable
-                    data={filteredTableData}
+                    data={filteredUsers}
                     columns={columns}
                     exportedPdfName="Penalty Report"
                     exportedFileName="PenaltyReport.csv"
                   />
                 </div>
               </div>
-
-
             </Card>
           </div>
         )}
       </div>
 
-      {/* 🔹 Breakdown Modal */}
+      {/* Breakdown Modal */}
       <Modal
         title={
           <div>
@@ -1311,6 +1507,17 @@ const PenaltyMonitor = () => {
           </div>
         ) : (
           <>
+            <div className="mb-4 flex justify-end">
+              <Button
+                type="primary"
+                onClick={exportBreakdownToCSV}
+                disabled={loadingBreakdown || !breakdownData.length}
+                icon={<DownloadOutlined />}
+              >
+                Export to CSV
+              </Button>
+            </div>
+
             <Table
               dataSource={breakdownData.map((d, i) => ({ ...d, key: i }))}
               columns={breakdownColumns}
@@ -1355,7 +1562,7 @@ const PenaltyMonitor = () => {
         )}
       </Modal>
 
-      {/* 🔹 WhatsApp Bulk Confirmation Modal */}
+      {/* WhatsApp Bulk Confirmation Modal */}
       <Modal
         title={
           <div className="flex items-center">
@@ -1389,6 +1596,232 @@ const PenaltyMonitor = () => {
         </ul>
       </Modal>
 
+      {/* Monthly Penalty Collection Details Modal */}
+      <Modal
+        title={
+          <div className="flex items-center">
+            <WalletOutlined className="mr-2 text-amber-600" />
+            <span className="text-lg font-semibold">Monthly Penalty Collection Details</span>
+          </div>
+        }
+        open={monthlyDetailsModalVisible}
+        onCancel={() => setMonthlyDetailsModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setMonthlyDetailsModalVisible(false)}>
+            Back
+          </Button>
+        ]}
+        width={1000}
+        bodyStyle={{ padding: "20px" }}
+      >
+        {monthlyCollectedLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <CircularLoader />
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-sm text-gray-600">Total Collected This Month</div>
+                  <div className="text-2xl font-bold text-amber-700">
+                    ₹{Number(monthlyCollectedSummary?.totalCollected).toLocaleString('en-IN')}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Number of Transactions</div>
+                  <div className="text-xl font-semibold text-gray-800">
+                    {monthlyCollectedDetails.length}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Table
+              dataSource={monthlyCollectedDetails}
+              rowKey="_id"
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 900 }}
+              columns={[
+                {
+                  title: "Customer",
+                  dataIndex: "userName",
+                  key: "userName",
+                  render: (name, r) => (
+                    <div>
+                      <div className="font-medium">{r.userName || "—"} </div>
+                      <div className="text-xs text-gray-500">{r.userName}</div>
+                    </div>
+                  ),
+                },
+                { title: "Group", dataIndex: "groupName", key: "groupName" },
+                { title: "Ticket", dataIndex: "ticket", key: "ticket" },
+                {
+                  title: "Regular",
+                  dataIndex: "regular_penalty",
+                  key: "regular_penalty",
+                  align: "right",
+                  render: (v) => `₹${Number(v || 0).toFixed(2)}`,
+                },
+                {
+                  title: "VC Penalty",
+                  dataIndex: "vc_penalty",
+                  key: "vc_penalty",
+                  align: "right",
+                  render: (v) => `₹${Number(v || 0).toFixed(2)}`,
+                },
+                {
+                  title: "Late Fee",
+                  dataIndex: "late_fee",
+                  key: "late_fee",
+                  align: "right",
+                  render: (v) => `₹${Number(v || 0).toFixed(2)}`,
+                },
+                {
+                  title: "Total",
+                  dataIndex: "total_penalty_deducted",
+                  key: "total",
+                  align: "right",
+                  render: (v) => (
+                    <strong className="text-green-700">₹{Number(v || 0).toFixed(2)}</strong>
+                  ),
+                },
+                {
+                  title: "Date",
+                  dataIndex: "createdAt",
+                  key: "date",
+                  render: (d) => moment(d).format("DD MMM YYYY"),
+                },
+              ]}
+            />
+          </>
+        )}
+      </Modal>
+
+      {/* Penalty Reversal Selection Drawer */}
+      <Drawer
+        title={
+          <div className="flex items-center">
+            <UndoOutlined className="mr-2 text-blue-600" />
+            <span className="text-lg font-semibold">Penalty Reversal</span>
+          </div>
+        }
+        placement="right"
+        onClose={() => setReversalDrawerOpen(false)}
+        open={reversalDrawerOpen}
+        width={600}
+        bodyStyle={{ padding: "20px" }}
+      >
+        <div className="mb-6">
+          <Alert
+            message="Select a customer to reverse penalties"
+            description="Choose a group, customer, and ticket to view and reverse penalties for that account."
+            type="info"
+            showIcon
+            className="mb-4"
+          />
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Group</label>
+            <Select
+              className="w-full"
+              placeholder="Select Group"
+              value={reversalGroupFilter || undefined}
+              onChange={handleGroupSelect}
+              allowClear
+            >
+              {groupOptions.map((group) => (
+                <Option key={group} value={group}>
+                  {group}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+            <Select
+              className="w-full"
+              placeholder="Select Customer"
+              value={reversalCustomerFilter || undefined}
+              onChange={(value) => handleCustomerSelect(value)}
+              disabled={!reversalGroupFilter}
+              allowClear
+            >
+              {customerOptions.map((user) => (
+                <Option key={user.userName} value={user.userName}>
+                  {user.userName}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              {reversalGroupFilter
+                ? "Step 2: Choose a customer from this group"
+                : "Select a group first"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ticket</label>
+            <Select
+              className="w-full"
+              placeholder="Select Ticket"
+              value={reversalTicketFilter || undefined}
+              onChange={handleTicketSelect}
+              disabled={!reversalCustomerFilter}
+              allowClear
+            >
+              {ticketOptions.map((ticket) => (
+                <Option key={ticket} value={ticket}>
+                  {ticket}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              {reversalCustomerFilter
+                ? "Step 3: Select a ticket to review penalties"
+                : "Select a customer first"}
+            </p>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              type="primary"
+              size="large"
+              block
+              disabled={!reversalTicketFilter}
+              onClick={() => {
+                const user = usersData.find(
+                  (u) =>
+                    u.groupName === reversalGroupFilter &&
+                    u.userName === reversalCustomerFilter &&
+                    u.paymentsTicket === reversalTicketFilter
+                );
+                if (user) {
+                  setPenaltySummary({
+                    userName: user.userName,
+                    groupName: user.groupName,
+                    userPhone: user.userPhone,
+                    paymentsTicket: user.paymentsTicket,
+                    userId: user.userId,
+                    groupId: user.groupId,
+                    lateFee: user.totalLateFee || 0,
+                    regularPenalty: user.regularPenalty || 0,
+                    vcPenalty: user.vcPenalty || 0,
+                  });
+                  setReversalDrawerOpen(false);
+                  setPenaltySummaryDrawer(true);
+                }
+              }}
+            >
+              Review & Reverse Penalties
+            </Button>
+          </div>
+        </div>
+      </Drawer>
 
       <Drawer
         title={null}
@@ -1406,7 +1839,7 @@ const PenaltyMonitor = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <Title level={3} className="text-white mb-1">Penalty Reversal</Title>
-                  <Text className=" text-sm">Review and reverse penalties for customer account</Text>
+                  <Text className="text-sm">Review and reverse penalties for customer account</Text>
                 </div>
                 <Button
                   type="primary"
@@ -1416,7 +1849,6 @@ const PenaltyMonitor = () => {
                 >
                   Close
                 </Button>
-
               </div>
             </div>
 
@@ -1587,7 +2019,7 @@ const PenaltyMonitor = () => {
                           ? "Reverse VC Penalty"
                           : "Reverse All Penalties & Fees"}
                   </Title>
-                  <Text className=" text-sm">
+                  <Text className="text-sm">
                     Enter the amount you want to reverse from the customer's penalties
                   </Text>
                 </div>
@@ -1602,7 +2034,6 @@ const PenaltyMonitor = () => {
                 >
                   Close
                 </Button>
-
               </div>
             </div>
 
@@ -1729,6 +2160,274 @@ const PenaltyMonitor = () => {
                   onClick={handleApplyReversal}
                 >
                   Apply Reversal
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Add Penalty Selection Drawer */}
+      <Drawer
+        title={
+          <div className="flex items-center">
+            <CalculatorOutlined className="mr-2 text-blue-600" />
+            <span className="text-lg font-semibold">Add Manual Penalty</span>
+          </div>
+        }
+        placement="right"
+        onClose={() => setAddPenaltyDrawerOpen(false)}
+        open={addPenaltyDrawerOpen}
+        width={600}
+        bodyStyle={{ padding: "20px" }}
+      >
+        <div className="mb-6">
+          <Alert
+            message="Select a customer to add manual penalties"
+            description="Choose a group, customer, and ticket to add manual penalties and late fees to that account."
+            type="info"
+            showIcon
+            className="mb-4"
+          />
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Group</label>
+            <Select
+              className="w-full"
+              placeholder="Select Group"
+              value={addPenaltyGroupFilter || undefined}
+              onChange={handleAddPenaltyGroupSelect}
+              allowClear
+            >
+              {groupOptions.map((group) => (
+                <Option key={group} value={group}>
+                  {group}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+            <Select
+              className="w-full"
+              placeholder="Select Customer"
+              value={addPenaltyCustomerFilter || undefined}
+              onChange={(value) => handleAddPenaltyCustomerSelect(value)}
+              disabled={!addPenaltyGroupFilter}
+              allowClear
+            >
+              {addPenaltyCustomerOptions.map((user) => (
+                <Option key={user.userName} value={user.userName}>
+                  {user.userName}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              {addPenaltyGroupFilter
+                ? "Step 2: Choose a customer from this group"
+                : "Select a group first"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ticket</label>
+            <Select
+              className="w-full"
+              placeholder="Select Ticket"
+              value={addPenaltyTicketFilter || undefined}
+              onChange={handleAddPenaltyTicketSelect}
+              disabled={!addPenaltyCustomerFilter}
+              allowClear
+            >
+              {addPenaltyTicketOptions.map((ticket) => (
+                <Option key={ticket} value={ticket}>
+                  {ticket}
+                </Option>
+              ))}
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              {addPenaltyCustomerFilter
+                ? "Step 3: Select a ticket to add penalties"
+                : "Select a customer first"}
+            </p>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              type="primary"
+              size="large"
+              block
+              disabled={!addPenaltyTicketFilter}
+              onClick={() => {
+                const user = usersData.find(
+                  (u) =>
+                    u.groupName === addPenaltyGroupFilter &&
+                    u.userName === addPenaltyCustomerFilter &&
+                    u.paymentsTicket === addPenaltyTicketFilter
+                );
+                if (user) {
+                  setAddPenaltyDetails({
+                    userName: user.userName,
+                    groupName: user.groupName,
+                    userPhone: user.userPhone,
+                    paymentsTicket: user.paymentsTicket,
+                    userId: user.userId,
+                    groupId: user.groupId,
+                    balance: user.balance,
+                    totalPenalty: user.totalPenalty,
+                    totalLateFee: user.totalLateFee,
+                  });
+                }
+              }}
+            >
+              Add Penalties
+            </Button>
+          </div>
+        </div>
+      </Drawer>
+
+      <Drawer
+        title={null}
+        placement="right"
+        onClose={() => {
+          setAddPenaltyDrawerOpen(false);
+          setAddPenaltyDetails(null);
+          setAddPenaltyAmount("");
+          setAddLateFeeAmount("");
+        }}
+        open={!!addPenaltyDetails}
+        width={800}
+        bodyStyle={{ padding: "0" }}
+        closable={false}
+      >
+        {addPenaltyDetails && (
+          <div className="h-full flex flex-col bg-white">
+            {/* Header Section */}
+            <div className="bg-blue-100 text-white p-6 border-b">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Title level={3} className="text-white mb-1">Add Manual Penalty</Title>
+                  <Text className="text-sm">Enter penalty and late fee amounts for customer account</Text>
+                </div>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => {
+                    setAddPenaltyDetails(null);
+                    setAddPenaltyAmount("");
+                    setAddLateFeeAmount("");
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 flex-grow overflow-auto">
+              {/* Customer Info */}
+              <div className="mb-4 border-b pb-4">
+                <Title level={4} className="mb-3">Customer Information</Title>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Customer</Text>
+                    <Text strong className="text-base">{addPenaltyDetails.userName}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Phone</Text>
+                    <Text strong className="text-base">{addPenaltyDetails.userPhone}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Group</Text>
+                    <Text strong className="text-base">{addPenaltyDetails.groupName}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Ticket</Text>
+                    <Text strong className="text-base">{addPenaltyDetails.paymentsTicket}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Current Balance</Text>
+                    <Text strong className="text-base">₹{Number(addPenaltyDetails.balance || 0).toLocaleString("en-IN")}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Current Penalty</Text>
+                    <Text strong className="text-base">₹{Number(addPenaltyDetails.totalPenalty || 0).toLocaleString("en-IN")}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs uppercase tracking-wide block mb-1">Current Late Fee</Text>
+                    <Text strong className="text-base">₹{Number(addPenaltyDetails.totalLateFee || 0).toLocaleString("en-IN")}</Text>
+                  </div>
+                </div>
+              </div>
+
+              {/* Penalty Input Section */}
+              <div className="mb-4">
+                <Title level={4} className="mb-3">Enter Penalty Details</Title>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Penalty Amount</label>
+                  <Input
+                    type="number"
+                    value={addPenaltyAmount}
+                    onChange={(e) => setAddPenaltyAmount(e.target.value)}
+                    placeholder="Enter penalty amount (e.g., 500)"
+                    min={0}
+                    step={0.01}
+                    className="w-full h-12 text-lg"
+                    addonBefore="₹"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Late Fee Amount</label>
+                  <Input
+                    type="number"
+                    value={addLateFeeAmount}
+                    onChange={(e) => setAddLateFeeAmount(e.target.value)}
+                    placeholder="Enter late fee amount (e.g., 200)"
+                    min={0}
+                    step={0.01}
+                    className="w-full h-12 text-lg"
+                    addonBefore="₹"
+                  />
+                </div>
+              </div>
+
+              {/* Warning Alert */}
+              <Alert
+                message="Important Notice"
+                description="The penalty and late fee amounts will be added to the customer's account. This action cannot be undone. Please verify the amounts before proceeding."
+                type="warning"
+                showIcon
+                className="mb-4"
+              />
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <Button
+                  size="large"
+                  className="flex-1"
+                  onClick={() => {
+                    setAddPenaltyDetails(null);
+                    setAddPenaltyAmount("");
+                    setAddLateFeeAmount("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  className="flex-1"
+                  disabled={addPenaltyLoading || (!addPenaltyAmount && !addLateFeeAmount)}
+                  onClick={handleSavePenalty}
+                  loading={addPenaltyLoading}
+                >
+                  Add Penalty
                 </Button>
               </div>
             </div>
