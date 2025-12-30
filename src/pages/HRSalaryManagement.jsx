@@ -882,7 +882,7 @@ const handleChange = (name, value) => {
       }
 
       // Add calculated incentive if it's been set (Pay as Incentive was confirmed)
-      totalSalaryPayable += finalCalculatedIncentive;
+      // totalSalaryPayable += finalCalculatedIncentive;
 
       const paidAmount = Number(formData.paid_amount || 0);
       const remainingBalance = totalSalaryPayable - paidAmount;
@@ -2365,7 +2365,7 @@ const handleChange = (name, value) => {
                           }
 
                           // Add calculated incentive if it's been set (Pay as Incentive was confirmed)
-                          total += formData.calculated_incentive || 0;
+                          // total += formData.calculated_incentive || 0;
 
                           return (
                             <>
