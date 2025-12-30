@@ -1776,6 +1776,7 @@ const Enroll = () => {
                   >
                     <option value="">-- Select Reason --</option>
                     <option value="Group Closed">Group Closed</option>
+                    <option value="Group Changed">Group Changed</option>
                     <option value="Chit Cancellation">Chit Cancellation</option>
                     <option value="On Hold">On Hold</option>
                     <option value="In Active Customer">
