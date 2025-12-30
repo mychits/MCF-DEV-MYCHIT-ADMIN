@@ -71,9 +71,9 @@ const Navbar = ({
   };
 
   const quickApprovals = [
-    { title: "Unverified Customers", href: "/approval-menu/un-approved-customer", color: "text-blue-600", icon: "👥" },
-    { title: "Mobile Enrollments", href: "/approval-menu/mobile-app-enroll", color: "text-amber-600", icon: "📱" },
-    { title: "Unapproved Loans", href: "/approval-menu/un-approved-loans", color: "text-red-600", icon: "💰" },
+    { title: "Unverified Customers", href: "/approval-menu/un-approved-customer", color: "text-blue-600", },
+    { title: "Mobile Enrollments", href: "/approval-menu/mobile-app-enroll", color: "text-amber-600",  },
+    { title: "Unapproved Loans", href: "/approval-menu/un-approved-loans", color: "text-red-600",  },
   ];
 
   return (
@@ -299,16 +299,10 @@ const Navbar = ({
                         onClick={() => setShowNotifications(false)}
                         className="flex items-center gap-4 px-6 py-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 border-b border-gray-100 last:border-0 group"
                       >
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${
-                          item.color === "text-blue-600" ? "from-blue-100 to-blue-50" :
-                          item.color === "text-amber-600" ? "from-amber-100 to-amber-50" :
-                          "from-red-100 to-red-50"
-                        } flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-200`}>
-                          {item.icon}
-                        </div>
+
                         
                         <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-sm ${item.color} group-hover:text-blue-700 transition-colors`}>
+                          <p className={`font-semibold text-sm ${item.color} group-hover:text-blue-900 transition-colors`}>
                             {item.title}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">Requires immediate attention</p>
@@ -342,7 +336,7 @@ const Navbar = ({
                 onClick={() => setShowProfileCard(!showProfileCard)}
                 className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 ${
                   showProfileCard 
-                    ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg ring-4 ring-indigo-100" 
+                    ? "bg-blue-700" 
                     : "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:from-indigo-50 hover:to-indigo-100 shadow-sm"
                 }`}
               >
@@ -353,7 +347,7 @@ const Navbar = ({
                 <div className="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slide-down">
                   
                   {/* Header with gradient and avatar */}
-                  <div className="relative h-28 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+                  <div className="relative h-28 bg-blue-900">
                     <div className="absolute inset-0 bg-black/10"></div>
                     <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
                       <div className="w-24 h-24 rounded-2xl bg-white shadow-xl flex items-center justify-center ring-4 ring-white">
