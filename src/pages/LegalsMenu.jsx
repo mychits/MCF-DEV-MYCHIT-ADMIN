@@ -21,6 +21,17 @@ const LegalsMenu = () => {
       href: "/legals-menu/guarantor",
       stats: "Active Guarantor",
     },
+     {
+      id: 1,
+      title: "Co Applicant",
+      description: "Manage Co Applicant information",
+      icon: <FaHandshake className="w-8 h-8" />,
+      color: "from-blue-600 to-blue-700",
+      lightColor: "bg-blue-50",
+      borderColor: "border-blue-200",
+      href: "/legals-menu/co-applicant",
+      stats: "Active Co Applicant",
+    },
    
   ];
 
@@ -92,7 +103,7 @@ const LegalsMenu = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Quick Tips</h3>
-                <p className="text-slate-700">Use the Legal directory to manage Guarantor Information, update Guarantor information all in one place.</p>
+                <p className="text-slate-700">Use the Legal directory to manage Guarantor and Co-Applicant Information, update Guarantor Co-Applicant information all in one place.</p>
                 
               </div>
             </div>

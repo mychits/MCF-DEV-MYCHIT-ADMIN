@@ -156,7 +156,8 @@ import PromotionWhatsappMessageMenu from "../pages/PromotionWhatsappMessageMenu"
 import DueEmailMenu from "../pages/DueEmailMenu"
 import RCSMarketingMenu from "../pages/RCSMarketingMenu";
 import SMSMarketingMenu from "../pages/SMSMarketingMenu";
-
+import CoApplicant from "../pages/CoApplicant";
+import CoApplicantPrint from "../components/printFormats/CoApplicantPrint"
 import PaymentWithPenalty from "../pages/PaymentWithPenalty";
 
 const mainRoutes = createBrowserRouter([
@@ -259,6 +260,11 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+      {
+    path: "/co-applicant-print/:id",
+
+    element: <CoApplicantPrint />,
+  },
   {
     path: "/payment-menu/payment-in-out-menu/pay-in-menu/payment-link-menu/chit-payment",
     element: (
@@ -308,6 +314,10 @@ const mainRoutes = createBrowserRouter([
         <MobileAppEnroll />
       </ProtectedRoute>
     ),
+  },
+   {
+    path: "/legals-menu/co-applicant",
+    element: <CoApplicant />,
   },
 
     {
