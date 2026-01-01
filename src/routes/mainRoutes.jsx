@@ -159,7 +159,7 @@ import SMSMarketingMenu from "../pages/SMSMarketingMenu";
 import CoApplicant from "../pages/CoApplicant";
 import CoApplicantPrint from "../components/printFormats/CoApplicantPrint"
 import PaymentWithPenalty from "../pages/PaymentWithPenalty";
-
+import PenaltyWhatsappMessageMenu from "../pages/PenaltyWhatsappMessageMenu";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -260,11 +260,11 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-      {
-    path: "/co-applicant-print/:id",
+  //     {
+  //   path: "/co-applicant-print/:id",
 
-    element: <CoApplicantPrint />,
-  },
+  //   element: <CoApplicantPrint />,
+  // },
   {
     path: "/payment-menu/payment-in-out-menu/pay-in-menu/payment-link-menu/chit-payment",
     element: (
@@ -932,6 +932,14 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+   {
+    path: "/market-menu/whatsapp-marketing/penalty-whatsapp-marketing",
+    element: (
+      <ProtectedRoute>
+        <PenaltyWhatsappMessageMenu />
+      </ProtectedRoute>
+    ),
+  },
     {
     path: "/market-menu/email-marketing/due-email-marketing",
     element: (
@@ -978,6 +986,7 @@ const mainRoutes = createBrowserRouter([
       {path: "/market-menu/whatsapp-marketing/lead-whatsapp-marketing/lead-referredby-message", element: <LeadReferredByWhatsappMessage/>},
       {path: "/market-menu/whatsapp-marketing/customer-whatsapp-marketing/customer-welcome-message", element: <CustomerWelcomeWhatsappMessage/>},
       {path: "/market-menu/whatsapp-marketing/customer-whatsapp-marketing/customer-chitplan-message", element: <CustomerChitPlanWhatsappMessage/>},
+    
    
   
 

@@ -108,8 +108,10 @@ const AdminApprovalMenu = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Quick Tips</h3>
-                <p className="text-slate-700">Use the Admin Approval directory to approve new Customers from Mobile, update customer information  all in one place.</p>
-                <p className="text-slate-700">Use the Admin Approval directory to approve new Enrollments from Mobile update new Enrolled Customer information all in one place.</p>
+                <p className="text-slate-700">Use the Approval directory to approve new Customers from Mobile, update customer information  all in one place.</p>
+                <p className="text-slate-700">Use the Approval directory to approve new Enrollments from Mobile update new Enrolled Customer information all in one place.</p>
+                <p className="text-slate-700">Use the  Approval directory to approve new Loans from Mobile update new Loan Customer information all in one place.</p>
+                
               </div>
             </div>
           </div>

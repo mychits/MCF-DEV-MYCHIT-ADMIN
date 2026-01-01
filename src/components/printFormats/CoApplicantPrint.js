@@ -304,6 +304,23 @@ const handleCoApplicantPrint = async (id) => {
       
       return y + 15; // Return Y position for next element
     };
+
+   const drawSectioncusTitle = (title, y) => {
+  const pageWidth = doc.internal.pageSize.width;
+  const centerX = pageWidth / 2;
+
+  // Section title background
+  doc.setFillColor(...colors.primary);
+  doc.rect(15, y, pageWidth - 30, 8, 'F');
+
+  // Section title text (centered)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...colors.white);
+  doc.text(title, centerX, y + 5.5, { align: 'center' });
+
+  return y + 15;
+};
     
     // Form field - single line
     const drawFormField = (label, value, x, y, width) => {
@@ -385,12 +402,15 @@ const handleCoApplicantPrint = async (id) => {
     // Customer information section
     doc.setFillColor(...colors.secondary);
     // FIX: Corrected the roundedRect call here
-    doc.roundedRect(15, currentY - 5, doc.internal.pageSize.width - 30, 8, 2, 2, 'F'); 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...colors.primary);
-    doc.text("Customer Information", 20, currentY);
+    // doc.roundedRect(15, currentY - 5, doc.internal.pageSize.width - 30, 8, 2, 2, 'F'); 
+    // doc.setFont("helvetica", "bold");
+    // doc.setFontSize(10);
+    // doc.setTextColor(...colors.primary);
+    // doc.text("Customer Information", 20, currentY);
+    currentY = drawSectioncusTitle("Customer Information", currentY)
     currentY += 10;
+    // currentY = drawSectionTitle("Customer Information", currentY + 5)
+
     
     currentY = drawTwoColumnFields([
       { label: "Customer Name", value: coapplicant?.user_id?.full_name || "" },

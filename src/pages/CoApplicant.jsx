@@ -8,7 +8,7 @@ import { IoMdMore } from "react-icons/io";
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
 import CircularLoader from "../components/loaders/CircularLoader";
-import handleCoApplicantPrint from "../components/printFormats/CoApplicantPrint";
+import CoApplicantPrint from "../components/printFormats/CoApplicantPrint";
 import CustomAlertDialog from "../components/alerts/CustomAlertDialog";
 import { Link } from "react-router-dom";
 import { fieldSize } from "../data/fieldSize";
@@ -207,120 +207,117 @@ const CoApplicant = () => {
     fetchEnrollmentData();
   }, []);
 
-  useEffect(() => {
-    const fetchCoApplicant = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get("/coapplicant/get-co-applicant-info");
-        console.info("guarantor", response.data);
-        const coapplicants = response.data?.coApplicant || [];
-        console.info("guarantor", response.data);
-        setCoApplicant(coapplicants);
-        const formattedData = coapplicants.map((group, index) => {
-          const enrollmentDetails = (group?.enrollment_ids || []).map(
-            (enroll) => {
-              const groupName = enroll?.group_id?.group_name || "N/A";
-              const ticket = enroll?.tickets || "N/A";
-              return `${groupName} | Ticket: ${ticket}`;
-            }
-          );
+useEffect(() => {
+  const fetchCoApplicant = async () => {
+    try {
+      setIsLoading(true);
 
-          const coapplicant = users.find(
-            (u) => u._id === group?.user_co_applicant
-          );
-          console.info("test-test", coapplicant);
-          const coapplicantName =
-            group?.coapplicant_referred_type === "Customer"
-              ? coapplicant?.full_name || "N/A"
-              : group?.co_applicant_name;
+      // wait until users are available (important for Customer type)
+      if (!users || users.length === 0) return;
 
-          const coapplicantPhone =
-            group?.co_applicant_referred_type === "Customer"
-              ? coapplicant?.phone_number || "N/A"
-              : group?.co_applicant_phone_number;
+      const response = await api.get("/coapplicant/get-co-applicant-info");
+      const coapplicants = response.data?.coApplicant || [];
 
-          return {
-            _id: group?._id,
-            id: index + 1,
-            user_id: group?.user_id?.full_name,
-            enrollment_summary: enrollmentDetails.join(", "),
-            co_applicant_referred_type: group?.co_applicant_referred_type,
-            co_applicant_name: coapplicantName,
-            co_applicant_phone_number: coapplicantPhone,
-            co_applicant_description: group?.co_applicant_description,
-            action: (
-              <div className="flex justify-center gap-2">
-                <Dropdown
-                  trigger={["click"]}
-                  menu={{
-                    items: [
-                      {
-                        key: "1",
-                        label: (
-                          <div
-                            className="text-green-600"
-                            onClick={() => handleUpdateModalOpen(group?._id)}
-                          >
-                            Edit
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "2",
-                        label: (
-                          <div
-                            className="text-red-600"
-                            onClick={() => handleDeleteModalOpen(group?._id)}
-                          >
-                            Delete
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "3",
-                        label: (
-                          <div
-                            onClick={() => handleCoApplicantPrint(group?._id)}
-                            className=" text-blue-600 "
-                          >
-                            Print
-                          </div>
-                        ),
-                      },
-                    ],
-                  }}
-                  placement="bottomLeft"
-                >
-                  <IoMdMore className="text-bold" />
-                </Dropdown>
-              </div>
-            ),
-          };
-        });
+      const formattedData = coapplicants.map((group, index) => {
+        // ---- Enrollment Summary ----
+        const enrollmentSummary = (group?.enrollment_ids || [])
+          .map((enroll) => {
+            const groupName = enroll?.group_id?.group_name || "N/A";
+            const ticket = enroll?.tickets || "N/A";
+            return `${groupName} | Ticket: ${ticket}`;
+          })
+          .join(", ");
 
-        let fData = formattedData.map((ele) => {
-          if (
-            ele?.co_applicant_address &&
-            typeof ele.co_applicant_address === "string" &&
-            ele?.co_applicant_address?.includes(",")
-          )
-            ele.co_applicant_address = ele.co_applicant_address.replaceAll(
-              ",",
-              " "
-            );
-          return ele;
-        });
-        if (!fData) setTableCoApplicant(formattedData);
-        if (!fData) setTableCoApplicant(formattedData);
-        setTableCoApplicant(fData);
-      } catch (error) {
-        console.error("Error fetching Co Applicant data:", error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCoApplicant();
-  }, [reloadTrigger]);
+        // ---- Resolve Customer Details ----
+        const customerUser =
+          group?.co_applicant_referred_type === "Customer"
+            ? users.find((u) => u._id === group?.user_co_applicant)
+            : null;
+
+        const coApplicantName =
+          group?.co_applicant_referred_type === "Customer"
+            ? customerUser?.full_name ?? "N/A"
+            : group?.co_applicant_name ?? "N/A";
+
+        const coApplicantPhone =
+          group?.co_applicant_referred_type === "Customer"
+            ? customerUser?.phone_number ?? "N/A"
+            : group?.co_applicant_phone_number ?? "N/A";
+
+        return {
+          _id: group?._id,
+          id: index + 1,
+          user_id: group?.user_id?.full_name ?? "N/A",
+          enrollment_summary: enrollmentSummary,
+          co_applicant_referred_type: group?.co_applicant_referred_type,
+          co_applicant_name: coApplicantName,
+          co_applicant_phone_number: coApplicantPhone,
+          co_applicant_description: group?.co_applicant_description ?? "-",
+
+          action: (
+            <div className="flex justify-center gap-2">
+              <Dropdown
+                trigger={["click"]}
+                placement="bottomLeft"
+                menu={{
+                  items: [
+                    {
+                      key: "1",
+                      label: (
+                        <div
+                          className="text-green-600"
+                          onClick={() => handleUpdateModalOpen(group?._id)}
+                        >
+                          Edit
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "2",
+                      label: (
+                        <div
+                          className="text-red-600"
+                          onClick={() => handleDeleteModalOpen(group?._id)}
+                        >
+                          Delete
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "3",
+                      label: (
+                        <div
+                          className="text-blue-600"
+                          onClick={() => CoApplicantPrint(group?._id)}
+                        >
+                          Print
+                        </div>
+                      ),
+                    },
+                  ],
+                }}
+              >
+                <IoMdMore className="cursor-pointer" />
+              </Dropdown>
+            </div>
+          ),
+        };
+      });
+
+      setCoApplicant(coapplicants);
+      setTableCoApplicant(formattedData);
+    } catch (error) {
+      console.error(
+        "Error fetching Co Applicant data:",
+        error?.message || error
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchCoApplicant();
+}, [reloadTrigger, users]);
 
   const handleAntDSelect = (field, value) => {
     setFormData((prevData) => ({
@@ -751,6 +748,19 @@ const CoApplicant = () => {
     }
   };
 
+    const handleInputFileChange = (e) => {
+    const { name, files } = e.target;
+    const file = files[0];
+
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: file, // ✅ keep real file object
+        [`${name}_preview`]: URL.createObjectURL(file), // for preview
+      }));
+    }
+  };
+
   const handleUpdateModalOpen = async (userId) => {
     try {
       const response = await api.get(
@@ -904,7 +914,7 @@ const CoApplicant = () => {
           <div className="flex-grow p-7">
             <div className="mt-6 mb-8">
               <div className="flex justify-between items-center w-full">
-                <h1 className="text-2xl font-semibold">Co Applicant</h1>
+                <h1 className="text-2xl font-semibold">Co Applicant Application</h1>
 
                 <button
                   onClick={() => {
@@ -3087,7 +3097,7 @@ const CoApplicant = () => {
                             id="co_applicant_photo"
                             type="file"
                             name="co_applicant_photo"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
@@ -3144,7 +3154,7 @@ const CoApplicant = () => {
                             id="co_applicant_pan_document"
                             type="file"
                             name="co_applicant_pan_document"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
@@ -3199,7 +3209,7 @@ const CoApplicant = () => {
                             id="co_applicant_aadhar_document"
                             type="file"
                             name="co_applicant_aadhar_document"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
@@ -3654,7 +3664,7 @@ const CoApplicant = () => {
                             id="co_applicant_income_document"
                             type="file"
                             name="co_applicant_income_document"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
@@ -3800,7 +3810,7 @@ const CoApplicant = () => {
                             id="co_applicant_bank_passbook_photo"
                             type="file"
                             name="co_applicant_bank_passbook_photo"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
@@ -3891,7 +3901,7 @@ const CoApplicant = () => {
                             id="co_applicant_document"
                             type="file"
                             name="co_applicant_document"
-                            onChange={handleFileChange}
+                            onChange={handleInputFileChange}
                             accept="image/*"
                             required
                             className="hidden"
