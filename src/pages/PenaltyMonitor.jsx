@@ -56,6 +56,7 @@ import {
 import { AiFillBackward } from "react-icons/ai";
 import Sidebar from "../components/layouts/Sidebar";
 import { useNavigate } from 'react-router-dom';
+
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -68,7 +69,6 @@ const PenaltyMonitor = () => {
   const [groupFilter, setGroupFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-
   const [monthlyCollectedSummary, setMonthlyCollectedSummary] = useState(null);
   const [monthlyCollectedDetails, setMonthlyCollectedDetails] = useState([]);
   const [monthlyCollectedLoading, setMonthlyCollectedLoading] = useState(false);
@@ -157,322 +157,172 @@ const PenaltyMonitor = () => {
     );
   }, [usersData, groupFilter, fromDate, toDate, searchText]);
 
-  // Fetch Data Function
-const fetchData = async () => {
-  try {
-    setScreenLoading(true);
-    const reportResponse = await api.get("/user/all-customers-report");
-    const penaltyResponse = await api.get("/penalty/get-penalty-report");
-    const manualPenaltyResponse = await api.get("/penalty/get-manual-penalties");
-    
-    console.log("Manual Penalty API Response:", manualPenaltyResponse);
-    
-    const allPenaltyData = penaltyResponse.data?.data || [];
-    const manualPenalties = manualPenaltyResponse.data?.data || [];
-    
-    // Create penalty map
-    const penaltyMap = new Map();
-    allPenaltyData.forEach((penalty) => {
-      const key = `${String(penalty.user_id)}_${String(penalty.group_id)}`;
-      penaltyMap.set(key, penalty);
-    });
-
-    // Create manual penalty map with correct ID extraction
-    const manualPenaltyMap = {};
-    manualPenalties.forEach(p => {
-      // Extract IDs from objects (handle both populated and unpopulated data)
-      const userId = p.user_id?._id || p.user_id;
-      const groupId = p.group_id?._id || p.group_id;
-      const ticket = String(p.ticket || "").trim();
+  // Fetch Data Function - Updated to use backend calculations
+  const fetchData = async () => {
+    try {
+      setScreenLoading(true);
+      // Fetch penalty report from backend
+      const penaltyResponse = await api.get("/penalty/get-penalty-report");
       
-      if (!userId || !groupId || !ticket) {
-        console.warn("Skipping manual penalty with missing data:", p);
+      if (!penaltyResponse.data?.success || !penaltyResponse.data?.data) {
+        message.error("Failed to load penalty monitor data");
         return;
       }
+
+      const allPenaltyData = penaltyResponse.data.data;
       
-      const key = `${String(userId)}_${String(groupId)}_${ticket}`;
+      // Fetch user details for additional information
+      const reportResponse = await api.get("/user/all-customers-report");
       
-      if (!manualPenaltyMap[key]) {
-        manualPenaltyMap[key] = { penalty_amount: 0, late_fee_amount: 0 };
-      }
-      
-      manualPenaltyMap[key].penalty_amount += Number(p.penalty_amount) || 0;
-      manualPenaltyMap[key].late_fee_amount += Number(p.late_fee_amount) || 0;
-      
-      console.log("✅ Added manual penalty for:", p.user_id?.phone_number || "Unknown", 
-                  "Key:", key,
-                  "Penalty:", manualPenaltyMap[key].penalty_amount,
-                  "Late Fee:", manualPenaltyMap[key].late_fee_amount);
-    });
-
-    console.log("🗺️ Final Manual Penalty Map:", manualPenaltyMap);
-
-    const usersList = [];
-    let count = 1;
-    
-    for (const usrData of reportResponse.data || []) {
-      if (usrData?.data) {
-        for (const data of usrData.data) {
-          if (data?.enrollment?.group) {
-            const groupId = String(data.enrollment.group._id);
-            const userId = String(usrData._id);
-            const penaltyKey = `${userId}_${groupId}`;
-            const penaltyData = penaltyMap.get(penaltyKey) || {
-              summary: {
-                total_penalty: 0,
-                total_late_payment_charges: 0,
-                grand_total_due_with_penalty: 0,
-              },
-              vacant_grace_days: 90,
-            };
-            
-            const vacantCycles = penaltyData?.cycles?.filter((c) => c.vacant_cycle === true) || [];
-            const summary = penaltyData.summary || {};
-            let vcPenalty = summary.total_vacant_chit_penalty || 0;
-            let regularPenalty = Math.max(0, (summary.total_penalty || 0) - vcPenalty);
-            let totalLateFee = summary.total_late_payment_charges || 0;
-
-            // Check if customer is fully paid
-            const isFullyPaid = (summary.total_paid || 0) >= (summary.total_expected || 0);
-
-            // If fully paid, zero out all penalties
-            if (isFullyPaid) {
-              vcPenalty = 0;
-              regularPenalty = 0;
-              totalLateFee = 0;
-            }
-
-            const amountToBePaid = summary.total_expected || 0;
-            const amountPaid = summary.total_paid || 0;
-            const balanceWithoutPenalty = amountToBePaid - amountPaid;
-            const combinedPenalty = regularPenalty + vcPenalty;
-            const totalOverdueCharges = combinedPenalty + totalLateFee;
-            const totalPenalty = regularPenalty + vcPenalty;
-            const balanceWithPenalty = summary.grand_total_due_with_penalty || 0;
-            const enrollmentDateStr = data.enrollment.createdAt?.split("T")[0] || "";
-            const enrollmentDate = moment(enrollmentDateStr);
-            const today = moment().startOf("day");
-            const vacantGraceDays = Number(penaltyData.vacant_grace_days || 90);
-            const vcGraceEnd = enrollmentDate.clone().add(vacantGraceDays, "days").startOf("day");
-            
-            let isVcWithinGrace = false;
-            let isVcPenaltyApplied = false;
-            if (vacantCycles.length > 0) {
-              if (today.isSameOrBefore(vcGraceEnd, "day")) {
-                isVcWithinGrace = true;
-              } else {
-                isVcPenaltyApplied = true;
+      // Create a map of user details for quick lookup
+      const userDetailsMap = new Map();
+      if (reportResponse.data) {
+        for (const usrData of reportResponse.data) {
+          if (usrData?.data) {
+            for (const data of usrData.data) {
+              if (data?.enrollment?.group) {
+                const groupId = String(data.enrollment.group._id);
+                const userId = String(usrData._id);
+                const ticket = String(data.payments.ticket || "").trim();
+                
+                userDetailsMap.set(`${userId}_${groupId}_${ticket}`, {
+                  userName: usrData.userName,
+                  userPhone: usrData.phone_number,
+                  customerId: usrData.customer_id,
+                  enrollmentDate: data.enrollment.createdAt?.split("T")[0] || "",
+                  isPrized: data.isPrized === "true"
+                });
               }
             }
-
-            // Get manual penalties for this user with consistent key format
-            const ticket = String(data.payments.ticket || "").trim();
-            const manualPenaltyKey = `${userId}_${groupId}_${ticket}`;
-            const manualPenaltiesForUser = manualPenaltyMap[manualPenaltyKey] || { penalty_amount: 0, late_fee_amount: 0 };
-            
-            console.log("👤 User:", usrData.userName, 
-                        "Manual Penalty Key:", manualPenaltyKey,
-                        "Manual Penalties:", manualPenaltiesForUser);
-
-            // WhatsApp menu items (keep your existing code)
-            const whatsappMenuItems = [];
-            if (isVcWithinGrace) {
-              whatsappMenuItems.push({
-                key: "vcWithinGrace",
-                label: "VC Grace Reminder",
-                icon: <MessageOutlined />,
-                onClick: () =>
-                  sendSingleWhatsapp(
-                    {
-                      userName: usrData.userName,
-                      groupName: data.enrollment.group.group_name,
-                      paymentsTicket: data.payments.ticket,
-                      totalToBePaid: summary.total_expected || 0,
-                      userPhone: usrData.phone_number,
-                      enrollmentDate: enrollmentDateStr,
-                    },
-                    "vcWithinGrace"
-                  ),
-              });
-            }
-            if (isVcPenaltyApplied) {
-              whatsappMenuItems.push({
-                key: "vcPenaltyApplied",
-                label: "VC Penalty Applied",
-                icon: <WarningOutlined style={{ color: "#faad14" }} />,
-                danger: true,
-                onClick: () =>
-                  sendSingleWhatsapp(
-                    {
-                      userName: usrData.userName,
-                      groupName: data.enrollment.group.group_name,
-                      paymentsTicket: data.payments.ticket,
-                      totalToBePaid: summary.total_expected || 0,
-                      userPhone: usrData.phone_number,
-                      enrollmentDate: enrollmentDateStr,
-                      vcPenalty,
-                      balance: balanceWithPenalty,
-                    },
-                    "vcPenaltyApplied"
-                  ),
-              });
-            }
-            if (!isVcWithinGrace && !isVcPenaltyApplied && data.isPrized !== "true") {
-              whatsappMenuItems.push({
-                key: "latePenaltyWithin",
-                label: "Late (No Penalty)",
-                icon: <ClockCircleOutlined />,
-                onClick: () =>
-                  sendSingleWhatsapp(
-                    {
-                      userName: usrData.userName,
-                      groupName: data.enrollment.group.group_name,
-                      paymentsTicket: data.payments.ticket,
-                      totalToBePaid: summary.total_expected || 0,
-                      userPhone: usrData.phone_number,
-                      enrollmentDate: enrollmentDateStr,
-                    },
-                    "latePenaltyWithin"
-                  ),
-              });
-            }
-            if (regularPenalty > 0 || totalLateFee > 0) {
-              whatsappMenuItems.push({
-                key: "latePenaltyApplied",
-                label: "Penalty Applied",
-                icon: <DollarCircleOutlined style={{ color: "#cf1322" }} />,
-                danger: true,
-                onClick: () =>
-                  sendSingleWhatsapp(
-                    {
-                      userName: usrData.userName,
-                      groupName: data.enrollment.group.group_name,
-                      paymentsTicket: data.payments.ticket,
-                      totalToBePaid: summary.total_expected || 0,
-                      userPhone: usrData.phone_number,
-                      enrollmentDate: enrollmentDateStr,
-                      regularPenalty,
-                      totalLateFee,
-                      balance: balanceWithPenalty,
-                    },
-                    "latePenaltyApplied"
-                  ),
-              });
-            }
-
-            const whatsappActions = (
-              <Space size="small">
-                <Button
-                  type="primary"
-                  icon={<EyeOutlined />}
-                  size="small"
-                  onClick={() =>
-                    handleShowBreakdown(
-                      userId,
-                      groupId,
-                      usrData.userName,
-                      data.enrollment.group.group_name,
-                      penaltyData
-                    )
-                  }
-                >
-                  View
-                </Button>
-              </Space>
-            );
-
-            const userRecord = {
-              _id: data.enrollment._id,
-              userId,
-              groupId,
-              sl_no: count,
-              userName: usrData.userName,
-              userPhone: usrData.phone_number,
-              customerId: usrData.customer_id,
-              amountPaid,
-              paymentsTicket: data.payments.ticket,
-              amountToBePaid,
-              groupName: data.enrollment.group.group_name,
-              enrollmentDate: enrollmentDateStr,
-              totalToBePaid: amountToBePaid,
-              balance: balanceWithPenalty,
-              regularPenalty,
-              vcPenalty,
-              totalPenalty: combinedPenalty,
-              totalLateFee,
-              balanceWithoutPenalty,
-              combinedPenalty,
-              totalOverdueCharges,
-              manualPenalty: manualPenaltiesForUser.penalty_amount,
-              manualLateFee: manualPenaltiesForUser.late_fee_amount,
-              actions: whatsappActions,
-              statusDiv: isVcWithinGrace ? (
-                <Tag color="blue">VC – Within Grace</Tag>
-              ) : isVcPenaltyApplied ? (
-                <Tag color="gold">VC Penalty Applied</Tag>
-              ) : data.isPrized === "true" ? (
-                <Tag color="success" icon={<CheckCircleOutlined />}>
-                  Prized
-                </Tag>
-              ) : (
-                <Tag color="error" icon={<CloseCircleOutlined />}>
-                  Un Prized
-                </Tag>
-              ),
-              isVcWithinGrace,
-              isVcPenaltyApplied,
-              hasPenaltyOrLateFee: regularPenalty > 0 || totalLateFee > 0,
-              vacantGraceDays,
-            };
-
-            console.log("📝 Final User Record:", userRecord.userName, 
-                        "Manual Penalty:", userRecord.manualPenalty,
-                        "Manual Late Fee:", userRecord.manualLateFee);
-
-            usersList.push(userRecord);
-            count++;
           }
         }
       }
+
+      // Process penalty data from backend
+      const usersList = [];
+      let count = 1;
+      
+      for (const penaltyData of allPenaltyData) {
+        const userId = String(penaltyData.user_id);
+        const groupId = String(penaltyData.group_id);
+        const ticket = String(penaltyData.ticket_number || "").trim();
+        
+        // Get user details from map
+        const userDetails = userDetailsMap.get(`${userId}_${groupId}_${ticket}`);
+        
+        if (!userDetails) continue;
+        
+        const summary = penaltyData.summary || {};
+        
+        // Extract values from backend calculation
+        const amountToBePaid = summary.total_expected || 0;
+        const amountPaid = summary.total_paid || 0;
+        const balance = summary.grand_total_due_with_penalty || 0;
+        const totalPenalty = summary.total_penalty || 0;
+        const totalLateFee = summary.total_late_payment_charges || 0;
+        const vcPenalty = summary.total_vacant_chit_penalty || 0;
+        const regularPenalty = totalPenalty - vcPenalty - (summary.manual_penalty || 0);
+        const manualPenalty = summary.manual_penalty || 0;
+        const manualLateFee = summary.manual_late_fee || 0;
+        
+        const totalOverdueCharges = totalPenalty + totalLateFee;
+        const balanceWithoutPenalty = amountToBePaid - amountPaid;
+        
+        // Determine VC status
+        const enrollmentDate = moment(userDetails.enrollmentDate);
+        const today = moment().startOf("day");
+        const vacantGraceDays = Number(penaltyData.vacant_grace_days || 90);
+        const vcGraceEnd = enrollmentDate.clone().add(vacantGraceDays, "days").startOf("day");
+        
+        let isVcWithinGrace = false;
+        let isVcPenaltyApplied = false;
+        const vacantCycles = penaltyData?.cycles?.filter((c) => c.vacant_cycle === true) || [];
+        
+        if (vacantCycles.length > 0) {
+          if (today.isSameOrBefore(vcGraceEnd, "day")) {
+            isVcWithinGrace = true;
+          } else {
+            isVcPenaltyApplied = true;
+          }
+        }
+        
+        const whatsappActions = (
+          <Space size="small">
+            <Button
+              type="primary"
+              icon={<EyeOutlined />}
+              size="small"
+              onClick={() =>
+                handleShowBreakdown(
+                  userId,
+                  groupId,
+                  userDetails.userName,
+                  penaltyData.group_name,
+                  penaltyData
+                )
+              }
+            >
+              View
+            </Button>
+          </Space>
+        );
+        
+        const userRecord = {
+          _id: penaltyData.enrollment_id,
+          userId,
+          groupId,
+          sl_no: count,
+          userName: userDetails.userName,
+          userPhone: userDetails.userPhone,
+          customerId: userDetails.customerId,
+          amountPaid,
+          paymentsTicket: ticket,
+          amountToBePaid,
+          groupName: penaltyData.group_name,
+          enrollmentDate: userDetails.enrollmentDate,
+          totalToBePaid: amountToBePaid,
+          balance,
+          regularPenalty,
+          vcPenalty,
+          totalPenalty,
+          totalLateFee,
+          balanceWithoutPenalty,
+          combinedPenalty: totalPenalty,
+          totalOverdueCharges,
+          manualPenalty,
+          manualLateFee,
+          actions: whatsappActions,
+          statusDiv: isVcWithinGrace ? (
+            <Tag color="blue">VC – Within Grace</Tag>
+          ) : isVcPenaltyApplied ? (
+            <Tag color="gold">VC Penalty Applied</Tag>
+          ) : userDetails.isPrized ? (
+            <Tag color="success" icon={<CheckCircleOutlined />}>
+              Prized
+            </Tag>
+          ) : (
+            <Tag color="error" icon={<CloseCircleOutlined />}>
+              Un Prized
+            </Tag>
+          ),
+          isVcWithinGrace,
+          isVcPenaltyApplied,
+          hasPenaltyOrLateFee: totalPenalty > 0 || totalLateFee > 0,
+          vacantGraceDays,
+        };
+        
+        usersList.push(userRecord);
+        count++;
+      }
+      
+      setUsersData(usersList);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      message.error("Failed to load penalty monitor data");
+    } finally {
+      setScreenLoading(false);
     }
-
-    const validUsers = usersList.filter((u) => {
-      const amountToBePaid = Number(u.totalToBePaid || 0);
-      const amountPaid = Number(u.amountPaid || 0);
-
-      // Hide if fully/overpaid
-      if (amountPaid >= amountToBePaid) {
-        return false;
-      }
-
-      // Check if user has any type of penalty
-      const hasAnyPenalty = 
-        (u.regularPenalty || 0) > 0 ||
-        (u.vcPenalty || 0) > 0 ||
-        (u.totalLateFee || 0) > 0 ||
-        (u.manualPenalty || 0) > 0 ||
-        (u.manualLateFee || 0) > 0;
-
-      // Hide if no penalties at all
-      if (!hasAnyPenalty) {
-        return false;
-      }
-
-      return amountToBePaid > 0;
-    });
-
-    console.log("✅ Valid users with manual penalties:", 
-                validUsers.filter(u => (u.manualPenalty || 0) > 0 || (u.manualLateFee || 0) > 0)
-                  .map(u => ({ name: u.userName, penalty: u.manualPenalty, lateFee: u.manualLateFee })));
-
-    setUsersData(validUsers);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    message.error("Failed to load penalty monitor data");
-  } finally {
-    setScreenLoading(false);
-  }
-};
+  };
 
   const fetchMonthlyCollected = async () => {
     try {
@@ -498,16 +348,33 @@ const fetchData = async () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
         navigate('/penalty-settings');
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
+
+  // Calculate totals based on backend data
+  const [totals, setTotals] = useState({
+    totalCustomers: 0,
+    totalGroups: 0,
+    totalToBePaid: 0,
+    totalPaid: 0,
+    totalBalance: 0,
+    totalPenalty: 0,
+    totalLateFee: 0,
+    totalRegularPenalty: 0,
+    totalVcPenalty: 0,
+    totalTickets: 0,
+    totalBalanceWithoutPenalty: 0,
+    totalOutstandingWithPenalty: 0,
+    totalPenaltyAndLateFee: 0,
+    totalManualPenalty: 0,
+    totalManualLateFee: 0,
+  });
 
   useEffect(() => {
     const uniqueCustomerIds = new Set(filteredUsers.map(u => u.userId));
@@ -553,29 +420,24 @@ const fetchData = async () => {
       setLoadingBreakdown(true);
       setSelectedCustomer({ userName, groupName });
       setBreakdownModal(true);
+      
+      // Use cached data if available
       let penaltyData = cachedPenaltyData;
       if (!penaltyData) {
         const res = await api.get("/penalty/get-penalty-report", {
           params: { user_id: userId, group_id: groupId },
         });
-        penaltyData = res.data;
+        if (res.data?.success && res.data?.data?.length > 0) {
+          penaltyData = res.data.data[0];
+        }
       }
-      const processedCycles = penaltyData.cycles?.map((cycle, index, arr) => {
-        const carryForward = index === 0 ? 0 : arr[index - 1].balance - Math.max(0, arr[index - 1].paid - (arr[index - 1].expected + (arr[index - 1].carry_forward || 0)));
-        const cycleTotal = cycle.expected + Math.max(0, carryForward);
-        const nextCarryForward = cycle.balance - Math.max(0, cycle.paid - cycleTotal);
-        const vcRate = cycle.vacant_cycle ? Number(cycle.penalty_rate_percent || 0) : 0;
-        const appliedVcAmount = cycle.vacant_cycle ? (cycle.expected * vcRate) / 100 : 0;
-        return {
-          ...cycle,
-          carry_forward: Math.max(0, carryForward),
-          cycle_total: cycleTotal,
-          next_carry_forward: Math.max(0, nextCarryForward),
-          excess: Math.max(0, cycle.paid - cycleTotal),
-          appliedVcAmount,
-        };
-      }) || [];
-      setBreakdownData(processedCycles);
+      
+      if (!penaltyData || !penaltyData.cycles) {
+        message.error("No penalty breakdown data available");
+        return;
+      }
+      
+      setBreakdownData(penaltyData.cycles);
     } catch (err) {
       console.error(err);
       message.error("Failed to load penalty breakdown");
@@ -591,11 +453,13 @@ const fetchData = async () => {
     const graceEnd = enrollmentDate.clone().add(vacantGraceDays, "days");
     return Math.max(0, graceEnd.diff(today, "days"));
   };
+
   const calculateDaysLate = (enrollmentDateStr) => {
     const lastDue = moment().startOf("month");
     const today = moment();
     return Math.max(0, today.diff(lastDue, "days"));
   };
+
   const sendSingleWhatsapp = async (user, type) => {
     try {
       setScreenLoading(true);
@@ -626,6 +490,7 @@ const fetchData = async () => {
           },
         },
       };
+
       let endpoint = "";
       switch (type) {
         case "vcWithinGrace": endpoint = "/whatsapp/vc-within-grace"; break;
@@ -634,6 +499,7 @@ const fetchData = async () => {
         case "latePenaltyApplied": endpoint = "/whatsapp/late-penalty-applied"; break;
         default: throw new Error("Invalid WhatsApp type");
       }
+
       const res = await api.post(endpoint, payload);
       const { success, error } = res.data;
       if (success > 0) {
@@ -648,6 +514,7 @@ const fetchData = async () => {
       setScreenLoading(false);
     }
   };
+
   const handleSendWhatsapp = async () => {
     if (selectedRows.length === 0) return;
     setScreenLoading(true);
@@ -680,6 +547,7 @@ const fetchData = async () => {
           },
         };
       });
+
       let endpoint = "";
       switch (sendModal.type) {
         case "vcWithinGrace": endpoint = "/whatsapp/vc-within-grace"; break;
@@ -688,6 +556,7 @@ const fetchData = async () => {
         case "latePenaltyApplied": endpoint = "/whatsapp/late-penalty-applied"; break;
         default: throw new Error("Invalid WhatsApp type");
       }
+
       const res = await api.post(endpoint, payload);
       const { success, error } = res.data;
       message.success(`✅ ${success} message(s) sent. ❌ ${error} failed.`);
@@ -700,6 +569,7 @@ const fetchData = async () => {
       setScreenLoading(false);
     }
   };
+
   const openSendModal = (type) => {
     setSendModal({ open: true, type });
   };
@@ -717,13 +587,14 @@ const fetchData = async () => {
   const handleTicketSelect = (value) => {
     setReversalTicketFilter(value);
   };
+
   const openReverseAmountDrawer = (type) => {
     let maxAmount = 0;
     switch (type) {
-      case "late_fee": maxAmount = penaltySummary.lateFee; break;
+      case "late_fee": maxAmount = penaltySummary.totalLateFee; break;
       case "penalty": maxAmount = penaltySummary.regularPenalty; break;
       case "vc_penalty": maxAmount = penaltySummary.vcPenalty; break;
-      case "all": maxAmount = penaltySummary.lateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty; break;
+      case "all": maxAmount = penaltySummary.totalLateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty; break;
       default: maxAmount = 0;
     }
     setMaxAllowedAmount(maxAmount);
@@ -732,6 +603,7 @@ const fetchData = async () => {
     setReverseAmountDrawer(true);
     setPenaltySummaryDrawer(false);
   };
+
   const handleApplyReversal = async () => {
     const amount = parseFloat(reverseAmount);
     if (!amount || amount <= 0 || amount > maxAllowedAmount) {
@@ -772,6 +644,7 @@ const fetchData = async () => {
   const handleAddPenaltyTicketSelect = (value) => {
     setAddPenaltyTicketFilter(value);
   };
+
   const handleSavePenalty = async () => {
     if (!addPenaltyDetails || (!addPenaltyAmount && !addLateFeeAmount)) {
       message.error("Please enter at least one of penalty or late fee amount");
@@ -879,11 +752,11 @@ const fetchData = async () => {
       },
     },
     {
-      key: "combinedPenalty",
+      key: "totalPenalty",
       header: "Total Penalty",
       render: (text, record) => (
         <span className="font-semibold text-purple-600">
-          ₹{Number(record.combinedPenalty || 0).toFixed(2).toLocaleString("en-IN")}
+          ₹{Number(record.totalPenalty || 0).toFixed(2).toLocaleString("en-IN")}
         </span>
       ),
     },
@@ -896,24 +769,6 @@ const fetchData = async () => {
         </span>
       ),
     },
-    // {
-    //   key: "manualPenalty",
-    //   header: "Manual Penalty",
-    //   render: (text, record) => (
-    //     <span className="font-semibold text-indigo-600">
-    //       ₹{Number(record.manualPenalty || 0).toFixed(2).toLocaleString("en-IN")}
-    //     </span>
-    //   ),
-    // },
-    // {
-    //   key: "manualLateFee",
-    //   header: "Manual Late Fee",
-    //   render: (text, record) => (
-    //     <span className="font-semibold text-teal-600">
-    //       ₹{Number(record.manualLateFee || 0).toFixed(2).toLocaleString("en-IN")}
-    //     </span>
-    //   ),
-    // },
     {
       key: "totalOverdueCharges",
       header: "Total Overdue Charges",
@@ -1050,7 +905,6 @@ const fetchData = async () => {
       message.warning("No data to export");
       return;
     }
-
     const headers = [
       "Auction",
       "Due Date",
@@ -1061,7 +915,6 @@ const fetchData = async () => {
       "Late Fee",
       "Penalty Rate (%)",
     ];
-
     const csvContent = [
       headers.join(","),
       ...breakdownData.map((row) => {
@@ -1073,12 +926,10 @@ const fetchData = async () => {
         const penalty = Number(row.penalty || 0).toFixed(2);
         const lateFee = Number(row.late_payment_charges || 0).toFixed(2);
         const penaltyRate = row.vacant_cycle ? "VC Rate" : Number(row.penalty_rate_percent || 0);
-
         const escape = (val) =>
           typeof val === "string" && (val.includes(",") || val.includes('"'))
             ? `"${val.replace(/"/g, '""')}"`
             : val;
-
         return [
           escape(auction),
           escape(dueDate),
@@ -1091,7 +942,6 @@ const fetchData = async () => {
         ].join(",");
       }),
     ].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -1105,24 +955,6 @@ const fetchData = async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-
-  const [totals, setTotals] = useState({
-    totalCustomers: 0,
-    totalGroups: 0,
-    totalToBePaid: 0,
-    totalPaid: 0,
-    totalBalance: 0,
-    totalPenalty: 0,
-    totalLateFee: 0,
-    totalRegularPenalty: 0,
-    totalVcPenalty: 0,
-    totalTickets: 0,
-    totalBalanceWithoutPenalty: 0,
-    totalOutstandingWithPenalty: 0,
-    totalPenaltyAndLateFee: 0,
-    totalManualPenalty: 0,
-    totalManualLateFee: 0,
-  });
 
   return (
     <div className="min-h-screen mt-20 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -1256,7 +1088,6 @@ const fetchData = async () => {
                   </Col>
                 </Row>
               </div>
-
               <Row gutter={[12, 16]}>
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-red-500">
@@ -1273,7 +1104,6 @@ const fetchData = async () => {
                     </div>
                   </Card>
                 </Col>
-
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-orange-500">
                     <div className="flex justify-between items-center">
@@ -1289,7 +1119,6 @@ const fetchData = async () => {
                     </div>
                   </Card>
                 </Col>
-
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-amber-500">
                     <div className="flex justify-between items-center">
@@ -1321,7 +1150,6 @@ const fetchData = async () => {
                     </div>
                   </Card>
                 </Col>
-
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-blue-500">
                     <div className="flex justify-between items-center">
@@ -1337,7 +1165,6 @@ const fetchData = async () => {
                     </div>
                   </Card>
                 </Col>
-
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-purple-500">
                     <div className="flex justify-between items-center">
@@ -1353,7 +1180,6 @@ const fetchData = async () => {
                     </div>
                   </Card>
                 </Col>
-
                 <Col xs={24} sm={4}>
                   <Card className="shadow-md border-l-4 border-l-pink-500">
                     <div className="flex justify-between items-center">
@@ -1370,41 +1196,6 @@ const fetchData = async () => {
                   </Card>
                 </Col>
               </Row>
-
-              {/* Second Row - Manual Penalties */}
-              {/* <Row gutter={[12, 16]} className="mt-4">
-                <Col xs={24} sm={12}>
-                  <Card className="shadow-md border-l-4 border-l-indigo-500">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs text-gray-500">Manual Penalty</p>
-                        <p className="text-lg font-bold text-indigo-600">
-                          ₹{Number(totals.totalManualPenalty || 0).toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </Col>
-
-                <Col xs={24} sm={12}>
-                  <Card className="shadow-md border-l-4 border-l-teal-500">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs text-gray-500">Manual Late Fee</p>
-                        <p className="text-lg font-bold text-teal-600">
-                          ₹{Number(totals.totalManualLateFee || 0).toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </Col>
-              </Row> */}
             </div>
 
             {/* Data Table */}
@@ -1517,7 +1308,6 @@ const fetchData = async () => {
                 Export to CSV
               </Button>
             </div>
-
             <Table
               dataSource={breakdownData.map((d, i) => ({ ...d, key: i }))}
               columns={breakdownColumns}
@@ -1636,7 +1426,6 @@ const fetchData = async () => {
                 </div>
               </div>
             </div>
-
             <Table
               dataSource={monthlyCollectedDetails}
               rowKey="_id"
@@ -1721,7 +1510,6 @@ const fetchData = async () => {
             className="mb-4"
           />
         </div>
-
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Group</label>
@@ -1740,7 +1528,6 @@ const fetchData = async () => {
             </Select>
             <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
             <Select
@@ -1763,7 +1550,6 @@ const fetchData = async () => {
                 : "Select a group first"}
             </p>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ticket</label>
             <Select
@@ -1786,7 +1572,6 @@ const fetchData = async () => {
                 : "Select a customer first"}
             </p>
           </div>
-
           <div className="pt-4">
             <Button
               type="primary"
@@ -1808,7 +1593,7 @@ const fetchData = async () => {
                     paymentsTicket: user.paymentsTicket,
                     userId: user.userId,
                     groupId: user.groupId,
-                    lateFee: user.totalLateFee || 0,
+                    totalLateFee: user.totalLateFee || 0,
                     regularPenalty: user.regularPenalty || 0,
                     vcPenalty: user.vcPenalty || 0,
                   });
@@ -1851,7 +1636,6 @@ const fetchData = async () => {
                 </Button>
               </div>
             </div>
-
             {/* Customer Info Card */}
             <div className="px-6 py-4 border-b">
               <div className="flex items-center mb-3">
@@ -1876,14 +1660,11 @@ const fetchData = async () => {
                 </div>
               </div>
             </div>
-
             {/* Penalty Breakdown Section */}
             <div className="px-6 py-4 flex-grow overflow-auto">
               <Title level={4} className="mb-4">Penalty Breakdown</Title>
-
               <div className="grid grid-cols-2 gap-4 mb-4">
-                {/* Late Fee Card */}
-                <Card className={`h-full ${penaltySummary.lateFee > 0 ? '' : 'opacity-60'}`}>
+                <Card className={`h-full ${penaltySummary.totalLateFee > 0 ? '' : 'opacity-60'}`}>
                   <div className="mb-4">
                     <Title level={5} className="mb-1">Late Fee</Title>
                     <Text type="secondary" className="text-sm">Charges for delayed payments</Text>
@@ -1891,10 +1672,10 @@ const fetchData = async () => {
                   <div className="mb-4">
                     <Text type="secondary" className="text-sm">Available for Reversal</Text>
                     <div className="text-xl font-semibold">
-                      ₹{Number(penaltySummary.lateFee).toLocaleString("en-IN")}
+                      ₹{Number(penaltySummary.totalLateFee).toLocaleString("en-IN")}
                     </div>
                   </div>
-                  {penaltySummary.lateFee > 0 && (
+                  {penaltySummary.totalLateFee > 0 && (
                     <Button
                       type="primary"
                       className="w-full"
@@ -1904,8 +1685,6 @@ const fetchData = async () => {
                     </Button>
                   )}
                 </Card>
-
-                {/* Regular Penalty Card */}
                 <Card className={`h-full ${penaltySummary.regularPenalty > 0 ? '' : 'opacity-60'}`}>
                   <div className="mb-4">
                     <Title level={5} className="mb-1">Regular Penalty</Title>
@@ -1928,8 +1707,6 @@ const fetchData = async () => {
                   )}
                 </Card>
               </div>
-
-              {/* VC Penalty Card */}
               <Card className={`mb-4 ${penaltySummary.vcPenalty > 0 ? '' : 'opacity-60'}`}>
                 <div className="mb-4">
                   <Title level={5} className="mb-1">Vacant Chit Penalty</Title>
@@ -1951,9 +1728,7 @@ const fetchData = async () => {
                   </Button>
                 )}
               </Card>
-
-              {/* Total Reversal Card */}
-              <Card className={`mb-4 ${(penaltySummary.lateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 ? 'border-2 border-slate-300' : 'opacity-60'}`}>
+              <Card className={`mb-4 ${(penaltySummary.totalLateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 ? 'border-2 border-slate-300' : 'opacity-60'}`}>
                 <div className="mb-4">
                   <Title level={5} className="mb-1">Total Reversible Amount</Title>
                   <Text type="secondary" className="text-sm">Sum of all penalties and fees</Text>
@@ -1962,13 +1737,13 @@ const fetchData = async () => {
                   <Text type="secondary" className="text-sm">Total Available for Reversal</Text>
                   <div className="text-2xl font-semibold">
                     ₹{(
-                      Number(penaltySummary.lateFee) +
+                      Number(penaltySummary.totalLateFee) +
                       Number(penaltySummary.regularPenalty) +
                       Number(penaltySummary.vcPenalty)
                     ).toLocaleString("en-IN")}
                   </div>
                 </div>
-                {(penaltySummary.lateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 && (
+                {(penaltySummary.totalLateFee + penaltySummary.regularPenalty + penaltySummary.vcPenalty) > 0 && (
                   <Button
                     type="primary"
                     className="w-full"
@@ -1978,8 +1753,6 @@ const fetchData = async () => {
                   </Button>
                 )}
               </Card>
-
-              {/* Information Alert */}
               <Alert
                 message="Important Information"
                 description="Select a penalty type above to reverse. You may reverse part or all of any penalty type. Enter the exact amount in the next step. All reversals will be logged for audit purposes."
@@ -2014,10 +1787,10 @@ const fetchData = async () => {
                     {selectedReversalType === "late_fee"
                       ? "Reverse Late Fee"
                       : selectedReversalType === "penalty"
-                        ? "Reverse Regular Penalty"
-                        : selectedReversalType === "vc_penalty"
-                          ? "Reverse VC Penalty"
-                          : "Reverse All Penalties & Fees"}
+                      ? "Reverse Regular Penalty"
+                      : selectedReversalType === "vc_penalty"
+                      ? "Reverse VC Penalty"
+                      : "Reverse All Penalties & Fees"}
                   </Title>
                   <Text className="text-sm">
                     Enter the amount you want to reverse from the customer's penalties
@@ -2036,7 +1809,6 @@ const fetchData = async () => {
                 </Button>
               </div>
             </div>
-
             <div className="px-6 py-4 flex-grow overflow-auto">
               {/* Customer Info */}
               <div className="mb-4 border-b pb-4">
@@ -2060,24 +1832,22 @@ const fetchData = async () => {
                   </div>
                 </div>
               </div>
-
               {/* Available Amount Card */}
               <div className="mb-4 p-4 bg-slate-50 rounded-lg border">
                 <Title level={4} className="mb-2">
                   {selectedReversalType === "late_fee"
                     ? "Late Fee Available for Reversal"
                     : selectedReversalType === "penalty"
-                      ? "Regular Penalty Available for Reversal"
-                      : selectedReversalType === "vc_penalty"
-                        ? "VC Penalty Available for Reversal"
-                        : "Total Reversible Amount"}
+                    ? "Regular Penalty Available for Reversal"
+                    : selectedReversalType === "vc_penalty"
+                    ? "VC Penalty Available for Reversal"
+                    : "Total Reversible Amount"}
                 </Title>
                 <div className="text-2xl font-semibold mb-2">
                   ₹{maxAllowedAmount.toLocaleString("en-IN")}
                 </div>
                 <Text type="secondary">Maximum amount that can be reversed</Text>
               </div>
-
               {/* Amount Input Section */}
               <div className="mb-4">
                 <Title level={4} className="mb-3">Enter Reversal Amount</Title>
@@ -2098,7 +1868,6 @@ const fetchData = async () => {
                   </div>
                 )}
               </div>
-
               {/* Quick Select Buttons */}
               <div className="mb-4">
                 <Title level={5} className="mb-3">Quick Select Amount</Title>
@@ -2129,7 +1898,6 @@ const fetchData = async () => {
                   </Button>
                 </div>
               </div>
-
               {/* Warning Alert */}
               <Alert
                 message="Important Notice"
@@ -2138,7 +1906,6 @@ const fetchData = async () => {
                 showIcon
                 className="mb-4"
               />
-
               {/* Action Buttons */}
               <div className="flex gap-4">
                 <Button
@@ -2190,7 +1957,6 @@ const fetchData = async () => {
             className="mb-4"
           />
         </div>
-
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Group</label>
@@ -2209,7 +1975,6 @@ const fetchData = async () => {
             </Select>
             <p className="text-xs text-gray-500 mt-1">Step 1: Select a group to proceed</p>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
             <Select
@@ -2232,7 +1997,6 @@ const fetchData = async () => {
                 : "Select a group first"}
             </p>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ticket</label>
             <Select
@@ -2255,7 +2019,6 @@ const fetchData = async () => {
                 : "Select a customer first"}
             </p>
           </div>
-
           <div className="pt-4">
             <Button
               type="primary"
@@ -2327,7 +2090,6 @@ const fetchData = async () => {
                 </Button>
               </div>
             </div>
-
             <div className="px-6 py-4 flex-grow overflow-auto">
               {/* Customer Info */}
               <div className="mb-4 border-b pb-4">
@@ -2363,11 +2125,9 @@ const fetchData = async () => {
                   </div>
                 </div>
               </div>
-
               {/* Penalty Input Section */}
               <div className="mb-4">
                 <Title level={4} className="mb-3">Enter Penalty Details</Title>
-                
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Penalty Amount</label>
                   <Input
@@ -2381,7 +2141,6 @@ const fetchData = async () => {
                     addonBefore="₹"
                   />
                 </div>
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Late Fee Amount</label>
                   <Input
@@ -2396,7 +2155,6 @@ const fetchData = async () => {
                   />
                 </div>
               </div>
-
               {/* Warning Alert */}
               <Alert
                 message="Important Notice"
@@ -2405,7 +2163,6 @@ const fetchData = async () => {
                 showIcon
                 className="mb-4"
               />
-
               {/* Action Buttons */}
               <div className="flex gap-4">
                 <Button
