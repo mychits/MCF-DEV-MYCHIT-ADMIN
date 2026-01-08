@@ -12,6 +12,7 @@ import filterOption from "../helpers/filterOption";
 import { FaCalculator } from "react-icons/fa";
 import CircularLoader from "../components/loaders/CircularLoader";
 import { fieldSize } from "../data/fieldSize";
+import handleLoanRequestPrint from "../components/printFormats/LoanRequestPrint"
 const Loan = () => {
   const [users, setUsers] = useState([]);
   const [agents, setAgents] = useState([]);
@@ -217,6 +218,17 @@ const handleRemoveBorrower = async () => {
                           onClick={() => handleRemoveModalOpen(borrower._id)}
                         >
                           Remove
+                        </div>
+                      ),
+                    },
+                     {
+                      key: "3",
+                      label: (
+                        <div
+                          className="text-blue-600"
+                          onClick={() => handleLoanRequestPrint(borrower._id)}
+                        >
+                          Print
                         </div>
                       ),
                     },
