@@ -74,6 +74,7 @@ const Payroll = () => {
       epf: 0,
       professional_tax: 0,
     },
+    additional_salary:[]
   });
   const [updateFormData, setUpdateFormData] = useState({
     name: "",
@@ -111,6 +112,7 @@ const Payroll = () => {
       epf: 0,
       professional_tax: 0,
     },
+    additional_salary:[]
   });
   useEffect(() => {
     const fetchEmployeeProfile = async () => {
@@ -218,16 +220,11 @@ const Payroll = () => {
     } 
     else {
       if (name === "salary") {
-        // let basic = (0.6 * (Number(value) || 0)).toFixed(2);
-        // let hra = (basic * 0.4).toFixed(2);
+        
         setFormData((prevData) => ({
           ...prevData,
           [name]: value,
-          // earnings: {
-          //   ...prevData.earnings,
-          //   basic,
-          //   hra,
-          // },
+         
         }));
       } 
       else {
@@ -579,6 +576,7 @@ const Payroll = () => {
           professional_tax:
             response?.data?.employee?.deductions?.professional_tax || 0,
         },
+        additional_salary:response?.data?.employee?.additional_salary || [],
       });
       setSelectedManagerId(response.data?.employee?.designation_id?._id || 0);
       setSelectedReportingManagerId(
@@ -1258,6 +1256,37 @@ const Payroll = () => {
                     htmlFor="salary"
                   >
                     Fixed Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    onWheel={(e) => e.target.blur()}
+                    name="salary"
+                    value={formData.salary}
+                    onChange={(e) =>
+                      handleChange(e.target.name, e.target.value)
+                    }
+                    id="salary"
+                    placeholder="Enter Your Salary"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  <span className="ml-2 font-medium font-mono text-blue-600">
+                    {numberToIndianWords(formData.salary || 0)}
+                  </span>
+                  {errors.salary && (
+                    <p className="mt-2 text-sm text-red-600">{errors.salary}</p>
+                  )}
+                </div>
+              </div>
+
+
+               <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block  text-sm font-medium text-gray-900"
+                    htmlFor="salary"
+                  >
+                    Additional Salary <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"

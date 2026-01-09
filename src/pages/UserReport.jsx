@@ -5,12 +5,13 @@ import api from "../instance/TokenInstance";
 import DataTable from "../components/layouts/Datatable";
 import CircularLoader from "../components/loaders/CircularLoader";
 import CustomerReportPrint from "../components/printFormats/CustomerReportPrint";
-import { Select } from "antd";
+import { Dropdown, Select } from "antd";
 import Navbar from "../components/layouts/Navbar";
 import filterOption from "../helpers/filterOption";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { IoMdDownload } from "react-icons/io";
+import { IoMdMore } from "react-icons/io";
 import Fuse from "fuse.js";
 const UserReport = () => {
   const [searchParams] = useSearchParams();
@@ -86,10 +87,12 @@ const UserReport = () => {
   const [filteredAuction, setFilteredAuction] = useState([]);
   const [groupInfo, setGroupInfo] = useState({});
 
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
+  // const [selectedDate, setSelectedDate] = useState(() => {
+  //   const today = new Date();
+  //   return today.toISOString().split("T")[0];
+  // });
+  const [selectedFromDate, setSelectedFromDate] = useState("");
+  const [selectedToDate, setSelectedToDate] = useState("");
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState(
     userId ? userId : ""
@@ -110,9 +113,23 @@ const UserReport = () => {
   const [filteredBorrowerData, setFilteredBorrowerData] = useState([]);
   const [filteredDisbursement, setFilteredDisbursement] = useState([]);
   const [disbursementLoading, setDisbursementLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+
   const [registrationAmount, setRegistrationAmount] = useState(null);
   const [registrationDate, setRegistrationDate] = useState(null);
   const [finalPaymentBalance, setFinalPaymentBalance] = useState(0);
+  // transctions details
+  const [selectedLabel, setSelectedLabel] = useState("50");
+  const [showFilterField, setShowFilterField] = useState(false);
+  const today = new Date();
+  const todayString = today.toISOString().split("T")[0];
+
+  const [hideAccountType, setHideAccountType] = useState("");
+  const [selectedAccountType, setSelectedAccountType] = useState("");
+  const [selectedPaymentFor, setSelectedPaymentFor] = useState([]);
+  const [showAllPaymentModes, setShowAllPaymentModes] = useState(false);
+  const [transactionsTable, setTransactionsTable] = useState([]);
+  const [totalTransactions, setTotalTransactons] = useState(10);
   const onGlobalSearchChangeHandler = (e) => {
     setSearchText(e.target.value);
   };
@@ -161,6 +178,127 @@ const UserReport = () => {
     { key: "balance", header: "Balance" },
   ];
 
+  const TransactionsColumns = [
+    { key: "id", header: "SL. NO" },
+    { key: "date", header: "Paid Date" },
+    { key: "transaction_date", header: "Transaction Date" },
+    { key: "group", header: "Group Name" },
+    { key: "category", header: "Category" },
+    { key: "ticket", header: "Ticket" },
+    { key: "receipt", header: "Receipt" },
+    { key: "old_receipt_no", header: "Old Receipt" },
+    { key: "amount", header: "Amount" },
+    { key: "mode", header: "Payment Mode" },
+    ...(hideAccountType
+      ? [{ key: "account_type", header: "Account Type" }]
+      : []),
+    { key: "collected_by", header: "Collected By" },
+    { key: "collection_time", header: "Collection Time" },
+    { key: "action", header: "Action" },
+  ];
+  useEffect(() => {
+    const abortController = new AbortController();
+    const fetchPayments = async () => {
+      if (!selectedGroup) return;
+
+      try {
+        setTransactionsLoading(true);
+
+        const queryParams = { userId: selectedGroup };
+        if (selectedFromDate) queryParams.from_date = selectedFromDate;
+          if (selectedToDate) queryParams.to_date = selectedToDate;
+        if (totalTransactions)
+          queryParams.totalTransactions = totalTransactions;
+        if (selectedPaymentMode?.length)
+          queryParams.pay_type = selectedPaymentMode;
+        if (selectedAccountType) queryParams.account_type = selectedAccountType;
+        if (selectedPaymentFor?.length)
+          queryParams.pay_for = selectedPaymentFor;
+
+        const response = await api.get(`/payment/customer/transactions`, {
+          params: queryParams,
+          signal: abortController.signal,
+        });
+
+        if (response.data && response.data.length > 0) {
+          const formattedData = response.data.map((item, index) => {
+            return {
+              _id: item._id,
+              id: index + 1,
+              group: item?.group_id?.group_name || item?.pay_for || "N/A",
+              name: item?.user_id?.full_name || "Unknown Customer",
+              category: item?.pay_for || "Chit",
+              phone_number: item?.user_id?.phone_number || "N/A",
+              ticket: item?.loan
+                ? item.loan?.loan_id
+                : item?.pigme
+                ? item.pigme?.pigme_id
+                : item?.ticket || "N/A",
+              receipt: item?.receipt_no || "N/A",
+              old_receipt_no: item?.old_receipt_no || "-",
+              amount: item?.amount || 0,
+              date: item.pay_date?.split("T")?.[0] || "N/A",
+              transaction_date: item?.createdAt?.split("T")?.[0] || "N/A",
+              mode: item?.pay_type || "N/A",
+              account_type: item?.account_type || "-",
+              collection_time: item?.collection_time || "-",
+              collected_by:
+                item?.collected_by?.name ||
+                item?.admin_type?.admin_name ||
+                "Super Admin",
+              action: (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "1",
+                        label: (
+                          <Link
+                            target="_blank"
+                            to={`/print/${item._id}`}
+                            className="text-blue-600">
+                            Print
+                          </Link>
+                        ),
+                      },
+                    ],
+                  }}
+                  placement="bottomLeft">
+                  <IoMdMore className="cursor-pointer" />
+                </Dropdown>
+              ),
+            };
+          });
+
+          console.log("Formatted Data Success:", formattedData);
+          setTransactionsTable(formattedData);
+        } else {
+          console.warn("No data returned for these filters:", queryParams);
+          setTransactionsTable([]);
+        }
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Request was cancelled (AbortError)");
+        } else {
+          console.error("Mapping/API Error:", error);
+        }
+        setTransactionsTable([]);
+      } finally {
+        setTransactionsLoading(false);
+      }
+    };
+
+    fetchPayments();
+    return () => abortController.abort();
+  }, [
+    selectedFromDate,
+    selectedToDate,
+    selectedPaymentMode,
+    selectedGroup,
+    selectedAccountType,
+    selectedPaymentFor,
+    totalTransactions,
+  ]);
   useEffect(() => {
     const fetchRegistrationFee = async () => {
       if (
@@ -234,8 +372,8 @@ const UserReport = () => {
             setRegistrationDate(
               registrationFees[0]?.createdAt
                 ? new Date(registrationFees[0].createdAt).toLocaleDateString(
-                  "en-GB"
-                )
+                    "en-GB"
+                  )
                 : null
             );
           }
@@ -278,54 +416,6 @@ const UserReport = () => {
 
     fetchRegistrationFee();
   }, [activeTab, selectedGroup, EnrollGroupId.groupId, EnrollGroupId.ticket]);
-
-  // useEffect(() => {
-  //   const fetchAllLoanPaymentsbyId = async () => {
-  //     setBorrowersData([]);
-  //     setBasicLoading(true);
-
-  //     try {
-  //       const response = await api.get(
-  //         `/loan-payment/get-all-loan-payments/${EnrollGroupId.ticket}`
-  //       );
-
-  //       if (response.data && response.data.length > 0) {
-  //         let balance = 0;
-  //         const formattedData = response.data.map((loanPayment, index) => {
-  //           balance += Number(loanPayment.amount);
-  //           return {
-  //             _id: loanPayment._id,
-  //             id: index + 1,
-  //             pay_date: formatPayDate(loanPayment?.pay_date),
-  //             amount: loanPayment.amount,
-  //             receipt_no: loanPayment.receipt_no,
-  //             pay_type: loanPayment.pay_type,
-  //             balance,
-  //           };
-  //         });
-  //         formattedData.push({
-  //           _id: "",
-  //           id: "",
-  //           pay_date: "",
-  //           receipt_no: "",
-  //           amount: "",
-  //           pay_type: "",
-  //           balance,
-  //         });
-  //         setBorrowersData(formattedData);
-  //       } else {
-  //         setBorrowersData([]);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching loan payment data:", error);
-  //       setBorrowersData([]);
-  //     } finally {
-  //       setBasicLoading(false);
-  //     }
-  //   };
-
-  //   if (EnrollGroupId.groupId === "Loan") fetchAllLoanPaymentsbyId();
-  // }, [EnrollGroupId.ticket]);
 
   useEffect(() => {
     const fetchAllLoanPaymentsbyId = async () => {
@@ -503,7 +593,6 @@ const UserReport = () => {
       try {
         setPigmeCustomers([]);
         const response = await api.get(`/payment/pigme/user/${selectedGroup}`);
-        console.info(response.data, "pigme");
         if (response.data) {
           const filteredPigmeData = response.data?.overall_pigme?.map(
             (pigme, index) => ({
@@ -617,7 +706,6 @@ const UserReport = () => {
   const handleEnrollGroup = (event) => {
     const value = event.target.value;
 
-
     if (value) {
       const [groupId, ticket] = value.split("|");
       setEnrollGroupId({ groupId, ticket });
@@ -650,7 +738,8 @@ const UserReport = () => {
       try {
         const response = await api.get(`/payment/get-customer-history`, {
           params: {
-            pay_date: selectedDate,
+            from_date: selectedFromDate,
+            to_date: selectedToDate,
             groupId: selectedAuctionGroupId,
             userId: selectedCustomers,
             pay_type: selectedPaymentMode,
@@ -688,10 +777,39 @@ const UserReport = () => {
     fetchPayments();
   }, [
     selectedAuctionGroupId,
-    selectedDate,
+    selectedToDate,
+    selectedFromDate,
     selectedPaymentMode,
     selectedCustomers,
   ]);
+
+const handleTransactionsSelectFilter = (value) => {
+  setSelectedLabel(value);
+  const today = new Date();
+  const formatDate = (date) => date.toISOString().slice(0, 10);
+
+  if (value === "Custom") {
+    setShowFilterField(true);
+    setTotalTransactons(0);
+    
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    setSelectedFromDate(formatDate(startOfMonth));
+    setSelectedToDate(formatDate(today));
+  } else {
+    setShowFilterField(false);
+    setTotalTransactons(parseInt(value));
+    setSelectedFromDate(""); // Clear dates so they don't interfere with limit logic
+    setSelectedToDate("");
+  }
+};
+
+  const dayGroup = [
+    { value: "200", label: "Last 200 Transactions" },
+    { value: "100", label: "Last 100 Transactions" },
+    { value: "50", label: "Last 50 Transactions" },
+    { value: "25", label: "Last 25 Transactions" },
+    { value: "Custom", label: "Custom" },
+  ];
   const loanColumns = [
     { key: "sl_no", header: "SL. No" },
     { key: "loan", header: "Loan ID" },
@@ -823,99 +941,93 @@ const UserReport = () => {
   //     setCommission(0);
   //   }
   // };
-  
-    const handleGroupAuctionChange = async (userId) => {
-  // 🔴 Clear old data immediately (prevents old data flash)
-  setFilteredAuction([]);
-  setTableAuctions([]);
-  setCommission(0);
-  setTotalToBePaid(0);
-  setNetTotalProfit(0);
-  setTotalPaid(0);
-  setTotalProfit(0);
 
-  if (!userId) return;
+  const handleGroupAuctionChange = async (userId) => {
+    setFilteredAuction([]);
+    setTableAuctions([]);
+    setCommission(0);
+    setTotalToBePaid(0);
+    setNetTotalProfit(0);
+    setTotalPaid(0);
+    setTotalProfit(0);
 
-  // 🔐 Request guard to avoid stale response updates
-  const currentRequestId = Date.now();
-  handleGroupAuctionChange.latestRequest = currentRequestId;
+    if (!userId) return;
 
-  try {
-    const response = await api.post(`/enroll/account/${userId}`);
+    // 🔐 Request guard to avoid stale response updates
+    const currentRequestId = Date.now();
+    handleGroupAuctionChange.latestRequest = currentRequestId;
 
-    // ❌ Ignore old API responses
-    if (handleGroupAuctionChange.latestRequest !== currentRequestId) return;
+    try {
+      const response = await api.post(`/enroll/account/${userId}`);
 
-    if (!response?.data?.length) return;
+      // ❌ Ignore old API responses
+      if (handleGroupAuctionChange.latestRequest !== currentRequestId) return;
 
-    setFilteredAuction(response.data);
+      if (!response?.data?.length) return;
 
-    const formattedData = response.data
-      .map((group, index) => {
-        const enrollment = group?.enrollment;
-        const grp = enrollment?.group;
-        if (!grp || enrollment?.customer_status !== "Active") return null;
+      setFilteredAuction(response.data);
 
-        const groupInstall = Number(grp.group_install) || 0;
-        const auctionCount = Number(group?.auction?.auctionCount) || 0;
-        const totalPaid = Number(group?.payments?.totalPaidAmount) || 0;
-        const profit = Number(group?.profit?.totalProfit) || 0;
-        const payable = Number(group?.payable?.totalPayable) || 0;
-        const firstDividend = Number(group?.firstAuction?.firstDividentHead) || 0;
+      const formattedData = response.data
+        .map((group, index) => {
+          const enrollment = group?.enrollment;
+          const grp = enrollment?.group;
+          if (!grp || enrollment?.customer_status !== "Active") return null;
 
-        const isDouble = grp.group_type === "double";
+          const groupInstall = Number(grp.group_install) || 0;
+          const auctionCount = Number(group?.auction?.auctionCount) || 0;
+          const totalPaid = Number(group?.payments?.totalPaidAmount) || 0;
+          const profit = Number(group?.profit?.totalProfit) || 0;
+          const payable = Number(group?.payable?.totalPayable) || 0;
+          const firstDividend =
+            Number(group?.firstAuction?.firstDividentHead) || 0;
 
-        const totalBePaid = isDouble
-          ? groupInstall * auctionCount + groupInstall
-          : payable + groupInstall + profit;
+          const isDouble = grp.group_type === "double";
 
-        const toBePaidAmount = isDouble
-          ? totalBePaid
-          : payable + groupInstall + firstDividend;
+          const totalBePaid = isDouble
+            ? groupInstall * auctionCount + groupInstall
+            : payable + groupInstall + profit;
 
-        return {
-          id: index + 1,
-          group: grp.group_name || "",
-          ticket: enrollment.tickets || "",
-          totalBePaid,
-          profit,
-          toBePaidAmount,
-          paidAmount: totalPaid,
-          balance: toBePaidAmount - totalPaid,
-          referred_type: enrollment.referred_type || "N/A",
-          referrer_name: enrollment.referrer_name || "N/A",
-          chit_asking_month: enrollment.chit_asking_month || "N/A",
-          customer_status: enrollment.customer_status,
-          removal_reason: enrollment.removal_reason || "N/A",
-          isPrized: enrollment.isPrized ? "Prized" : "Un Prized",
-        };
-      })
-      .filter(Boolean);
+          const toBePaidAmount = isDouble
+            ? totalBePaid
+            : payable + groupInstall + firstDividend;
 
-    setTableAuctions(formattedData);
+          return {
+            id: index + 1,
+            group: grp.group_name || "",
+            ticket: enrollment.tickets || "",
+            totalBePaid,
+            profit,
+            toBePaidAmount,
+            paidAmount: totalPaid,
+            balance: toBePaidAmount - totalPaid,
+            referred_type: enrollment.referred_type || "N/A",
+            referrer_name: enrollment.referrer_name || "N/A",
+            chit_asking_month: enrollment.chit_asking_month || "N/A",
+            customer_status: enrollment.customer_status,
+            removal_reason: enrollment.removal_reason || "N/A",
+            isPrized: enrollment.isPrized ? "Prized" : "Un Prized",
+          };
+        })
+        .filter(Boolean);
 
-    // 📊 Totals
-    setTotalToBePaid(
-      formattedData.reduce((sum, row) => sum + row.totalBePaid, 0)
-    );
+      setTableAuctions(formattedData);
 
-    setNetTotalProfit(
-      formattedData.reduce((sum, row) => sum + row.toBePaidAmount, 0)
-    );
+      // 📊 Totals
+      setTotalToBePaid(
+        formattedData.reduce((sum, row) => sum + row.totalBePaid, 0)
+      );
 
-    setTotalPaid(
-      formattedData.reduce((sum, row) => sum + row.paidAmount, 0)
-    );
+      setNetTotalProfit(
+        formattedData.reduce((sum, row) => sum + row.toBePaidAmount, 0)
+      );
 
-    setTotalProfit(
-      formattedData.reduce((sum, row) => sum + row.profit, 0)
-    );
+      setTotalPaid(formattedData.reduce((sum, row) => sum + row.paidAmount, 0));
 
-  } catch (error) {
-    console.error("Error fetching enrollment data:", error);
-  }
-};
-
+      setTotalProfit(formattedData.reduce((sum, row) => sum + row.profit, 0));
+    } catch (error) {
+      console.error("Error fetching enrollment data:", error);
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -1144,8 +1256,7 @@ const UserReport = () => {
                   <div className="mb-2">
                     <label
                       className="block text-lg text-gray-500 text-center  font-semibold mb-2"
-                      htmlFor={"SS"}
-                    >
+                      htmlFor={"SS"}>
                       Customer
                     </label>
                     <Select
@@ -1161,8 +1272,7 @@ const UserReport = () => {
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
-                      style={{ height: "50px", width: "600px" }}
-                    >
+                      style={{ height: "50px", width: "600px" }}>
                       {groups.map((group) => (
                         <option key={group._id} value={group._id}>
                           {group.full_name} - {group.phone_number}
@@ -1178,31 +1288,39 @@ const UserReport = () => {
                   <div className="mt-6 mb-8">
                     <div className="flex justify-start border-b border-gray-300 mb-4">
                       <button
-                        className={`px-6 py-2 font-medium ${activeTab === "groupDetails"
+                        className={`px-6 py-2 font-medium ${
+                          activeTab === "groupDetails"
                             ? "border-b-2 border-blue-500 text-blue-500"
                             : "text-gray-500"
-                          }`}
-                        onClick={() => handleTabChange("groupDetails")}
-                      >
+                        }`}
+                        onClick={() => handleTabChange("groupDetails")}>
                         Customer Details
                       </button>
                       <button
-                        className={`px-6 py-2 font-medium ${activeTab === "basicReport"
+                        className={`px-6 py-2 font-medium ${
+                          activeTab === "basicReport"
                             ? "border-b-2 border-blue-500 text-blue-500"
                             : "text-gray-500"
-                          }`}
-                        onClick={() => handleTabChange("basicReport")}
-                      >
+                        }`}
+                        onClick={() => handleTabChange("basicReport")}>
                         Customer Ledger
                       </button>
-
                       <button
-                        className={`px-6 py-2 font-medium ${activeTab === "disbursement"
+                        className={`px-6 py-2 font-medium ${
+                          activeTab === "transactions"
                             ? "border-b-2 border-blue-500 text-blue-500"
                             : "text-gray-500"
-                          }`}
-                        onClick={() => handleTabChange("disbursement")}
-                      >
+                        }`}
+                        onClick={() => handleTabChange("transactions")}>
+                        Transactions
+                      </button>
+                      <button
+                        className={`px-6 py-2 font-medium ${
+                          activeTab === "disbursement"
+                            ? "border-b-2 border-blue-500 text-blue-500"
+                            : "text-gray-500"
+                        }`}
+                        onClick={() => handleTabChange("disbursement")}>
                         PayOut | Disbursement
                       </button>
                     </div>
@@ -1224,8 +1342,7 @@ const UserReport = () => {
                             customerTransactions
                           )
                         }
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded shadow"
-                      >
+                        className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded shadow">
                         <IoMdDownload size={20} />
                         Download Full Report
                       </button>
@@ -1300,8 +1417,7 @@ const UserReport = () => {
                                         results.map(({ item }) => (
                                           <div
                                             key={item.key}
-                                            className="p-1 border-b"
-                                          >
+                                            className="p-1 border-b">
                                             <strong>{item.key}</strong> →{" "}
                                             {item.value || "-"}
                                           </div>
@@ -1325,12 +1441,12 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${visibleRows.row1
-                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-                                    }
-      `}
-                                >
+        ${
+          visibleRows.row1
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+        }
+      `}>
                                   {visibleRows.row1
                                     ? "✓ Hide Basic Info"
                                     : "Show Basic Info"}
@@ -1344,12 +1460,12 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${visibleRows.row2
-                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-                                    }
-      `}
-                                >
+        ${
+          visibleRows.row2
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+        }
+      `}>
                                   {visibleRows.row2
                                     ? "✓ Hide Address Info"
                                     : "Show Address Info"}
@@ -1363,12 +1479,12 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${visibleRows.row3
-                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-                                    }
-      `}
-                                >
+        ${
+          visibleRows.row3
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+        }
+      `}>
                                   {visibleRows.row3
                                     ? "✓ Hide Regional Info"
                                     : "Show Regional Info"}
@@ -1382,12 +1498,12 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${visibleRows.row4
-                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-                                    }
-      `}
-                                >
+        ${
+          visibleRows.row4
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+        }
+      `}>
                                   {visibleRows.row4
                                     ? "✓ Hide Referral, Nominee & Bank Details"
                                     : "Show Referral, Nominee & Bank Details"}
@@ -1446,8 +1562,8 @@ const UserReport = () => {
                                       value={
                                         group.dateofbirth
                                           ? new Date(group.dateofbirth)
-                                            .toISOString()
-                                            .split("T")[0]
+                                              .toISOString()
+                                              .split("T")[0]
                                           : ""
                                       }
                                     />
@@ -1516,8 +1632,8 @@ const UserReport = () => {
                                       value={
                                         group.nominee_dateofbirth
                                           ? new Date(group.nominee_dateofbirth)
-                                            .toISOString()
-                                            .split("T")[0]
+                                              .toISOString()
+                                              .split("T")[0]
                                           : ""
                                       }
                                     />
@@ -1558,13 +1674,16 @@ const UserReport = () => {
                               <h3 className="text-lg font-medium mb-4">
                                 Enrolled Groups
                               </h3>
-                          
+
                               {TableAuctions &&
                                 TableAuctions.length > 0 &&
                                 !isLoading && (
                                   <div className="mt-5">
                                     <DataTable
-                                      data={filterOption(TableAuctions, searchText)}
+                                      data={filterOption(
+                                        TableAuctions,
+                                        searchText
+                                      )}
                                       columns={Auctioncolumns}
                                       exportedPdfName="Customer Report"
                                       printHeaderKeys={[
@@ -1590,12 +1709,13 @@ const UserReport = () => {
                                   </div>
                                 )}
 
-
                               {filteredBorrowerData &&
                                 filteredBorrowerData.length > 0 &&
                                 !isLoading && (
                                   <div className="mt-10">
-                                    <h3 className="text-lg font-medium mb-4">Loan Details</h3>
+                                    <h3 className="text-lg font-medium mb-4">
+                                      Loan Details
+                                    </h3>
                                     <DataTable
                                       data={filteredBorrowerData}
                                       columns={loanColumns}
@@ -1604,12 +1724,13 @@ const UserReport = () => {
                                   </div>
                                 )}
 
-
                               {filteredPigmeData &&
                                 filteredPigmeData.length > 0 &&
                                 !isLoading && (
                                   <div className="mt-10">
-                                    <h3 className="text-lg font-medium mb-4">Pigme Details</h3>
+                                    <h3 className="text-lg font-medium mb-4">
+                                      Pigme Details
+                                    </h3>
                                     <DataTable
                                       data={filteredPigmeData}
                                       columns={pigmeColumns}
@@ -1618,20 +1739,19 @@ const UserReport = () => {
                                   </div>
                                 )}
 
-
                               {!isLoading &&
                                 TableAuctions.length === 0 &&
                                 filteredBorrowerData.length === 0 &&
                                 filteredPigmeData.length === 0 && (
                                   <div className="p-20 w-full flex justify-center items-center text-gray-500">
-                                    No Chit Group, Loan, or Pigme data found for this customer
+                                    No Chit Group, Loan, or Pigme data found for
+                                    this customer
                                   </div>
                                 )}
 
-
-                              {isLoading && <CircularLoader isLoading={isLoading} />}
-
-
+                              {isLoading && (
+                                <CircularLoader isLoading={isLoading} />
+                              )}
 
                               {!isLoading && TableAuctions.length === 0 && (
                                 <div className="p-40 w-full flex justify-center items-center">
@@ -1913,18 +2033,19 @@ const UserReport = () => {
                                     : ""
                                 }
                                 onChange={handleEnrollGroup}
-                                className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                              >
+                                className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md">
                                 <option value="">Select Group | Ticket</option>
 
-                                {/* ✅ CHIT Groups */}
                                 {filteredAuction.map((group) => {
-                                  if (group?.enrollment?.group && group?.enrollment?.customer_status === "Active") {
+                                  if (
+                                    group?.enrollment?.group &&
+                                    group?.enrollment?.customer_status ===
+                                      "Active"
+                                  ) {
                                     return (
                                       <option
                                         key={group.enrollment.group._id}
-                                        value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}
-                                      >
+                                        value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}>
                                         {group.enrollment.group.group_name} |{" "}
                                         {group.enrollment.tickets}
                                       </option>
@@ -1940,9 +2061,9 @@ const UserReport = () => {
                                         key={
                                           loan?.loan_details?.loan?._id || index
                                         }
-                                        value={`Loan|${loan?.loan_details?.loan?._id || index
-                                          }`}
-                                      >
+                                        value={`Loan|${
+                                          loan?.loan_details?.loan?._id || index
+                                        }`}>
                                         {loan?.loan_details?.loan?.loan_id ||
                                           "N/A"}{" "}
                                         | ₹{loan?.loan_value || 0}
@@ -1958,10 +2079,10 @@ const UserReport = () => {
                                           pigme?.pigme_details?.pigme?._id ||
                                           index
                                         }
-                                        value={`Pigme|${pigme?.pigme_details?.pigme?._id ||
+                                        value={`Pigme|${
+                                          pigme?.pigme_details?.pigme?._id ||
                                           index
-                                          }`}
-                                      >
+                                        }`}>
                                         {pigme?.pigme_details?.pigme
                                           ?.pigme_id || "N/A"}{" "}
                                         | ₹{pigme?.total_deposited_amount || 0}
@@ -1975,8 +2096,9 @@ const UserReport = () => {
                           <div className="mt-6 flex justify-center gap-8 flex-wrap">
                             <input
                               type="text"
-                              value={`Registration Fee: ₹${registrationAmount || 0
-                                }`}
+                              value={`Registration Fee: ₹${
+                                registrationAmount || 0
+                              }`}
                               readOnly
                               className="px-4 py-2 border rounded font-semibold w-60 text-center bg-green-100 text-green-800 border-green-400"
                             />
@@ -1988,19 +2110,19 @@ const UserReport = () => {
                             />
                             <input
                               type="text"
-                              value={`Total: ₹${Number(finalPaymentBalance) +
+                              value={`Total: ₹${
+                                Number(finalPaymentBalance) +
                                 Number(registrationAmount || 0)
-                                }`}
+                              }`}
                               readOnly
                               className="px-4 py-2 border rounded font-semibold w-60 text-center bg-purple-100 text-purple-800 border-purple-400"
                             />
                           </div>
 
-                          {/* ✅ Corrected Data Display */}
                           {(TableEnrolls?.length > 0 ||
                             borrowersData?.length > 0 ||
                             pigmeCustomerData?.length > 0) &&
-                            !basicLoading ? (
+                          !basicLoading ? (
                             <div className="mt-10">
                               <DataTable
                                 exportedPdfName="Customer Ledger Report"
@@ -2022,15 +2144,15 @@ const UserReport = () => {
                                   EnrollGroupId?.groupId === "Loan"
                                     ? borrowersData
                                     : EnrollGroupId?.groupId === "Pigme"
-                                      ? pigmeCustomerData
-                                      : TableEnrolls
+                                    ? pigmeCustomerData
+                                    : TableEnrolls
                                 }
                                 columns={
                                   EnrollGroupId?.groupId === "Loan"
                                     ? BasicLoanColumns
                                     : EnrollGroupId?.groupId === "Pigme"
-                                      ? BasicPigmeColumns
-                                      : Basiccolumns
+                                    ? BasicPigmeColumns
+                                    : Basiccolumns
                                 }
                               />
                             </div>
@@ -2073,6 +2195,193 @@ const UserReport = () => {
                         )}
                       </div>
                     )}
+
+                    {activeTab === "transactions" && (
+                      <div className="flex flex-col flex-1">
+                        <label className="mb-1 text-sm  text-gray-700 font-bold">
+                          Transactions
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-700">
+                              Date Range
+                            </label>
+                            <Select
+                              showSearch
+                              popupMatchSelectWidth={false}
+                              onChange={handleTransactionsSelectFilter}
+                              value={selectedLabel || undefined}
+                              placeholder="Last 50 Transactions"
+                              filterOption={(input, option) =>
+                                option.children
+                                  .toString()
+                                  .toLowerCase()
+                                  .includes(input.toLowerCase())
+                              }
+                              className="w-full"
+                              style={{ height: "44px" }}>
+                              {dayGroup.map((time) => (
+                                <Select.Option
+                                  key={time.value}
+                                  value={time.value}>
+                                  {time.label}
+                                </Select.Option>
+                              ))}
+                            </Select>
+                          </div>
+
+                          {/* Date Field */}
+                          {showFilterField && (
+                            <>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  From Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={selectedFromDate}
+                                  onChange={(e) =>
+                                    setSelectedFromDate(e.target.value)
+                                  }
+                                  className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  To Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={selectedToDate}
+                                  onChange={(e) =>
+                                    setSelectedToDate(e.target.value)
+                                  }
+                                  className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-700">
+                              Payment Mode
+                            </label>
+
+                            <Select
+                              mode="multiple"
+                              value={selectedPaymentMode || undefined}
+                              showSearch
+                              placeholder="Select payment mode"
+                              popupMatchSelectWidth={false}
+                              onChange={(modes) => {
+                                setSelectedPaymentMode(modes);
+                              }}
+                              filterOption={(input, option) =>
+                                option.label
+                                  .toString()
+                                  .toLowerCase()
+                                  .includes(input.toLowerCase())
+                              }
+                              className="w-full"
+                              style={{ height: "44px" }}
+                              options={[
+                                { label: "Cash", value: "cash" },
+                                { label: "Online", value: "online" },
+                                {
+                                  label: "Payment Link",
+                                  value: "Payment Link",
+                                },
+                              ]}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-700">
+                              Payment For
+                            </label>
+
+                            <Select
+                              mode="multiple"
+                              value={selectedPaymentFor}
+                              showSearch
+                              placeholder="Select payment for"
+                              popupMatchSelectWidth={false}
+                              onChange={(modes) => {
+                                setSelectedPaymentFor(modes);
+                              }}
+                              filterOption={(input, option) =>
+                                option.label
+                                  .toString()
+                                  .toLowerCase()
+                                  .includes(input.toLowerCase())
+                              }
+                              className="w-full"
+                              style={{ height: "44px" }}
+                              options={[
+                                { label: "Chit", value: "Chit" },
+                                { label: "Pigme", value: "Pigme" },
+                                { label: "Loan", value: "Loan" },
+                              ]}
+                            />
+                          </div>
+
+                          {showAllPaymentModes && (
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-slate-700">
+                                Account Type
+                              </label>
+                              <Select
+                                value={selectedAccountType}
+                                showSearch
+                                placeholder="Select account type"
+                                popupMatchSelectWidth={false}
+                                onChange={(groupId) =>
+                                  setSelectedAccountType(groupId)
+                                }
+                                filterOption={(input, option) =>
+                                  option.children
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(input.toLowerCase())
+                                }
+                                className="w-full"
+                                style={{ height: "44px" }}>
+                                <Select.Option value="">
+                                  All Types
+                                </Select.Option>
+                                <Select.Option value="suspense">
+                                  Suspense
+                                </Select.Option>
+                                <Select.Option value="credit">
+                                  Credit
+                                </Select.Option>
+                                <Select.Option value="adjustment">
+                                  Adjustment
+                                </Select.Option>
+                                <Select.Option value="others">
+                                  Others
+                                </Select.Option>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+                        {transactionsLoading ? (
+                          <CircularLoader />
+                        ) : transactionsTable?.length > 0 ? (
+                          <div className="mt-10">
+                            <DataTable
+                              data={transactionsTable}
+                              columns={TransactionsColumns}
+                              exportedPdfName={`Transactions Report`}
+                              exportedFileName={`Transactions Report.csv`}
+                            />
+                          </div>
+                        ) : (
+                          <div className="p-40  w-full flex justify-center items-center ">
+                            No Transactions Found
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -2085,3 +2394,6 @@ const UserReport = () => {
 };
 
 export default UserReport;
+
+
+// Date Range in transaction section is not working properly why
