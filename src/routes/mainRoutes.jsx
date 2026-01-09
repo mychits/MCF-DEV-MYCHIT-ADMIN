@@ -160,6 +160,8 @@ import CoApplicant from "../pages/CoApplicant";
 import CoApplicantPrint from "../components/printFormats/CoApplicantPrint"
 import PaymentWithPenalty from "../pages/PaymentWithPenalty";
 import PenaltyWhatsappMessageMenu from "../pages/PenaltyWhatsappMessageMenu";
+import EmployeeRewardPoints from "../pages/EmployeeRewardPoints";
+import RewardSettings from "../pages/RewardSettings";
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -227,6 +229,14 @@ const mainRoutes = createBrowserRouter([
         <Payment />
       </ProtectedRoute>
     ),
+  },
+      {
+    path: "/employee-reward-points",
+    element: <EmployeeRewardPoints/>
+  },
+     {
+    path: "/reward-settings",
+    element: <RewardSettings/>
   },
       {
     path: "/payment-menu/payment-in-out-menu/pay-in-menu/penalty-payment",

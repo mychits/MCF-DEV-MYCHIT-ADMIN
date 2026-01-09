@@ -64,13 +64,35 @@ const MenuSidebar = [
   {
     title: "Insurance",
     icon: <IoPeopleOutline />,
-    link : "/insurance"
-
+    link: "/insurance",
   },
+  {
+    title: "Gift Received",
+    icon: <FaGift />,
+    link: "/gift-received",
+  },
+
   {
     title: "Reward",
     icon: <FaGift />,
-    link : "/gift-received"
+    submenu: true,
+    submenuItems: [
+      {
+        title: "Generate Reward Points",
+        icon: <FaGift size={20} />,
+        link: "/employee-reward-points",
+      },
+      {
+        title: "Reward Settings",
+        icon: <FaGift size={20} />,
+        link: "/reward-settings",
+      },
+      // {
+      //   title: "Redeem Reward Points",
+      //   icon: <FaGift size={20} />,
+      //   link: "/redeem-reward-points",
+      // },
+    ],
   },
 
   {
@@ -88,7 +110,6 @@ const MenuSidebar = [
     icon: <BsPersonCheck />,
     link: "/admin-access-rights",
   },
-
 
   // {
   //   title: "Target Management",
@@ -127,24 +148,25 @@ const MenuSidebar = [
   //     //       title: "PayOut Menu",
   //     //       icon: <RiMoneyRupeeCircleFill size={20} />,
   //     //       link:"/target-payout-menu"
-          
 
-          
   //     //     },
   //     //   ],
   //     // },
   //   ],
   // },
 
-    {
-  title: "Penalty Management",
-  icon: <RiMoneyRupeeCircleFill />,
-  submenu: true,
-  submenuItems: [
-    { title: "Penalty Settings", icon: <TiSpanner size={20} />, link: "/penalty-settings" },
-   
-  ],
-},
+  {
+    title: "Penalty Management",
+    icon: <RiMoneyRupeeCircleFill />,
+    submenu: true,
+    submenuItems: [
+      {
+        title: "Penalty Settings",
+        icon: <TiSpanner size={20} />,
+        link: "/penalty-settings",
+      },
+    ],
+  },
 
   {
     title: "Profile",
