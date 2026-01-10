@@ -491,12 +491,14 @@ const formatLedgerData = (ledger) => {
       businessClosed: formatCurrency(item.business?.totalBusinessClosed),
       achievement: getAchievementTag(item.business?.achievement),
       incentiveEarned: formatCurrency(item.business?.incentive_earned),
+  
       balance: (
         <span className={balanceColor + " font-bold"}>{formatCurrency(balance)}</span>
       ),
       // Raw values for export functionality
       netPayableRaw: item.financials?.net_payable,
       standardDeductions: item.financials?.standard_deductions,
+          advance:item.financials?.advance,
       grossSalary:item.financials?.gross_salary,
       otherPayments:item.financials?.other_payments,
       paidAmountRaw: item.financials?.paid_amount,
@@ -583,6 +585,7 @@ const EmployeeStatement = () => {
     { key: "businessClosed", header: "Business Closed" },
     { key: "incentiveEarned", header: "Incentive" },
     { key: "achievement", header: "Achievement" },
+    { key: "advance", header: "Advance" },
     { key: "netPayable", header: "Net Payable" },
     { key: "standardDeductions", header: "Standard Deductions" },
     { key: "otherPayments", header: "Other Payments" },
@@ -597,6 +600,7 @@ const EmployeeStatement = () => {
     { key: "businessClosedRaw", header: "Business Closed" },
     { key: "incentiveRaw", header: "Incentive" },
     { key: "achievementRaw", header: "Achievement" },
+       { key: "advance", header: "Advance" },
     { key: "netPayableRaw", header: "Net Payable" },
     { key: "standardDeductions", header: "Standard Deductions" },
     { key: "otherPayments", header: "Other Payments" },

@@ -194,8 +194,13 @@ const HRSalaryManagement = () => {
       current_remaining_target: 0,
     },
     total_salary: 0,
+    pigmy_perc: 0,
+    loan_perc: 0,
+    pigmy_collection_incentive: 0,
+    loan_collection_incentive: 0,
   });
-
+  const [showCollectionContinue, setShowCollectionContinue] = useState(false);
+  const [collectionLoading, setCollectionLoading] = useState(false);
   // Handler for Pay as Salary button
   const handlePayAsSalary = () => {
     setPayAsSalaryModalOpen(true);
@@ -464,7 +469,43 @@ const HRSalaryManagement = () => {
       setDeleteLoading(false);
     }
   };
+  const handleFetchCollectionIncentive = async () => {
+    try {
+      setCollectionLoading(true);
+      const monthIndex = moment().month(formData.month).month();
+      const start_date = moment()
+        .year(formData.year)
+        .month(monthIndex)
+        .startOf("month")
+        .format("YYYY-MM-DD");
+      const end_date = moment()
+        .year(formData.year)
+        .month(monthIndex)
+        .endOf("month")
+        .format("YYYY-MM-DD");
 
+      const response = await API.get(
+        `/payment/pigmy-loan/collection/${formData.employee_id}/pigmy-perc/${formData.pigmy_perc}/loan-perc/${formData.loan_perc}`,
+        { params: { from_date: start_date, to_date: end_date } }
+      );
+
+      const { total_loan_collections_perc, total_pigmy_collections_perc } =
+        response.data.data;
+
+      setFormData((prev) => ({
+        ...prev,
+        loan_collection_incentive: total_loan_collections_perc || 0,
+        pigmy_collection_incentive: total_pigmy_collections_perc || 0,
+      }));
+
+      setShowCollectionContinue(false); // Hide button after fetching
+      message.success("Collection data fetched successfully");
+    } catch (error) {
+      message.error("Failed to fetch collection data");
+    } finally {
+      setCollectionLoading(false);
+    }
+  };
   const handlePrint = (salaryPaymentId) => {
     navigate("/salary-slip-print/" + salaryPaymentId);
   };
@@ -735,16 +776,26 @@ const HRSalaryManagement = () => {
     return base;
   }, [updateFormData]);
 
-  async function handleCalculateSalary() {
-    try {
-      setCalculateLoading(true);
-      setFormData((prev) => ({
-        ...prev,
-        additional_payments: [],
-        additional_deductions: [],
-        advance_payments: [],
-      }));
-      const response = await API.get("/salary-payment/calculate", {
+async function handleCalculateSalary() {
+  try {
+    setCalculateLoading(true);
+    
+    // Reset specific dynamic fields
+    setFormData((prev) => ({
+      ...prev,
+      additional_payments: [],
+      additional_deductions: [],
+      advance_payments: [],
+    }));
+
+    // 1. Prepare Dates for Collection API
+    const monthIndex = moment().month(formData.month).month();
+    const start_date = moment().year(formData.year).month(monthIndex).startOf("month").format("YYYY-MM-DD");
+    const end_date = moment().year(formData.year).month(monthIndex).endOf("month").format("YYYY-MM-DD");
+
+    // 2. Run both API calls in parallel for better performance
+    const [salaryRes, collectionRes] = await Promise.all([
+      API.get("/salary-payment/calculate", {
         params: {
           employee_id: formData.employee_id,
           month: formData.month,
@@ -752,36 +803,41 @@ const HRSalaryManagement = () => {
           earnings: formData.earnings,
           deductions: formData.deductions,
         },
-      });
-      const calculated = response.data.data;
-      setCalculatedSalary(calculated);
-      // Set previous month remaining balance
+      }),
+      API.get(
+        `/payment/pigmy-loan/collection/${formData.employee_id}/pigmy-perc/${formData.pigmy_perc}/loan-perc/${formData.loan_perc}`,
+        { params: { from_date: start_date, to_date: end_date } }
+      )
+    ]);
 
-      setFormData((prev) => ({
-        ...prev,
-        total_salary_payable: calculated.calculated_salary,
-      }));
-      setShowComponents(true);
-      message.success("Salary calculated successfully");
-    } catch (error) {
-      console.error("Error calculating salary:", error);
-      if (
-        error.response?.status === 406 &&
-        error.response?.data?.existing_salary
-      ) {
-        setExistingSalaryRecord(error.response.data.existing_salary);
-        setAlreadyPaidModalOpen(true);
-        setCalculatedSalary(null);
-        setShowComponents(false);
-        return;
-      }
-      message.error(
-        error.response?.data?.message || "Failed to calculate salary"
-      );
-    } finally {
-      setCalculateLoading(false);
+    const calculated = salaryRes.data.data;
+    const { total_loan_collections_perc, total_pigmy_collections_perc } = collectionRes.data.data;
+
+    // 3. Update state with all results
+    setCalculatedSalary(calculated);
+    setFormData((prev) => ({
+      ...prev,
+      total_salary_payable: calculated.calculated_salary,
+      loan_collection_incentive: total_loan_collections_perc || 0,
+      pigmy_collection_incentive: total_pigmy_collections_perc || 0,
+    }));
+
+    setShowComponents(true);
+    message.success("Salary and Collections calculated successfully");
+  } catch (error) {
+    console.error("Error in calculation:", error);
+    if (error.response?.status === 406 && error.response?.data?.existing_salary) {
+      setExistingSalaryRecord(error.response.data.existing_salary);
+      setAlreadyPaidModalOpen(true);
+      setCalculatedSalary(null);
+      setShowComponents(false);
+      return;
     }
+    message.error(error.response?.data?.message || "Failed to calculate details");
+  } finally {
+    setCalculateLoading(false);
   }
+}
 
   async function handleAddSalary() {
     try {
@@ -1616,7 +1672,70 @@ const HRSalaryManagement = () => {
                     })()}
                   </div>
                 </div>
-                {/* Calculate Button */}
+                <div className="mt-6 bg-slate-50 rounded-2xl border border-slate-200 p-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-600 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-xl text-gray-900">
+                        Collection Incentive
+                      </h3>
+                    </div>
+
+                    {/* Continue Button - Shows only when values are updated */}
+                    {showCollectionContinue && (
+                      <Button
+                        type="primary"
+                        onClick={handleFetchCollectionIncentive}
+                        loading={collectionLoading}
+                        style={{
+                          backgroundColor: "#16a34a",
+                          borderColor: "#16a34a",
+                        }}
+                        className="px-8 shadow-md">
+                        Continue
+                      </Button>
+                    )}
+                  </div>
+
+             <div className="mt-6 bg-slate-50 rounded-2xl border border-slate-200 p-8 shadow-sm">
+  <div className="flex items-center gap-3 mb-6">
+   
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex flex-col">
+      <label className="font-semibold text-gray-700 text-sm mb-2 text-blue-600">
+        Pigmy Collection Percentage (%)
+      </label>
+      <Input
+        type="number"
+        placeholder="Enter %"
+        value={formData.pigmy_perc}
+        onChange={(e) => setFormData(prev => ({ ...prev, pigmy_perc: e.target.value }))}
+        className="h-11 font-bold text-lg"
+        suffix="%"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label className="font-semibold text-gray-700 text-sm mb-2 text-blue-600">
+        Loan Collection Percentage (%)
+      </label>
+      <Input
+        type="number"
+        placeholder="Enter %"
+        value={formData.loan_perc}
+        onChange={(e) => setFormData(prev => ({ ...prev, loan_perc: e.target.value }))}
+        className="h-11 font-bold text-lg"
+        suffix="%"
+      />
+    </div>
+  </div>
+  <p className="mt-4 text-xs text-gray-400 italic">* Values will be fetched when you press the main "Continue" button below.</p>
+</div>
+                </div>
                 <div className="flex justify-end pt-4">
                   <Button
                     type="primary"
@@ -1705,9 +1824,9 @@ const HRSalaryManagement = () => {
                         </span>
                       </div>
 
-                        <div className="form-group">
+                      <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          LOP 
+                          LOP
                         </label>
                         <input
                           type="number"
@@ -2089,132 +2208,74 @@ const HRSalaryManagement = () => {
                   </div>
                 )}
                 {calculatedSalary && showComponents && (
-                  <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                      Transaction Details
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
-                      {calculatedSalary && (
-                        <div className="form-group">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Calculated Incentive
-                          </label>
-                          {(() => {
-                            const incentiveValue = calculatedIncentive;
-                            const isPositive =
-                              formData.calculated_incentive >= 0;
-                            const displayValue =
-                              Math.abs(incentiveValue).toFixed(2);
-                            return (
-                              <>
-                                <input
-                                  type="text"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-800 font-medium"
-                                  value={
-                                    isPositive
-                                      ? `+ ${Number(
-                                          formData.calculated_incentive
-                                        ).toLocaleString("en-IN", {
-                                          minimumFractionDigits: 2,
-                                        })}`
-                                      : `- ${Number(
-                                          Math.abs(
-                                            formData.calculated_incentive
-                                          )
-                                        ).toLocaleString("en-IN", {
-                                          minimumFractionDigits: 2,
-                                        })}`
-                                  }
-                                  disabled
-                                />
-                                <span className="ml-2 font-medium font-mono text-blue-600">
-                                  {numberToIndianWords(displayValue)}
-                                  {isPositive ? " (Bonus)" : " (Deduction)"}
-                                </span>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      )}
+  <div className="bg-blue-50 p-6 rounded-xl mt-4 border border-blue-100 shadow-inner">
+    <h3 className="text-lg font-semibold text-blue-800 mb-6 flex items-center gap-2">
+      <RiMoneyRupeeCircleFill /> Final Transaction Adjustments
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      
+      {/* Target Incentive (Read Only) */}
+      <div className="form-group">
+        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Target Incentive</label>
+        <Input 
+          value={formData.calculated_incentive} 
+          disabled 
+          prefix="₹"
+          className="font-bold !text-blue-600 !bg-white"
+        />
+      </div>
 
-                      <div className=" gap-4 mb-4">
-                        <div className="form-group">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Total Salary Payable
-                          </label>
-                          {(() => {
-                            let total = 0;
-                            const totalTarget = Number(
-                              formData.monthly_business_info.total_target || 0
-                            );
-                            const totalBusinessClosed = Number(
-                              formData.monthly_business_info
-                                .total_business_closed || 0
-                            );
-                            const rawIncentive =
-                              (totalTarget - totalBusinessClosed) / 100;
+      {/* Pigmy Collection Incentive (Editable) */}
+      <div className="form-group">
+        <label className="block text-xs font-bold text-blue-500 uppercase mb-2 tracking-wider">Pigmy Incentive (Edit)</label>
+        <Input 
+          type="number"
+          value={formData.pigmy_collection_incentive} 
+          onChange={(e) => setFormData(prev => ({ ...prev, pigmy_collection_incentive: Number(e.target.value) }))}
+          prefix="₹"
+          className="font-bold border-blue-300 bg-white hover:border-blue-500"
+        />
+      </div>
 
-                            const totalStandardDeductions = Object.values(
-                              formData.deductions || {}
-                            ).reduce((sum, v) => {
-                              const val = Number(v);
+      {/* Loan Collection Incentive (Editable) */}
+      <div className="form-group">
+        <label className="block text-xs font-bold text-blue-500 uppercase mb-2 tracking-wider">Loan Incentive (Edit)</label>
+        <Input 
+          type="number"
+          value={formData.loan_collection_incentive} 
+          onChange={(e) => setFormData(prev => ({ ...prev, loan_collection_incentive: Number(e.target.value) }))}
+          prefix="₹"
+          className="font-bold border-blue-300 bg-white hover:border-blue-500"
+        />
+      </div>
 
-                              return sum + (isNaN(val) ? 0 : val);
-                            }, 0);
-
-                            const advanceTotal =
-                              formData.advance_payments.reduce(
-                                (sum, p) => sum + Number(p.value || 0),
-                                0
-                              );
-                            const addPayments =
-                              formData.additional_payments.reduce(
-                                (sum, p) => sum + Number(p.value || 0),
-                                0
-                              );
-                            const addDeductions =
-                              formData.additional_deductions.reduce(
-                                (sum, d) => sum + Number(d.value || 0),
-                                0
-                              );
-
-                            if (rawIncentive > 0) {
-                              total = 0;
-                              total +=
-                                advanceTotal + addPayments - addDeductions;
-                              total -= totalStandardDeductions;
-                            } else if (rawIncentive < 0) {
-                              total = calculatedSalary?.calculated_salary || 0;
-                              total +=
-                                advanceTotal + addPayments - addDeductions;
-                            } else {
-                              total = calculatedSalary?.calculated_salary || 0;
-                              total +=
-                                advanceTotal + addPayments - addDeductions;
-                            }
-
-                            return (
-                              <>
-                                <input
-                                  type="number"
-                                  min={-99999999}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
-                                  value={Number(total || 0).toFixed(2)}
-                                  disabled
-                                />
-                                <span className="ml-2 font-medium font-mono text-blue-600">
-                                  {numberToIndianWords(
-                                    Number(total || 0).toFixed(2)
-                                  )}
-                                </span>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+      {/* Final Net Payable (Total Sum) */}
+      <div className="form-group">
+        <label className="block text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider">Final Net Payable</label>
+        {(() => {
+          const basePay = Number(formData.total_salary_payable || 0);
+          const total = basePay + 
+                        Number(formData.calculated_incentive || 0) + 
+                        Number(formData.pigmy_collection_incentive || 0) + 
+                        Number(formData.loan_collection_incentive || 0);
+          return (
+            <div className="flex flex-col">
+              <Input 
+                value={total.toFixed(2)} 
+                disabled 
+                prefix="₹" 
+                className="font-black !text-gray-900 !bg-gray-200 border-none text-lg h-10"
+              />
+              <span className="text-[10px] text-gray-500 mt-1 font-mono uppercase">
+                {numberToIndianWords(total.toFixed(2))}
+              </span>
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  </div>
+)}
               </>
             )
           ) : (
@@ -2708,46 +2769,50 @@ const HRSalaryManagement = () => {
               </div>
             </section>
             {/* Attendance Summary */}
-          {/* Added 'flex flex-col' so that 'gap-4' actually works */}
-<section className="flex flex-col gap-4 bg-gradient-to-br from-purple-50 to-purple-50 p-6 rounded-xl shadow-md border border-purple-200 hover:shadow-lg transition-shadow">
-  
-  <h4 className="font-bold text-slate-900 mb-2 flex items-center text-lg">
-    <span className="w-1 h-6 bg-purple-600 rounded-full mr-3"></span>
-    Attendance Details
-  </h4>
+            {/* Added 'flex flex-col' so that 'gap-4' actually works */}
+            <section className="flex flex-col gap-4 bg-gradient-to-br from-purple-50 to-purple-50 p-6 rounded-xl shadow-md border border-purple-200 hover:shadow-lg transition-shadow">
+              <h4 className="font-bold text-slate-900 mb-2 flex items-center text-lg">
+                <span className="w-1 h-6 bg-purple-600 rounded-full mr-3"></span>
+                Attendance Details
+              </h4>
 
-  {Object.entries(existingSalaryRecord.attendance_details || {}).map(([key, val]) => {
-    const isCurrency = key.includes("salary") || key.includes("calculated");
-    const isDate = key.includes("date");
+              {Object.entries(
+                existingSalaryRecord.attendance_details || {}
+              ).map(([key, val]) => {
+                const isCurrency =
+                  key.includes("salary") || key.includes("calculated");
+                const isDate = key.includes("date");
 
-    let displayValue;
-    if (isDate) {
-      // Improved dayjs safety check
-      displayValue = val ? dayjs(val).format("YYYY-MM-DD") : "N/A";
-    } else if (isCurrency) {
-      displayValue = `₹${Number(val).toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    } else {
-      displayValue = val;
-    }
+                let displayValue;
+                if (isDate) {
+                  // Improved dayjs safety check
+                  displayValue = val ? dayjs(val).format("YYYY-MM-DD") : "N/A";
+                } else if (isCurrency) {
+                  displayValue = `₹${Number(val).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`;
+                } else {
+                  displayValue = val;
+                }
 
-    return (
-      <div // Changed to div for semantic correctness since we aren't using a <ul> wrapper
-        key={key}
-        className="flex justify-between items-center bg-white p-4 rounded-lg border border-purple-100 hover:border-purple-200 transition-colors"
-      >
-        <span className="capitalize text-slate-700 font-medium">
-          {key.replace(/_/g, " ")}
-        </span>
-        <span className={`font-bold ${isCurrency ? "text-purple-700" : "text-slate-600"}`}>
-          {displayValue}
-        </span>
-      </div>
-    );
-  })}
-</section>
+                return (
+                  <div // Changed to div for semantic correctness since we aren't using a <ul> wrapper
+                    key={key}
+                    className="flex justify-between items-center bg-white p-4 rounded-lg border border-purple-100 hover:border-purple-200 transition-colors">
+                    <span className="capitalize text-slate-700 font-medium">
+                      {key.replace(/_/g, " ")}
+                    </span>
+                    <span
+                      className={`font-bold ${
+                        isCurrency ? "text-purple-700" : "text-slate-600"
+                      }`}>
+                      {displayValue}
+                    </span>
+                  </div>
+                );
+              })}
+            </section>
             {/* Earnings */}
             <section className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl shadow-md border border-green-200 hover:shadow-lg transition-shadow">
               <h4 className="font-bold text-slate-900 mb-4 flex items-center text-lg">
@@ -3135,3 +3200,4 @@ const HRSalaryManagement = () => {
 };
 
 export default HRSalaryManagement;
+
