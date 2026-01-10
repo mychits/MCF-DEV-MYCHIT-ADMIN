@@ -12,7 +12,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { IoMdDownload } from "react-icons/io";
 import { IoMdMore } from "react-icons/io";
+import { MdAccountBalanceWallet } from "react-icons/md";
 import Fuse from "fuse.js";
+import { numberToIndianWords } from "../helpers/numberToIndianWords";
 const UserReport = () => {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get("user_id");
@@ -130,6 +132,7 @@ const UserReport = () => {
   const [showAllPaymentModes, setShowAllPaymentModes] = useState(false);
   const [transactionsTable, setTransactionsTable] = useState([]);
   const [totalTransactions, setTotalTransactons] = useState(10);
+  const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
   const onGlobalSearchChangeHandler = (e) => {
     setSearchText(e.target.value);
   };
@@ -206,7 +209,7 @@ const UserReport = () => {
 
         const queryParams = { userId: selectedGroup };
         if (selectedFromDate) queryParams.from_date = selectedFromDate;
-          if (selectedToDate) queryParams.to_date = selectedToDate;
+        if (selectedToDate) queryParams.to_date = selectedToDate;
         if (totalTransactions)
           queryParams.totalTransactions = totalTransactions;
         if (selectedPaymentMode?.length)
@@ -221,6 +224,11 @@ const UserReport = () => {
         });
 
         if (response.data && response.data.length > 0) {
+          const totalSum = response.data.reduce(
+            (sum, item) => sum + Number(item.amount || 0),
+            0
+          );
+          setTotalTransactionAmount(totalSum);
           const formattedData = response.data.map((item, index) => {
             return {
               _id: item._id,
@@ -277,12 +285,10 @@ const UserReport = () => {
           setTransactionsTable([]);
         }
       } catch (error) {
-        if (error.name === "AbortError") {
-          console.log("Request was cancelled (AbortError)");
-        } else {
-          console.error("Mapping/API Error:", error);
+        if (error.name !== "AbortError") {
+          setTransactionsTable([]);
+          setTotalTransactionAmount(0);
         }
-        setTransactionsTable([]);
       } finally {
         setTransactionsLoading(false);
       }
@@ -298,6 +304,7 @@ const UserReport = () => {
     selectedAccountType,
     selectedPaymentFor,
     totalTransactions,
+    showFilterField,
   ]);
   useEffect(() => {
     const fetchRegistrationFee = async () => {
@@ -783,25 +790,25 @@ const UserReport = () => {
     selectedCustomers,
   ]);
 
-const handleTransactionsSelectFilter = (value) => {
-  setSelectedLabel(value);
-  const today = new Date();
-  const formatDate = (date) => date.toISOString().slice(0, 10);
+  const handleTransactionsSelectFilter = (value) => {
+    setSelectedLabel(value);
+    const today = new Date();
+    const formatDate = (date) => date.toISOString().slice(0, 10);
 
-  if (value === "Custom") {
-    setShowFilterField(true);
-    setTotalTransactons(0);
-    
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    setSelectedFromDate(formatDate(startOfMonth));
-    setSelectedToDate(formatDate(today));
-  } else {
-    setShowFilterField(false);
-    setTotalTransactons(parseInt(value));
-    setSelectedFromDate(""); // Clear dates so they don't interfere with limit logic
-    setSelectedToDate("");
-  }
-};
+    if (value === "Custom") {
+      setShowFilterField(true);
+      setTotalTransactons(0);
+
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      setSelectedFromDate(formatDate(startOfMonth));
+      setSelectedToDate(formatDate(today));
+    } else {
+      setShowFilterField(false);
+      setTotalTransactons(parseInt(value));
+      setSelectedFromDate(""); // Clear dates so they don't interfere with limit logic
+      setSelectedToDate("");
+    }
+  };
 
   const dayGroup = [
     { value: "200", label: "Last 200 Transactions" },
@@ -2198,9 +2205,50 @@ const handleTransactionsSelectFilter = (value) => {
 
                     {activeTab === "transactions" && (
                       <div className="flex flex-col flex-1">
-                        <label className="mb-1 text-sm  text-gray-700 font-bold">
+                        <label className="m-4 text-sm  text-gray-700 font-bold">
                           Transactions
                         </label>
+
+                        <div className="my-6 relative overflow-hidden group bg-gradient-to-br from-white to-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-blue-300">
+                          {/* Subtle Background Icon Decoration */}
+                          <div className="absolute -right-2 -bottom-2 text-blue-100/40 group-hover:text-blue-200/50 transition-colors">
+                            <MdAccountBalanceWallet size={80} />
+                          </div>
+
+                          <div className="relative z-10 flex items-center gap-4">
+                            {/* Icon Container */}
+                            <div className="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
+                              <MdAccountBalanceWallet className="text-white text-2xl" />
+                            </div>
+
+                            <div className="flex flex-col">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                Total Amount
+                              </span>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-sm font-bold text-blue-600">
+                                  ₹
+                                </span>
+                                <span className="text-2xl font-black text-slate-800 tracking-tight">
+                                  {totalTransactionAmount.toLocaleString(
+                                    "en-IN"
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Real-time Words Conversion - keeping consistency with your payroll style */}
+                          {totalTransactionAmount > 0 && (
+                            <div className="mt-3 pt-3 border-t border-blue-100/50">
+                              <p className="text-[10px] font-medium text-blue-500 italic leading-tight">
+                                {numberToIndianWords(totalTransactionAmount)}{" "}
+                                Only
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                           <div className="space-y-2">
                             <label className="block text-sm font-medium text-slate-700">
@@ -2364,6 +2412,7 @@ const handleTransactionsSelectFilter = (value) => {
                             </div>
                           )}
                         </div>
+
                         {transactionsLoading ? (
                           <CircularLoader />
                         ) : transactionsTable?.length > 0 ? (
@@ -2394,6 +2443,5 @@ const handleTransactionsSelectFilter = (value) => {
 };
 
 export default UserReport;
-
 
 // Date Range in transaction section is not working properly why
