@@ -241,7 +241,7 @@ const DueMessage = () => {
         <Sidebar />
         <div className="flex-grow p-7 mt-32">
           <h1 className="text-2xl font-bold text-center">
-            Whatsapp Due Messages
+            Whatsapp Outstanding Messages
           </h1>
           {contextHolder}
 
