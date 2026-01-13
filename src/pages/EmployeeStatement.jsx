@@ -197,7 +197,6 @@
 //     { key: "balance", header: "Balance"},
 //   ];
 
-
 //    const columnsRaw = [
 //     { key: "id", header: "SL. NO" },
 //     { key: "month", header: "Month" },
@@ -405,7 +404,6 @@
 //             </div>
 //           )}
 
-          
 //           <footer className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-sm">
 //             <Space>
 //               <MinusCircleOutlined className="text-red-500" />
@@ -471,7 +469,9 @@ const formatCurrency = (amount) => {
 const getAchievementTag = (status) => {
   const isSuccess = status === "Met/Exceeded";
   return (
-    <Tag color={isSuccess ? "green" : "red"} icon={isSuccess ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
+    <Tag
+      color={isSuccess ? "green" : "red"}
+      icon={isSuccess ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
       {status}
     </Tag>
   );
@@ -491,16 +491,18 @@ const formatLedgerData = (ledger) => {
       businessClosed: formatCurrency(item.business?.totalBusinessClosed),
       achievement: getAchievementTag(item.business?.achievement),
       incentiveEarned: formatCurrency(item.business?.incentive_earned),
-  
+
       balance: (
-        <span className={balanceColor + " font-bold"}>{formatCurrency(balance)}</span>
+        <span className={balanceColor + " font-bold"}>
+          {formatCurrency(balance)}
+        </span>
       ),
       // Raw values for export functionality
       netPayableRaw: item.financials?.net_payable,
       standardDeductions: item.financials?.standard_deductions,
-          advance:item.financials?.advance,
-      grossSalary:item.financials?.gross_salary,
-      otherPayments:item.financials?.other_payments,
+      advance: item.financials?.advance,
+      grossSalary: item.financials?.gross_salary,
+      otherPayments: item.financials?.other_payments,
       paidAmountRaw: item.financials?.paid_amount,
       targetRaw: item.business?.target,
       businessClosedRaw: item.business?.totalBusinessClosed,
@@ -556,7 +558,7 @@ const EmployeeStatement = () => {
       setIsLoading(true);
       const response = await api.get(`/employee/ledgernew/${employeeId}`);
       const ledger = response.data?.ledger || [];
-      
+
       setOverallNetPosition(response.data?.overall_net_position);
       setTableData(formatLedgerData(ledger));
       setLedgerData(ledger);
@@ -567,7 +569,9 @@ const EmployeeStatement = () => {
     }
   };
 
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   useEffect(() => {
     if (selectedEmployee) fetchLedgerData(selectedEmployee);
@@ -600,25 +604,30 @@ const EmployeeStatement = () => {
     { key: "businessClosedRaw", header: "Business Closed" },
     { key: "incentiveRaw", header: "Incentive" },
     { key: "achievementRaw", header: "Achievement" },
-       { key: "advance", header: "Advance" },
+    { key: "advance", header: "Advance" },
     { key: "netPayableRaw", header: "Net Payable" },
     { key: "standardDeductions", header: "Standard Deductions" },
     { key: "otherPayments", header: "Other Payments" },
- { key: "grossSalary", header: "Gross Salary" },
+    { key: "grossSalary", header: "Gross Salary" },
     { key: "paidAmountRaw", header: "Paid" },
     { key: "balanceRaw", header: "Balance" },
   ];
 
-  const selectedEmployeeName = employees.find((e) => e._id === selectedEmployee)?.name;
+  const selectedEmployeeName = employees.find(
+    (e) => e._id === selectedEmployee
+  )?.name;
 
   return (
     <div>
-      <Navbar visibility={true} onGlobalSearchChangeHandler={(e) => setSearchText(e.target.value)} />
+      <Navbar
+        visibility={true}
+        onGlobalSearchChangeHandler={(e) => setSearchText(e.target.value)}
+      />
       <CustomAlertDialog
         type={alertConfig.type}
         isVisible={alertConfig.visibility}
         message={alertConfig.message}
-        onClose={() => setAlertConfig(p => ({...p, visibility: false}))}
+        onClose={() => setAlertConfig((p) => ({ ...p, visibility: false }))}
       />
 
       <div className="flex mt-20">
@@ -628,7 +637,9 @@ const EmployeeStatement = () => {
           <section className="mb-8">
             <h1 className="text-lg font-bold font-mono p-2">Quick Navigator</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link to="/hr-menu/salary-management" className="flex items-center gap-3 p-4 border rounded-lg hover:bg-blue-50 transition-all">
+              <Link
+                to="/hr-menu/salary-management"
+                className="flex items-center gap-3 p-4 border rounded-lg hover:bg-blue-50 transition-all">
                 <MdOutlineMan className="text-blue-600" size={20} />
                 <span className="font-medium">HR / Salary Management</span>
               </Link>
@@ -646,7 +657,11 @@ const EmployeeStatement = () => {
               className="w-full sm:w-1/3"
               placeholder="Select Employee"
               onChange={setSelectedEmployee}
-              options={employees.map(emp => ({
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option.label.toLowerCase().includes(input.toLowerCase())
+              }
+              options={employees.map((emp) => ({
                 value: emp._id,
                 label: `${emp.name} (${emp.phone_number})`,
               }))}
@@ -663,27 +678,49 @@ const EmployeeStatement = () => {
                   exportedFileName={`Statement_${selectedEmployeeName}`}
                 />
               ) : (
-                <CircularLoader isLoading={isLoading} failure={tableData.length === 0 && !isLoading} data="Ledger Data" />
+                <CircularLoader
+                  isLoading={isLoading}
+                  failure={tableData.length === 0 && !isLoading}
+                  data="Ledger Data"
+                />
               )}
 
               {/* Updated Summary Section */}
               {overallNetPosition !== null && (
                 <section className="mt-6 p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-                  <Title level={4} className="mb-4">Financial Summary</Title>
+                  <Title level={4} className="mb-4">
+                    Financial Summary
+                  </Title>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <Text type="secondary">Status Description</Text>
                       <p className="mt-2 text-sm text-gray-600">
-                        The net position represents the final closing balance for this employee across all periods.
+                        The net position represents the final closing balance
+                        for this employee across all periods.
                       </p>
                     </div>
-                    <div className={`p-6 rounded-lg border-2 flex flex-col justify-center ${overallNetPosition >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                      <Text strong className="text-gray-600">OVERALL NET POSITION</Text>
-                      <Title level={2} className={`m-0 ${overallNetPosition >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    <div
+                      className={`p-6 rounded-lg border-2 flex flex-col justify-center ${
+                        overallNetPosition >= 0
+                          ? "bg-green-50 border-green-200"
+                          : "bg-red-50 border-red-200"
+                      }`}>
+                      <Text strong className="text-gray-600">
+                        OVERALL NET POSITION
+                      </Text>
+                      <Title
+                        level={2}
+                        className={`m-0 ${
+                          overallNetPosition >= 0
+                            ? "text-green-700"
+                            : "text-red-700"
+                        }`}>
                         {formatCurrency(overallNetPosition)}
                       </Title>
                       <Text className="text-xs mt-1 uppercase font-bold">
-                        {overallNetPosition >= 0 ? "Amount to be Paid by Company" : "Excess Paid / Advance Due"}
+                        {overallNetPosition >= 0
+                          ? "Amount to be Paid by Company"
+                          : "Excess Paid / Advance Due"}
                       </Text>
                     </div>
                   </div>
@@ -694,17 +731,22 @@ const EmployeeStatement = () => {
             <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed">
               <TeamOutlined className="text-5xl text-gray-300 mb-4" />
               <Title level={4}>No Employee Selected</Title>
-              <Text>Please select an employee from the dropdown to view financial history.</Text>
+              <Text>
+                Please select an employee from the dropdown to view financial
+                history.
+              </Text>
             </div>
           )}
 
           <footer className="mt-8 p-4 bg-blue-50 rounded-lg text-sm text-blue-800 border border-blue-100">
-             <Space>
-               <CreditCardOutlined />
-               <Text className="text-blue-800">
-                 <strong>Running Balance:</strong> Positive (+) means company owes employee | Negative (-) means employee has taken excess/advance.
-               </Text>
-             </Space>
+            <Space>
+              <CreditCardOutlined />
+              <Text className="text-blue-800">
+                <strong>Running Balance:</strong> Positive (+) means company
+                owes employee | Negative (-) means employee has taken
+                excess/advance.
+              </Text>
+            </Space>
           </footer>
         </div>
       </div>
@@ -713,4 +755,3 @@ const EmployeeStatement = () => {
 };
 
 export default EmployeeStatement;
-
