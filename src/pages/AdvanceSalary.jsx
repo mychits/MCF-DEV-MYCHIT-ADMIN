@@ -5,7 +5,7 @@ import api from "../instance/TokenInstance";
 import DataTable from "../components/layouts/Datatable";
 import CustomAlert from "../components/alerts/CustomAlert";
 import Navbar from "../components/layouts/Navbar";
-import { Select, Dropdown, Drawer, Modal, Empty } from "antd";
+import { Select, Dropdown, Drawer, Modal, Empty, Alert } from "antd";
 import { IoMdMore } from "react-icons/io";
 import BackdropBlurLoader from "../components/loaders/BackdropBlurLoader";
 import { numberToIndianWords } from "../helpers/numberToIndianWords";
@@ -39,7 +39,14 @@ const EmployeeAdvancePayment = () => {
     type: "info",
     noReload: true,
   });
-
+useEffect(() => {
+  if (alertConfig.visibility) {
+    const timer = setTimeout(() => {
+      setAlertConfig((prev) => ({ ...prev, visibility: false }));
+    }, 3000);
+    return () => clearTimeout(timer);
+  }
+}, [alertConfig.visibility]);
   useEffect(() => {
     fetchEmployees();
     fetchAdvanceHistory();
@@ -122,7 +129,7 @@ const EmployeeAdvancePayment = () => {
       await api.delete(`/advance-payment/delete-advance/${id}`);
       setAlertConfig({
         visibility: true,
-        message: "Record deleted",
+        message: "Data Deleted Successfully!",
         type: "success",
         noReload: true,
       });
@@ -153,7 +160,7 @@ const EmployeeAdvancePayment = () => {
       }
       setAlertConfig({
         visibility: true,
-        message: editId ? "Updated" : "Added",
+        message: editId ? "Data Updated Successfully!" : "Data Added Successfully!",
         type: "success",
         noReload: true,
       });
@@ -207,7 +214,17 @@ const EmployeeAdvancePayment = () => {
           visibility={true}
         />
         <Sidebar />
-        <CustomAlert {...alertConfig} isVisible={alertConfig.visibility} />
+        {alertConfig.visibility && (
+  <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-md px-4">
+    <Alert
+      message={alertConfig.message}
+      type={alertConfig.type} // success, info, warning, error
+      showIcon
+      closable
+      onClose={() => setAlertConfig({ ...alertConfig, visibility: false })}
+    />
+  </div>
+)}
 
         <div className="flex-grow p-7">
           <div className="flex justify-between items-center mb-6">
