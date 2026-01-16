@@ -163,6 +163,8 @@ import PenaltyWhatsappMessageMenu from "../pages/PenaltyWhatsappMessageMenu";
 import EmployeeRewardPoints from "../pages/EmployeeRewardPoints";
 import RewardSettings from "../pages/RewardSettings";
 import AdvanceSalary from "../pages/AdvanceSalary"; 
+import RewardMenu from "../pages/RewardsMenu";
+// import CustomerRewardPoints from "../pages/CustomerRewardPoints"
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -206,6 +208,23 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
+         {
+    path: "/reward-menu",
+    element: (
+      <ProtectedRoute>
+        <RewardMenu />
+      </ProtectedRoute>
+    ),
+  },
+        {
+    path: "/reward-menu/employee-reward-points",
+    element: ( <ProtectedRoute> <EmployeeRewardPoints/> </ProtectedRoute>),
+  },
+  //      {
+  //   path: "/reward-menu/customer-reward-points",
+  //   element: ( <ProtectedRoute> <CustomerRewardPoints/> </ProtectedRoute>),
+  // },
   
   {
     path: "/payment-menu/payment-in-out-menu/pay-in-menu",

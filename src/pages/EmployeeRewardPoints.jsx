@@ -355,6 +355,7 @@ const EmployeeRewardPoints = () => {
     loan_reward_points: 0,
     pigme_reward_points: 0,
     total_earned_amount: 0,
+    total_redeemed_points: 0,
     total_earned_reward: 0,
     total_redeemed_amount: 0,
     balance_amount: 0,
@@ -525,7 +526,7 @@ const EmployeeRewardPoints = () => {
     <div>
       <Navbar visibility />
       <div className="flex mt-20">
-        <SettingSidebar />
+        <Sidebar />
 
         <div className="flex-grow p-7">
           <h1 className="text-2xl font-semibold mb-6">
@@ -598,10 +599,11 @@ const EmployeeRewardPoints = () => {
           {/* ================= SUMMARY CARDS ================= */}
           {employeeId && (
             <div className="grid grid-cols-5 gap-4 mb-6">
-              <SummaryCard label="Earned Amount" value={`₹ ${summary.total_earned_amount}`} />
               <SummaryCard label="Earned Points" value={summary.total_earned_reward} />
+              <SummaryCard label="Redeemed Points" value={summary.total_redeemed_points}/>
+              <SummaryCard label="Earned Amount" value={`₹ ${summary.total_earned_amount}`} />
               <SummaryCard label="Redeemed Amount" value={`₹ ${summary.total_redeemed_amount}`} />
-              <SummaryCard label="One Chit Reward Point Value" value={`₹ ${summary.reward_point_value}`} />
+              {/* <SummaryCard label="One Chit Reward Point Value" value={`₹ ${summary.reward_point_value}`} /> */}
             </div>
           )}
 

@@ -43,7 +43,7 @@ import { MdAccountBalanceWallet } from "react-icons/md";
 import { LuTarget } from "react-icons/lu";
 import { TbTargetArrow } from "react-icons/tb";
 import { FaExclamationTriangle } from "react-icons/fa";
-
+import { FaGifts } from "react-icons/fa";
 import { TbGraph } from "react-icons/tb";
 const MenuSidebar = [
   {
@@ -357,6 +357,13 @@ const MenuSidebar = [
         //   },
         // ],
       },
+          {
+              id: "#3",
+              title: "Rewards",
+              hider: true,
+              icon: <FaGifts size={18} />,
+              link: "/reward-menu"
+          },
     ],
   },
 
