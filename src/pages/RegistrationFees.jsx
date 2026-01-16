@@ -178,7 +178,7 @@ const RegistrationFee = () => {
             to_date: today,
           },
         });
-        console.info(response.data, "registration fees");
+     
         if (response.data && response.data.length > 0) {
           const formattedData = response.data.map((group, index) => {
            //if (!group?.group_id?.group_name) return {};
@@ -843,49 +843,7 @@ const RegistrationFee = () => {
     }
   };
 
-  // const handleFileSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   const formDatas = new FormData();
-  //   const fileInput = e.target.file;
-
-  //   formDatas.append("user_id", formData.user_id);
-  //   formDatas.append("group_id", formData.group_id);
-  //   formDatas.append("ticket", formData.ticket);
-
-  //   if (fileInput && fileInput.files[0]) {
-  //     formDatas.append("file", fileInput.files[0]);
-
-  //     try {
-  //       const response = await api.post(`/payment/payment-excel`, formDatas, {
-  //         headers: { "Content-Type": "multipart/form-data" },
-  //       });
-
-  //       if (response.status === 200) {
-  //         setShowUploadModal(false);
-  //         setAlertConfig({
-  //           visibility: true,
-  //           message: "File uploaded successfully!",
-  //           type: "success",
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error uploading file:", error);
-
-  //       setAlertConfig({
-  //         visibility: true,
-  //         message: "Failed to upload file.",
-  //         type: "success",
-  //       });
-  //     }
-  //   } else {
-  //     setAlertConfig({
-  //       visibility: true,
-  //       message: "Please select a file to upload.",
-  //       type: "success",
-  //     });
-  //   }
-  // };
+  
 
   const handleGroupAuctionChange = async (groupId) => {
     if (groupId) {

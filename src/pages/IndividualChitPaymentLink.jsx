@@ -6,7 +6,7 @@ import Modal from "../components/modals/Modal";
 import DataTable from "../components/layouts/Datatable";
 import CircularLoader from "../components/loaders/CircularLoader";
 import Navbar from "../components/layouts/Navbar";
-import { Select, Dropdown, Modal as AntModal, Alert } from "antd";
+import { Select, Dropdown, Modal as AntModal, Alert, Empty } from "antd";
 import { IoMdMore } from "react-icons/io";
 import { Link } from "react-router-dom";
 import BackdropBlurLoader from "../components/loaders/BackdropBlurLoader";
@@ -598,7 +598,13 @@ const IndividualChitPaymentLink = () => {
                   </div>
                 </div>
 
-                {TablePayments && TablePayments.length > 0 ? (
+                {isLoading? <CircularLoader
+                     
+                      data="Payments Data"
+                      failure={
+                        TablePayments.length <= 0 && selectedAuctionGroupId
+                      }
+                    />: TablePayments && TablePayments.length > 0 ? (
                   <DataTable
                     data={TablePayments.filter((item) =>
                       Object.values(item).some((value) =>
@@ -617,13 +623,7 @@ const IndividualChitPaymentLink = () => {
                   />
                 ) : (
                   <div className="mt-10 text-center text-gray-500">
-                    <CircularLoader
-                      isLoading={isLoading}
-                      data="Payments Data"
-                      failure={
-                        TablePayments.length <= 0 && selectedAuctionGroupId
-                      }
-                    />
+                   <Empty description="No Payment Link Transaction Found"/>
                   </div>
                 )}
               </div>

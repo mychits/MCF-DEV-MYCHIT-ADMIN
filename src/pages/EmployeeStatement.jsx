@@ -296,7 +296,8 @@ const EmployeeStatement = () => {
                   exportCols={columnsRaw}
                   data={filterTableData(tableData, searchText)}
                   columns={columns}
-                  exportedFileName={`Statement_${selectedEmployeeName}`}
+                  exportedPdfName={`Salary Statement: ${selectedEmployeeName}`}
+                  exportedFileName={`Salary Statement ${selectedEmployeeName}`}
                 />
               ) : (
                 <CircularLoader
