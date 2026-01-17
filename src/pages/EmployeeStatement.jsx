@@ -74,7 +74,8 @@ const formatLedgerData = (ledger) => {
       businessClosed: formatCurrency(item.business?.totalBusinessClosed),
       achievement: getAchievementTag(item.business?.achievement),
       incentiveEarned: formatCurrency(item.business?.incentive_earned),
-      otherIncentives: formatCurrency(item.business?.other_incentives),
+      pigmyIncentives: formatCurrency(item.business?.pigmy_incentives),
+      loanIncentives: formatCurrency(item.business?.loan_incentives),
       advance: advanceDisplay, // Use the formatted display string
 
       balance: (
@@ -181,7 +182,8 @@ const EmployeeStatement = () => {
     { key: "targetAmount", header: "Target" },
     { key: "businessClosed", header: "Business Closed" },
     { key: "incentiveEarned", header: "Incentive" },
-    { key: "otherIncentives", header: "Other Incentives" },
+    { key: "pigmyIncentives", header: "Pigmy Incentives" },
+    { key: "loanIncentives", header: "Loan Incentives" },
     { key: "achievement", header: "Achievement" },
     { key: "advance", header: "Advance" },
     { key: "netPayable", header: "Net Payable" },
@@ -197,6 +199,8 @@ const EmployeeStatement = () => {
     { key: "targetRaw", header: "Target" },
     { key: "businessClosedRaw", header: "Business Closed" },
     { key: "incentiveRaw", header: "Incentive" },
+    { key: "pigmyIncentives", header: "Pigmy Incentives" },
+    { key: "loanIncentives", header: "Loan Incentives" },
     { key: "achievementRaw", header: "Achievement" },
     { key: "advanceRaw", header: "Advance" },
     { key: "netPayableRaw", header: "Net Payable" },
@@ -254,7 +258,7 @@ const EmployeeStatement = () => {
       <div className="flex mt-20">
         <Sidebar />
         <div className="flex-grow p-7">
-          {/* Navigator */}
+       
           <section className="mb-8">
             <h1 className="text-lg font-bold font-mono p-2">Quick Navigator</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,7 +271,6 @@ const EmployeeStatement = () => {
             </div>
           </section>
 
-          {/* Employee Selection */}
           <section className="mt-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl font-semibold flex items-center">
               <TeamOutlined className="mr-2 text-blue-600" /> Employee Statement
@@ -295,7 +298,7 @@ const EmployeeStatement = () => {
                 <DataTable
                   exportCols={columnsRaw}
                   data={filterTableData(tableData, searchText)}
-                  columns={columns}
+                  columns={columnsRaw}
                   exportedPdfName={`Salary Statement: ${selectedEmployeeName}`}
                   exportedFileName={`Salary Statement ${selectedEmployeeName}`}
                 />
