@@ -165,7 +165,7 @@ import RewardSettings from "../pages/RewardSettings";
 import AdvanceSalary from "../pages/AdvanceSalary"; 
 import RewardMenu from "../pages/RewardsMenu";
 import PaymentLinkTransactions from "../pages/PaymentLinkTransactions";
-// import CustomerRewardPoints from "../pages/CustomerRewardPoints"
+import CustomerRewardPoints from "../pages/CustomerRewards"
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -222,10 +222,10 @@ const mainRoutes = createBrowserRouter([
     path: "/reward-menu/employee-reward-points",
     element: ( <ProtectedRoute> <EmployeeRewardPoints/> </ProtectedRoute>),
   },
-  //      {
-  //   path: "/reward-menu/customer-reward-points",
-  //   element: ( <ProtectedRoute> <CustomerRewardPoints/> </ProtectedRoute>),
-  // },
+       {
+    path: "/reward-menu/customer-reward-points",
+    element: ( <ProtectedRoute> <CustomerRewardPoints/> </ProtectedRoute>),
+  },
   
   {
     path: "/payment-menu/payment-in-out-menu/pay-in-menu",

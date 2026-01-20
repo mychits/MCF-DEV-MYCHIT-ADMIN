@@ -77,11 +77,11 @@ const MenuSidebar = [
     icon: <FaGift />,
     submenu: true,
     submenuItems: [
-      {
-        title: "Generate Reward Points",
-        icon: <FaGift size={20} />,
-        link: "/employee-reward-points",
-      },
+      // {
+      //   title: "Generate Reward Points",
+      //   icon: <FaGift size={20} />,
+      //   link: "/employee-reward-points",
+      // },
       {
         title: "Reward Settings",
         icon: <FaGift size={20} />,
