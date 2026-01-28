@@ -348,6 +348,15 @@ const subMenus = [
     color: "from-blue-500 to-blue-600",
     isNew: false,
   },
+   {
+    id: "41",
+    title: "Loan Completion Report",
+    link: "/reports/loan-completion-report",
+    category: "Customer",
+    Icon: TfiGift,
+    color: "from-blue-500 to-blue-600",
+    isNew: false,
+  },
   
 ];
 

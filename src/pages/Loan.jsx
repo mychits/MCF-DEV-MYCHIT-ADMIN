@@ -314,6 +314,20 @@ const handleRemoveBorrower = async () => {
     return Object.keys(newErrors).length === 0;
   };
 
+useEffect(() => {
+  if (!formData.start_date || !formData.tenure) return;
+
+  const startDate = new Date(formData.start_date);
+  startDate.setDate(startDate.getDate() + Number(formData.tenure));
+
+  const endDate = startDate.toISOString().split("T")[0];
+
+  setFormData((prev) => ({
+    ...prev,
+    end_date: endDate,
+  }));
+}, [formData.start_date, formData.tenure]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const isValid = validateForm("addBorrower");
@@ -692,7 +706,7 @@ const handleRemoveBorrower = async () => {
                     onChange={handleChange}
                     id="end_date"
                     placeholder="Enter End Date"
-                    required
+                    readOnly
                     className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
                   />
                   {errors.end_date && (

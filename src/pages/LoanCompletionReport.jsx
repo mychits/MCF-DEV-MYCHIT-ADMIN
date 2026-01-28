@@ -10,7 +10,7 @@ import CircularLoader from "../components/loaders/CircularLoader";
 
 const { RangePicker } = DatePicker;
 
-const CustomerLoanReport = () => {
+const LoanCompletionReport = () => {
   const [loanReportTable, setLoanReportTable] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,32 +25,57 @@ const CustomerLoanReport = () => {
         const response = await api.get(`/payment/customers/loan-report`);
         console.info(response, " test fvdfhjdfgjhgf");
 
-        const formattedData = response.data.loanReports.map((loan, index) => ({
-          id: loan?._id,
-          slNo: index + 1,
-          loanIds: loan?.loan_id || "N/A",
-          loanAmountValue: loan?.loan_amount || 0,
+        // const formattedData = response.data.loanReports.map((loan, index) => ({
+        //   id: loan?._id,
+        //   slNo: index + 1,
+        //   loanIds: loan?.loan_id || "N/A",
+        //   loanAmountValue: loan?.loan_amount || 0,
 
-          customerId: loan?.borrower?.customer_id || "N/A",
-          customerName: loan?.borrower?.full_name || "N/A",
-          customerPhone: loan?.borrower?.phone_number || "N/A",
-          daily_payment_amount: loan?.daily_payment_amount || "N/A",
-          loanStartDate: loan?.start_date
-            ? new Date(loan.start_date).toLocaleDateString("en-GB")
-            : "N/A",
-          // Store the original date for filtering
-          loanStartDateObj: loan?.start_date ? new Date(loan.start_date) : null,
+        //   customerId: loan?.borrower?.customer_id || "N/A",
+        //   customerName: loan?.borrower?.full_name || "N/A",
+        //   customerPhone: loan?.borrower?.phone_number || "N/A",
+        //   daily_payment_amount: loan?.daily_payment_amount || "N/A",
+        //   loanStartDate: loan?.start_date
+        //     ? new Date(loan.start_date).toLocaleDateString("en-GB")
+        //     : "N/A",
+        //   // Store the original date for filtering
+        //   loanStartDateObj: loan?.start_date ? new Date(loan.start_date) : null,
 
-          loanServiceCharges: loan?.service_charges ?? 0,
-          loanAmount: loan?.double_loan_amount ?? 0,
-          payableAmount: loan?.amount_payable ?? 0,
-          totalLoanAmount: loan?.total_paid_amount ?? 0,
-          loanBalance: loan?.outstanding ?? 0,
-          remainingBalance: loan?.balance ?? 0,
-          status: loan?.status || "-",
-          referredBy: loan?.referredBy || "N/A",
-        }));
-        
+        //   loanServiceCharges: loan?.service_charges ?? 0,
+        //   loanAmount: loan?.double_loan_amount ?? 0,
+        //   payableAmount: loan?.amount_payable ?? 0,
+        //   totalLoanAmount: loan?.total_paid_amount ?? 0,
+        //   loanBalance: loan?.balance ?? 0,
+        //   status: loan?.status === "Completed" ? loan.status : null,
+        //   referredBy: loan?.referredBy || "N/A",
+        // }));
+        const formattedData = response.data.loanReports
+  .filter(loan => loan?.status === "Completed")
+  .map((loan, index) => ({
+    id: loan?._id,
+    slNo: index + 1,
+    loanIds: loan?.loan_id || "N/A",
+    loanAmountValue: loan?.loan_amount || 0,
+
+    customerId: loan?.borrower?.customer_id || "N/A",
+    customerName: loan?.borrower?.full_name || "N/A",
+    customerPhone: loan?.borrower?.phone_number || "N/A",
+    daily_payment_amount: loan?.daily_payment_amount || "N/A",
+
+    loanStartDate: loan?.start_date
+      ? new Date(loan.start_date).toLocaleDateString("en-GB")
+      : "N/A",
+    loanStartDateObj: loan?.start_date ? new Date(loan.start_date) : null,
+
+    loanServiceCharges: loan?.service_charges ?? 0,
+    loanAmount: loan?.double_loan_amount ?? 0,
+    payableAmount: loan?.amount_payable ?? 0,
+    totalLoanAmount: loan?.total_paid_amount ?? 0,
+    loanBalance: loan?.balance ?? 0,
+
+    status: loan.status, // always "Completed" now
+    referredBy: loan?.referredBy || "N/A",
+  }));
 
         setLoanReportTable(formattedData);
       } catch (error) {
@@ -129,17 +154,16 @@ const CustomerLoanReport = () => {
     { key: "loanIds", header: "Loan ID" },
     { key: "customerName", header: "Customer Name" },
     { key: "customerPhone", header: "Phone Number" },
-    { key: "referredBy", header: "Referred By" },
     { key: "loanStartDate", header: "Loan Start Date" },
     { key: "loanServiceCharges", header: "Service Charges" },
     {key: "daily_payment_amount", header: "Daily Payment"},
     { key: "loanAmount", header: "Loan Amount" },
     { key: "payableAmount", header: "Loan Payable" },
     { key: "totalLoanAmount", header: "Total Paid" },
-    { key: "loanBalance", header: "OutStanding" },
-    {key: "remainingBalance", header: "Balance"},
     {key: "status", header: "Status"},
+    { key: "referredBy", header: "Referred By" },
 
+    { key: "loanBalance", header: "Balance" },
   ];
 
   const StatCard = ({ icon: Icon, label, value, color }) => (
@@ -162,10 +186,10 @@ const CustomerLoanReport = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FileText className="w-7 h-7 text-blue-600" /> Customer Loan Report
+            <FileText className="w-7 h-7 text-blue-600" /> Loan Completion Report
           </h1>
           <p className="text-gray-600 ml-10">
-            Overview of customer loans, payments & referral details
+            Overview of customer completion loans, payments & referral details
           </p>
         </div>
 
@@ -281,4 +305,4 @@ const CustomerLoanReport = () => {
   );
 };
 
-export default CustomerLoanReport;
+export default LoanCompletionReport;
