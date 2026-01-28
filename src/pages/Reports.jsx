@@ -353,7 +353,7 @@ const subMenus = [
     title: "Loan Completion Report",
     link: "/reports/loan-completion-report",
     category: "Customer",
-    Icon: TfiGift,
+    Icon: GiMoneyStack,
     color: "from-blue-500 to-blue-600",
     isNew: false,
   },
