@@ -1026,7 +1026,7 @@ const HRSalaryManagement = () => {
         medicalAllowance: data?.earnings?.medical_allowance,
         basketOfBenifits: data?.earnings?.basket_of_benifits,
         performanceBonus: data?.earnings?.performance_bonus,
-        otherAllowances: data?.earnings?.basic,
+        otherAllowances: data?.earnings?.other_allowances,
         conveyance: data?.earnings?.conveyance,
         incomeTax: data?.deductions?.income_tax,
         esi: data?.deductions?.esi,
