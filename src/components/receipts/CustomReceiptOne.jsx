@@ -1,4 +1,5 @@
-const Receipt = ({ id, orderType, user_name, others, status, collectedBy, viewMode = 'grid' }) => {
+const Receipt = ({ id, orderType, user_name, others, status, collectedBy, createdAt, viewMode = 'grid' }) => {
+
   const getStatusStyles = (stat) => {
     switch (stat?.toUpperCase()) {
       case 'PAID': return 'bg-green-100 text-green-700 border-green-200';
@@ -10,22 +11,41 @@ const Receipt = ({ id, orderType, user_name, others, status, collectedBy, viewMo
   if (viewMode === 'list') {
     // List View (Table Row Style)
     return (
-      <div className="flex items-center justify-between bg-white p-4 border-b border-gray-200 hover:bg-gray-50 font-mono text-xs transition-colors">
-        <div className="w-16 text-gray-400">#{id}</div>
-        <div className="w-1/4 font-bold uppercase">{user_name}</div>
-        <div className="w-1/4 text-gray-600 italic truncate pr-4">{others}</div>
-        <div className="w-1/6 font-semibold">{orderType}</div>
-        <div className="w-1/6">
-          <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${getStatusStyles(status)}`}>
-            {status}
+      <div className="grid grid-cols-[60px_120px_1fr_1.5fr_120px_100px_120px] items-center bg-white p-4 border-b border-gray-200 hover:bg-gray-50 font-mono text-xs transition-colors gap-4">
+
+        <div className="text-gray-400">#{id}</div>
+
+        <div className="text-gray-500 truncate">
+          {createdAt || ''}
+        </div>
+
+        <div className="font-bold uppercase truncate">
+          {user_name || "N/A"}
+        </div>
+
+        <div className="text-gray-600 italic truncate pr-4">
+          {others || "N/A"}
+        </div>
+
+        <div className="font-semibold truncate uppercase">
+          {orderType || "N/A"}
+        </div>
+
+        <div className="flex justify-start">
+          <span className={`px-2 py-0.5 rounded border text-[10px] font-bold whitespace-nowrap ${getStatusStyles(status)}`}>
+            {status || "N/A"}
           </span>
         </div>
-        <div className="w-1/6 text-right text-gray-500">{collectedBy || 'System'}</div>
+
+        <div className="text-right text-gray-500 truncate">
+          {collectedBy || 'Admin'}
+        </div>
+
       </div>
     );
   }
 
-  // Grid View (The existing card style)
+
   return (
     <div className="bg-white p-5 shadow-md border border-gray-200 rounded-sm font-mono text-xs text-gray-800 w-full hover:shadow-lg transition-shadow">
       <div className="text-center mb-3">
@@ -40,7 +60,7 @@ const Receipt = ({ id, orderType, user_name, others, status, collectedBy, viewMo
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-gray-500 uppercase">Customer:</span>
-          <span className="font-bold text-right">{user_name}</span>
+          <span className="font-bold text-right">{user_name || "N/A"}</span>
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-gray-500 uppercase">Status:</span>
@@ -56,7 +76,12 @@ const Receipt = ({ id, orderType, user_name, others, status, collectedBy, viewMo
       </div>
       <div className="border-t-2 border-double border-gray-300 mt-4 pt-2 text-center">
         <p className="text-[10px] text-gray-400 uppercase">Collected By</p>
-        <p className="font-bold text-gray-700 uppercase">{collectedBy || 'System'}</p>
+        <p className="font-bold text-gray-700 uppercase">{collectedBy || 'ADMIN'}</p>
+      </div>
+
+      <div className="border-t-2 border-double border-gray-300 mt-4 pt-2 text-center">
+        <p className="text-[10px] text-gray-400 uppercase">Transaction Date</p>
+        <p className="font-bold text-gray-700 uppercase">{createdAt || 'N/A'}</p>
       </div>
     </div>
   );

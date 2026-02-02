@@ -18,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import Receipt from "../components/receipts/CustomReceiptOne";
 import { BsGrid3X3GapFill, BsListUl } from "react-icons/bs";
-
+import dayjs from "dayjs";
 const Home = () => {
   const [groups, setGroups] = useState([]);
   const [users, setUsers] = useState([]);
@@ -202,7 +202,8 @@ const Home = () => {
             {status}
           </Tag>,
           statusRaw: status,
-          collectedBy: order?.collected_by
+          collectedBy: order?.collected_by,
+          createdAt: dayjs(order?.createdAt)?.endOf("D")?.format("YYYY-MM-DD")
         })
       });
       setTableTransactions(filteredData);
@@ -437,7 +438,7 @@ const Home = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  {/* View Toggle Buttons */}
+               
                   <div className="flex bg-gray-200 p-1 rounded-lg">
                     <button
                       onClick={() => setViewMode('grid')}
@@ -469,15 +470,16 @@ const Home = () => {
                   ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                   : "flex flex-col border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm"
                 }>
-                  {/* List View Header */}
+
                   {viewMode === 'list' && tableTransactions.length > 0 && (
-                    <div className="flex items-center justify-between bg-gray-100 p-4 border-b border-gray-200 font-bold text-[10px] text-gray-500 uppercase tracking-wider">
-                      <div className="w-16">ID</div>
-                      <div className="w-1/4">Customer</div>
-                      <div className="w-1/4">Details</div>
-                      <div className="w-1/6">Type</div>
-                      <div className="w-1/6">Status</div>
-                      <div className="w-1/6 text-right">Agent</div>
+                    <div className="grid grid-cols-[60px_140px_1fr_1.5fr_100px_100px_120px] items-center bg-gray-100 p-4 border-b border-gray-200 font-bold text-[10px] text-gray-500 uppercase tracking-wider gap-4">
+                      <div>ID</div>
+                      <div className="text-left">Transaction Date</div>
+                      <div>Customer</div>
+                      <div>Details</div>
+                      <div>Type</div>
+                      <div>Status</div>
+                      <div className="text-right">Agent</div>
                     </div>
                   )}
 
@@ -496,7 +498,7 @@ const Home = () => {
                 </div>
               )}
             </div>
-          
+
             {!loading && filteredCards.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-gray-500 text-lg">

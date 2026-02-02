@@ -7,6 +7,7 @@ import Sidebar from "../components/layouts/Sidebar";
 import API from "../instance/TokenInstance";
 import { useEffect } from "react";
 import { Tag } from 'antd';
+import dayjs from "dayjs";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -45,7 +46,8 @@ const PaymentLinkTransactions = () => {
             {status}
           </Tag>,
           statusRaw: status,
-          collectedBy: order?.collected_by
+          collectedBy: order?.collected_by,
+     
         })
       });
       setTableTransactions(filteredData);
@@ -61,6 +63,7 @@ const PaymentLinkTransactions = () => {
 
   const columns = [
     { key: "id", header: "SL. NO" },
+    { key: "createdAt", header: "Transaction Date" },
     { key: "orderType", header: "Order Type" },
     { key: "user_name", header: "User Name" },
     { key: "others", header: "Groups / Others" },
@@ -70,6 +73,7 @@ const PaymentLinkTransactions = () => {
   ];
   const exportColumns = [
     { key: "id", header: "SL. NO" },
+    { key: "createdAt", header: "Transaction Date" },
     { key: "orderType", header: "Order Type" },
     { key: "user_name", header: "User Name" },
     { key: "others", header: "Groups / Others" },
@@ -98,6 +102,7 @@ const PaymentLinkTransactions = () => {
               catcher="_id"
               data={tableTransactions}
               columns={columns}
+              exportCols={exportColumns}
               exportedPdfName="Payment_Link_Transactions"
               exportedFileName={`Loans.csv`}
             />
