@@ -143,6 +143,7 @@ const HRSalaryManagement = () => {
     { key: "employeeName", header: "Employee Name" },
     { key: "employeeCode", header: "Employee Id" },
     { key: "salaryYear", header: "Year" },
+    { key: "salaryMonth", header: "Month" },
     { key: "totalDays", header: "Total Days" },
     { key: "presentDays", header: "Present Days" },
     { key: "absentDays", header: "Absent Days" },
