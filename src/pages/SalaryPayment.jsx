@@ -121,7 +121,7 @@ const SalaryPayment = () => {
     { label: "November", value: "November", disabled: false },
     { label: "December", value: "December", disabled: false },
   ];
-  const previousMonth = months[dayjs().subtract(2, "month").format("MM")].label;
+  const previousMonth = months[dayjs().subtract(2, "month").format("MM")]?.label;
   const [formData, setFormData] = useState({
     employee_id: "",
     month: previousMonth,
