@@ -168,6 +168,11 @@ import PaymentLinkTransactions from "../pages/PaymentLinkTransactions";
 import CustomerRewardPoints from "../pages/CustomerRewards"
 import RedemptionPointsReport from "../pages/RedemptionPointsReport";
 import LoanCompletionReport from "../pages/LoanCompletionReport";
+
+import HelpAndSupport from "../pages/HelpAndSupport";
+import ComplaintForm from "../pages/ComplaintForm";
+import Supports from "../pages/Supports";
+
 const mainRoutes = createBrowserRouter([
   {
     path: "/",
@@ -181,6 +186,31 @@ const mainRoutes = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+     {
+    path: "/help",
+    element: (
+      <ProtectedRoute>
+        <HelpAndSupport/>
+      </ProtectedRoute>
+    ),
+  },
+     {
+    path: "/help&support",
+    element: (
+      <ProtectedRoute>
+        <HelpAndSupport/>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/help-support",
+    element: (
+      <ProtectedRoute>
+        <ComplaintForm/>
+      </ProtectedRoute>
+    ),
+  },
+
   {
     path: "/quick-search",
     element: (
@@ -439,6 +469,14 @@ const mainRoutes = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <FilterGroups />
+      </ProtectedRoute>
+    ),
+  },
+    {
+    path: "/supports",
+    element: (
+      <ProtectedRoute>
+       <Supports/>
       </ProtectedRoute>
     ),
   },
