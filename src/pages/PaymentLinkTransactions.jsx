@@ -19,6 +19,7 @@ const PaymentLinkTransactions = () => {
   const [tableTransactions, setTableTransactions] = useState([]);
   async function getTransactions() {
     try {
+      setIsLoading(true);
       const response = await API.get("/cashfree-pg-orders");
       const transactionsData = response.data?.data;
       const filteredData = transactionsData.map((order, index) => {
@@ -50,6 +51,8 @@ const PaymentLinkTransactions = () => {
       setTableTransactions(filteredData);
     } catch (error) {
       setTableTransactions([]);
+    }finally{
+      setIsLoading(false);
     }
   }
   useEffect(() => {
