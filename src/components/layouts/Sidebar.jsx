@@ -45,6 +45,9 @@ import { TbTargetArrow } from "react-icons/tb";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { FaGifts } from "react-icons/fa";
 import { TbGraph } from "react-icons/tb";
+
+import { MdAdminPanelSettings } from "react-icons/md";
+
 const MenuSidebar = [
   {
     id: "$1",
@@ -357,6 +360,7 @@ const MenuSidebar = [
         //   },
         // ],
       },
+      
           {
               id: "#3",
               title: "Rewards",
@@ -364,6 +368,14 @@ const MenuSidebar = [
               icon: <FaGifts size={18} />,
               link: "/reward-menu"
           },
+
+          {
+        id: "#4",
+        title: "Admin Support",
+        icon: <MdAdminPanelSettings size={18} />,
+        isHeading: true,
+        link: "/supports"
+      },
     ],
   },
 
