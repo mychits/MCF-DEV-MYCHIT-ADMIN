@@ -255,15 +255,18 @@ const Daybook = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* New IN/OUT Filter */}
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500">TRANSACTION TYPE</label>
               <Select className="w-full h-10" value={selectedTransactionType} onChange={setSelectedTransactionType}>
                 <Select.Option value="All">All (IN & OUT)</Select.Option>
                 <Select.Option value="IN">Payment IN Only</Select.Option>
                 <Select.Option value="OUT">Payment OUT Only</Select.Option>
               </Select>
-            </div>
+            </div> */}
 
+
+
+            
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500">DATE RANGE</label>
               <Select className="w-full h-10" value={selectedLabel} onChange={handleSelectFilter} options={[{ value: "Today", label: "Today" }, { value: "Yesterday", label: "Yesterday" }, { value: "Twodaysago", label: "Two Days Ago" }, { value: "Custom", label: "Custom" }]} />
@@ -331,6 +334,51 @@ const Daybook = () => {
                 <Select className="w-full h-10" value={selectedAccountType} onChange={setSelectedAccountType} options={[{ label: 'All', value: '' }, { label: 'Suspense', value: 'suspense' }, { label: 'Credit', value: 'credit' }]} />
               </div>
             )}
+
+
+             <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Collection Employee
+                    </label>
+                    <Select
+                      showSearch
+                      placeholder="Select employee"
+                      popupMatchSelectWidth={false}
+                      onChange={(selection) => {
+                        const [id, type] = selection.split("|") || [];
+                        if (type === "admin_type") {
+                          setCollectionAdmin(id);
+                          setCollectionAgent("");
+                        } else if (type === "agent_type") {
+                          setCollectionAgent(id);
+                          setCollectionAdmin("");
+                        } else {
+                          setCollectionAdmin("");
+                          setCollectionAgent("");
+                        }
+                      }}
+                      filterOption={(input, option) =>
+                        option.children
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      className="w-full"
+                      style={{ height: "44px" }}>
+                      <Select.Option value="">All Employees</Select.Option>
+                      {[...new Set(agents), ...new Set(admins)].map((dt) => (
+                        <Select.Option
+                          key={dt?._id}
+                          value={`${dt._id}|${dt.selected_type}`}>
+                          {dt.selected_type === "admin_type"
+                            ? "Admin | "
+                            : "Employee | "}
+                          {dt.full_name} | {dt.phone_number}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </div>
+
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500">TOTAL DISPLAYED</label>

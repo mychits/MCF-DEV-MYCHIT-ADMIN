@@ -40,6 +40,11 @@ const CustomerLoanReport = () => {
             : "N/A",
           // Store the original date for filtering
           loanStartDateObj: loan?.start_date ? new Date(loan.start_date) : null,
+         // loanStartDateObj: loan?.start_date ? new Date(loan.start_date) : null,
+          loanEndDate: loan?.end_date ? `${loan?.end_date}`.split("T")[0]
+            : "N/A",
+          loanSanctionDate: loan?.loan_sanction_date ? `${loan?.loan_sanction_date}`.split("T")[0] : "N/A",
+          loanDocumentCharges: loan?.document_charges ?? 0,
           payableLoanDays: loan?.days_count,
           loanServiceCharges: loan?.service_charges ?? 0,
           loanAmount: loan?.double_loan_amount ?? 0,
@@ -119,6 +124,7 @@ const CustomerLoanReport = () => {
     return {
       totalLoans: filtered.length,
       totalAmount: filtered.reduce((sum, loan) => sum + loan.loanAmount, 0),
+      totalPayable: filtered.reduce((sum, loan) => sum + loan.payableAmount, 0),
       totalPaid: filtered.reduce((sum, loan) => sum + loan.totalLoanAmount, 0),
       totalBalance: filtered.reduce((sum, loan) => sum + loan.loanBalance, 0),
     };
@@ -130,15 +136,18 @@ const CustomerLoanReport = () => {
     { key: "customerName", header: "Customer Name" },
     { key: "customerPhone", header: "Phone Number" },
     { key: "referredBy", header: "Referred By" },
+    {key: "loanSanctionDate", header: "Sanction Date"},
     { key: "loanStartDate", header: "Loan Start Date" },
+    {key: "loanEndDate", header: "Loan End Date"},
     { key: "loanServiceCharges", header: "Service Charges" },
-    {key: "daily_payment_amount", header: "Daily Payment"},
+    {key: "loanDocumentCharges", header: "Documentation Charges"},
+    {key: "daily_payment_amount", header: "Daily Installment"},
     { key: "loanAmount", header: "Loan Amount" },
     {key: "payableLoanDays", header: "Loan Age (in Days)"},
     { key: "payableAmount", header: "Loan Payable" },
     { key: "totalLoanAmount", header: "Total Paid" },
-    { key: "loanBalance", header: "OutStanding" },
     {key: "remainingBalance", header: "Balance"},
+    { key: "loanBalance", header: "OutStanding" },
     {key: "status", header: "Status"},
 
   ];
@@ -180,6 +189,7 @@ const CustomerLoanReport = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard icon={FileText} label="Total Loans" value={summaryStats.totalLoans} color="bg-blue-600" />
               <StatCard icon={IndianRupee} label="Total Loan Amount" value={`₹${summaryStats.totalAmount}`} color="bg-purple-600" />
+              <StatCard icon={TrendingUp} label="Total Payable" value={`₹${summaryStats.totalPayable}`} color="bg-blue-600" />
               <StatCard icon={TrendingUp} label="Total Paid" value={`₹${summaryStats.totalPaid}`} color="bg-green-600" />
               <StatCard icon={Calendar} label="Total Balance" value={`₹${summaryStats.totalBalance}`} color="bg-orange-600" />
             </div>

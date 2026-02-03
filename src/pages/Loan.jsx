@@ -12,8 +12,12 @@ import filterOption from "../helpers/filterOption";
 import { FaCalculator } from "react-icons/fa";
 import CircularLoader from "../components/loaders/CircularLoader";
 import { fieldSize } from "../data/fieldSize";
-import handleLoanRequestPrint from "../components/printFormats/LoanRequestPrint"
+import { useNavigate } from "react-router-dom";
+import LoanRequestPrint from "../components/printFormats/LoanRequestPrint";
+import jsPDF from "jspdf";
+import imageInput from "../assets/images/Agent.png";
 const Loan = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -32,8 +36,6 @@ const Loan = () => {
   const [removeReason, setRemoveReason] = useState("");
   const [customRemoveReason, setCustomRemoveReason] = useState("");
 
-
-
   const onGlobalSearchChangeHandler = (e) => {
     const { value } = e.target;
     setSearchText(value);
@@ -50,7 +52,9 @@ const Loan = () => {
     loan_amount: "",
     tenure: "",
     service_charges: "",
+    document_charges: "",
     daily_payment_amount: "",
+    loan_sanction_date: "",
     start_date: "",
     end_date: "",
     note: "",
@@ -66,7 +70,9 @@ const Loan = () => {
     loan_amount: "",
     tenure: "",
     service_charges: "",
+    document_charges: "",
     daily_payment_amount: "",
+    loan_sanction_date: "",
     start_date: "",
     end_date: "",
     note: "",
@@ -87,43 +93,210 @@ const Loan = () => {
     }
   };
 
-const handleRemoveBorrower = async () => {
-  if (!removeReason || (removeReason === "Other" && !customRemoveReason.trim())) {
-    setAlertConfig({
-      visibility: true,
-      message: "Please select and specify removal reason",
-      type: "warning",
-    });
-    return;
-  }
+  const handleRemoveBorrower = async () => {
+    if (
+      !removeReason ||
+      (removeReason === "Other" && !customRemoveReason.trim())
+    ) {
+      setAlertConfig({
+        visibility: true,
+        message: "Please select and specify removal reason",
+        type: "warning",
+      });
+      return;
+    }
 
-  try {
-    await api.patch(
-      `/loans/${currentBorrower._id}/remove`,
-      {
+    try {
+      await api.patch(`/loans/${currentBorrower._id}/remove`, {
         removal_reason:
           removeReason === "Other" ? customRemoveReason : removeReason,
-      }
+      });
+
+      setAlertConfig({
+        visibility: true,
+        message: "Loan removed successfully",
+        type: "success",
+      });
+
+      setShowRemoveModal(false);
+      setRemoveReason("");
+      setCustomRemoveReason("");
+      setCurrentBorrower(null);
+      setReloadTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error removing loan:", error);
+    }
+  };
+
+  const generateAndOpenPDF = (downloadOnly = false, userData) => {
+   
+
+    const sections = [
+      {
+        title: "Customer Details",
+        fields: [
+          { label: "Customer Name", value: userData?.borrower?.full_name },
+          { label: "Phone Number", value: userData?.borrower?.phone_number },
+          { label: "Email", value: userData?.borrower?.email },
+        ],
+      },
+      {
+        title: "Loan Summary",
+        fields: [
+          { label: "Loan ID", value: userData?.loan_id },
+          {
+            label: "Sanction Date",
+            value: userData?.loan_sanction_date?.split("T")[0],
+          },
+          { label: "Loan Amount", value: userData?.loan_amount },
+          { label: "Tenure (Days)", value: userData?.tenure },
+          { label: "Start Date", value: userData?.start_date?.split("T")[0] },
+          { label: "End Date", value: userData?.end_date?.split("T")[0] },
+          { label: "Daily Payment", value: userData?.daily_payment_amount },
+          { label: "Service Charges", value: userData?.service_charges },
+          { label: "Documentation Charges", value: userData?.document_charges },
+          { label: "Description", value: userData?.note },
+        ],
+      },
+      {
+        title: "Referral Details",
+        fields: [
+          { label: "Referred Type", value: userData?.referred_type },
+          {
+            label: "Employee Name",
+            value: userData?.referred_employee?.name || "N/A",
+          },
+          {
+            label: "Employee Phone",
+            value: userData?.referred_employee?.phone_number || "N/A",
+          },
+        ],
+      },
+    ];
+
+    const doc = new jsPDF("p", "mm", "a4");
+
+    const safeText = (v) => (v ? String(v) : "N/A");
+
+    let y = 65;
+
+    doc.addImage(imageInput, "PNG", 90, 8, 30, 30);
+
+    doc.setFillColor(0, 38, 124);
+    doc.rect(0, 40, 210, 15, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.text("Loan Request Application", 105, 49, { align: "center" });
+
+    const drawField = (label, value, x, y) => {
+      doc.setDrawColor(220, 224, 230);
+      doc.rect(x, y, 80, 8);
+
+      doc.setTextColor(0, 38, 124);
+      doc.setFontSize(9);
+      doc.text(label + ":", x + 2, y + 5);
+
+      doc.setTextColor(33, 33, 33);
+      doc.text(safeText(value), x + 40, y + 5);
+
+      return y + 12;
+    };
+
+sections.forEach((sec) => {
+  const rectX = 15;
+  const rectY = y;
+  const rectWidth = 180;
+  const rectHeight = 10;
+
+  // Draw rectangle
+  doc.setFillColor(0, 38, 124);
+  doc.rect(rectX, rectY, rectWidth, rectHeight, "F");
+
+  // Set text color
+  doc.setTextColor(255, 255, 255);
+
+    doc.setFontSize(14);
+
+  // Center text horizontally & vertically
+  doc.text(sec.title, rectX + rectWidth / 2, rectY + rectHeight / 2 + 1.5, {
+    align: "center",
+  });
+
+  y += 15;
+
+  sec.fields.forEach((f, i) => {
+    const x = i % 2 === 0 ? 15 : 110;
+    y = drawField(f.label, f.value, x, i % 2 ? y - 12 : y);
+  });
+
+  y += 5;
+});
+
+    // Add declaration and signature
+    doc.setFontSize(10);
+    doc.text(
+      "I hereby declare that the above loan information is true and correct.",
+      105,
+      y + 10,
+      { align: "center" },
     );
 
-    setAlertConfig({
-      visibility: true,
-      message: "Loan removed successfully",
-      type: "success",
+    // Signature box
+    doc.setDrawColor(0, 0, 0);
+    doc.rect(80, y + 20, 50, 20);
+    doc.text("Customer Signature", 105, y + 38, { align: "center" });
+
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerY = pageHeight - 17; // footer bar start
+
+    // Footer background
+    doc.setFillColor(0, 38, 124);
+    doc.rect(0, footerY, 210, 20, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+
+    // Company name
+    doc.text("VIJAYA VINAYAK CHIT FUNDS PRIVATE LIMITED", 105, footerY + 5, {
+      align: "center",
     });
 
-    setShowRemoveModal(false);
-    setRemoveReason("");
-    setCustomRemoveReason("");
-    setCurrentBorrower(null);
-    setReloadTrigger((prev) => prev + 1);
+    // Address
+    doc.text(
+      "#11/36-25, 3rd Floor, 2nd Main, Kathriguppe Main Road, Banashankari 3rd Stage, Bengaluru-560085",
+      105,
+      footerY + 9,
+      { align: "center" },
+    );
 
-  } catch (error) {
-    console.error("Error removing loan:", error);
-  }
-};
+    // Contact
+    doc.text(
+      "Mob: 9483900777 | Ph: 080-4979 8763 | Email: info.mychits@gmail.com | Website: www.mychits.co.in",
+      105,
+      footerY + 13,
+      { align: "center" },
+    );
 
+    if (downloadOnly) {
+      // Direct download
+      doc.save(`${userData?.borrower?.full_name}_Loan_Request.pdf`);
+    } else {
+      // Open in new window for preview and print
+      const pdfBlob = doc.output("blob");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
 
+      // Open in new window
+      const printWindow = window.open(pdfUrl, "_blank");
+
+      // Set title
+      if (printWindow) {
+        printWindow.document.title = `${userData?.borrower?.full_name}_Loan_Request.pdf`;
+
+        // Optional: Auto-trigger print dialog
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -154,7 +327,7 @@ const handleRemoveBorrower = async () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get("/employee");
+        const response = await api.get("/agent/employee");
         setEmployees(response?.data?.employee);
       } catch (error) {
         console.error("failed to fetch employees", error);
@@ -162,6 +335,14 @@ const handleRemoveBorrower = async () => {
     };
     fetchEmployees();
   }, []);
+
+  const handlePrint = async (loanPrintId) => {
+    try {
+      const res = await api.get(`/loans/get-borrower/${loanPrintId}`);
+
+      generateAndOpenPDF(false, res.data);
+    } catch (error) {}
+  };
 
   useEffect(() => {
     const fetchBorrowers = async () => {
@@ -178,6 +359,8 @@ const handleRemoveBorrower = async () => {
           loan_amount: borrower?.loan_amount,
           tenure: borrower?.tenure,
           service_charges: borrower?.service_charges,
+          loan_sanction_date: borrower?.loan_sanction_date?.split("T")[0],
+          document_charges: borrower?.document_charges,
           daily_payment_amount: borrower?.daily_payment_amount,
           start_date: borrower?.start_date?.split("T")[0],
           end_date: borrower?.end_date?.split("T")[0],
@@ -185,12 +368,12 @@ const handleRemoveBorrower = async () => {
           referred_type: borrower?.referred_type,
           referred_by:
             borrower?.referred_employee?.name &&
-              borrower?.referred_employee?.phone_number
+            borrower?.referred_employee?.phone_number
               ? `${borrower.referred_employee.name} | ${borrower?.referred_employee?.phone_number}`
               : borrower?.referred_agent?.name
                 ? `${borrower.referred_agent.name} | ${borrower.referred_agent.phone_number}`
                 : borrower?.referred_customer?.full_name &&
-                  borrower?.referred_customer?.phone_number
+                    borrower?.referred_customer?.phone_number
                   ? `${borrower.referred_customer.full_name} | ${borrower?.referred_customer?.phone_number}`
                   : "N/A",
           action: (
@@ -221,18 +404,19 @@ const handleRemoveBorrower = async () => {
                         </div>
                       ),
                     },
-                     {
+                    {
                       key: "3",
                       label: (
                         <div
                           className="text-blue-600"
-                          onClick={() => handleLoanRequestPrint(borrower._id)}
+                          onClick={() => {
+                            handlePrint(borrower._id);
+                          }}
                         >
                           Print
                         </div>
                       ),
                     },
-
                   ],
                 }}
                 placement="bottomLeft"
@@ -314,19 +498,19 @@ const handleRemoveBorrower = async () => {
     return Object.keys(newErrors).length === 0;
   };
 
-useEffect(() => {
-  if (!formData.start_date || !formData.tenure) return;
+  useEffect(() => {
+    if (!formData.start_date || !formData.tenure) return;
 
-  const startDate = new Date(formData.start_date);
-  startDate.setDate(startDate.getDate() + Number(formData.tenure));
+    const startDate = new Date(formData.start_date);
+    startDate.setDate(startDate.getDate() + Number(formData.tenure));
 
-  const endDate = startDate.toISOString().split("T")[0];
+    const endDate = startDate.toISOString().split("T")[0];
 
-  setFormData((prev) => ({
-    ...prev,
-    end_date: endDate,
-  }));
-}, [formData.start_date, formData.tenure]);
+    setFormData((prev) => ({
+      ...prev,
+      end_date: endDate,
+    }));
+  }, [formData.start_date, formData.tenure]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -352,6 +536,8 @@ useEffect(() => {
           loan_amount: "",
           tenure: "",
           service_charges: "",
+          loan_sanction_date: "",
+          document_charges: "",
           daily_payment_amount: "",
           start_date: "",
           end_date: "",
@@ -383,12 +569,16 @@ useEffect(() => {
       const borrowerData = response.data;
       const formattedStartDate = borrowerData?.start_date?.split("T")[0];
       const formattedEndDate = borrowerData?.end_date?.split("T")[0];
+      const formattedSanctionDate =
+        borrowerData?.loan_sanction_date?.split("T")[0];
       setCurrentUpdateBorrower(response.data);
       setUpdateFormData({
         borrower: response?.data?.borrower._id,
         loan_amount: response?.data?.loan_amount,
         tenure: response?.data?.tenure,
         service_charges: response?.data?.service_charges,
+        document_charges: response?.data?.document_charges,
+        loan_sanction_date: formattedSanctionDate,
         daily_payment_amount: response?.data?.daily_payment_amount,
         start_date: formattedStartDate,
         end_date: formattedEndDate,
@@ -436,7 +626,7 @@ useEffect(() => {
       if (isValid) {
         await api.patch(
           `/loans/update-borrower/${currentUpdateBorrower._id}`,
-          updateFormData
+          updateFormData,
         );
         setShowModalUpdate(false);
         setReloadTrigger((prev) => prev + 1);
@@ -458,6 +648,8 @@ useEffect(() => {
     { key: "loan_amount", header: "Loan Amount" },
     { key: "tenure", header: "Tenure" },
     { key: "service_charges", header: "Service Charges" },
+    { key: "document_charges", header: "Documentation Charges" },
+    { key: "loan_sanction_date", header: "Sanction Date" },
     { key: "start_date", header: "Start Date" },
     { key: "end_date", header: "Due Date" },
     { key: "referred_type", header: "Referred Type" },
@@ -561,7 +753,8 @@ useEffect(() => {
                 >
                   {users.map((user) => (
                     <Select.Option key={user._id} value={user._id}>
-                      {user.customer_id} | {user.full_name} | {user.phone_number}
+                      {user.customer_id} | {user.full_name} |{" "}
+                      {user.phone_number}
                     </Select.Option>
                   ))}
                 </Select>
@@ -663,6 +856,57 @@ useEffect(() => {
                   {errors.daily_payment_amount && (
                     <p className="text-red-500 text-sm mt-1">
                       {errors.daily_payment_amount}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="document_charges"
+                  >
+                    Documentation Charges{" "}
+                    <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="document_charges"
+                    value={formData.document_charges}
+                    onChange={handleChange}
+                    id="document_charges"
+                    placeholder="Enter Documentation Charges"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.document_charges && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.document_charges}
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="daily_payment_amount"
+                  >
+                    Sanction Date <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    placeholder="Enter the Date"
+                    name="loan_sanction_date"
+                    value={formData.loan_sanction_date}
+                    onChange={handleChange}
+                    id="loan_sanction_date"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.loan_sanction_date && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.loan_sanction_date}
                     </p>
                   )}
                 </div>
@@ -842,7 +1086,9 @@ useEffect(() => {
                           .includes(input.toLowerCase());
                       }}
                       value={formData?.referred_employee || undefined}
-                      onChange={(value) => handleAntDSelect("referred_employee", value)}
+                      onChange={(value) =>
+                        handleAntDSelect("referred_employee", value)
+                      }
                     >
                       {employees.map((employee) => (
                         <Select.Option key={employee._id} value={employee._id}>
@@ -1043,6 +1289,56 @@ useEffect(() => {
                   {errors.daily_payment_amount && (
                     <p className="text-red-500 text-sm mt-1">
                       {errors.daily_payment_amount}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row justify-between space-x-4">
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="document_charges"
+                  >
+                    Documentation Charges{" "}
+                    <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    name="document_charges"
+                    value={updateFormData.document_charges}
+                    onChange={handleInputChange}
+                    id="document_charges"
+                    placeholder="Enter Documentation Charges"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.document_charges && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.document_charges}
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-1/2">
+                  <label
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                    htmlFor="loan_sanction_date"
+                  >
+                    Sanction Date <span className="text-red-500 ">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    placeholder="Enter the Date"
+                    name="loan_sanction_date"
+                    value={updateFormData.loan_sanction_date}
+                    onChange={handleInputChange}
+                    id="loan_sanction_date"
+                    required
+                    className={`bg-gray-50 border border-gray-300 ${fieldSize.height} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                  />
+                  {errors.loan_sanction_date && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.loan_sanction_date}
                     </p>
                   )}
                 </div>
@@ -1384,7 +1680,6 @@ useEffect(() => {
                   />
                 </div>
               )}
-
             </div>
 
             <div className="flex justify-end gap-3">
@@ -1404,7 +1699,6 @@ useEffect(() => {
             </div>
           </div>
         </Modal>
-
       </div>
     </>
   );
