@@ -6,6 +6,7 @@ import { ImUserTie } from "react-icons/im";
 import { MdGroups } from "react-icons/md";
 import { FaPeopleGroup } from "react-icons/fa6";
 import { useEffect, useState, useCallback } from "react";
+import { FaCodeBranch } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/layouts/Sidebar";
 import Navbar from "../components/layouts/Navbar";
@@ -36,6 +37,7 @@ const Home = () => {
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [tableTransactions, setTableTransactions] = useState([]);
   const [viewMode, setViewMode] = useState('list');
+  const [targetValue , setTotalTargetAmount] = useState(0);
 
   const fetchGroupData = useCallback(async () => {
     try {
@@ -76,7 +78,17 @@ const Home = () => {
       setEmployees([]);
     }
   }, []);
-
+const fetchTotalBranchTarget = useCallback(async () => {
+    try {
+   
+      const response = await api.get("/payment/branch/target"); 
+      
+      setTotalTargetAmount(response?.data?.data?.[0].branchTarget || 0);
+    } catch (error) {
+      console.error("Error fetching branch target amount:", error);
+      setTotalTargetAmount(0);
+    }
+  }, []);
   const fetchUserData = useCallback(async () => {
     try {
       const response = await api.get("/user/get-user");
@@ -163,6 +175,7 @@ const Home = () => {
       fetchEmployeeData(),
       fetchTotalAmount(),
       fetchMonthlyPayments(),
+      fetchTotalBranchTarget()
     ]).then(() => setLoading(false));
   }, [
     reloadTrigger,
@@ -173,6 +186,8 @@ const Home = () => {
     fetchEmployeeData,
     fetchTotalAmount,
     fetchMonthlyPayments,
+    fetchTotalBranchTarget
+    
   ]);
   async function getTransactions() {
     try {
@@ -217,6 +232,16 @@ const Home = () => {
     getTransactions();
   }, [])
   const baseCards = [
+    {
+      id: 1055,
+      icon: <FaCodeBranch size={24} />,
+      text: "Branch Target",
+      count:  `₹ ${(targetValue ?? 0)?.toLocaleString("en-IN")} `,
+      bgGradient: "from-neutral-500 to-neutral-600",
+      iconBg: "bg-neutral-700",
+      hoverBg: "hover:from-neutral-600 hover:to-neutral-700",
+      redirect: "/staff-menu/employee-menu",
+    },
     {
       id: 1,
       icon: <LiaLayerGroupSolid size={24} />,
@@ -267,6 +292,7 @@ const Home = () => {
       hoverBg: "hover:from-lime-600 hover:to-lime-700",
       redirect: "/staff-menu/employee-menu",
     },
+    
   ];
 
   const paymentCards = hidePayment
