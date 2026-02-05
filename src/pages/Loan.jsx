@@ -327,8 +327,8 @@ sections.forEach((sec) => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get("/agent/employee");
-        setEmployees(response?.data?.employee);
+        const response = await api.get("/agent/get-employee");
+        setEmployees(response?.data?.employee || []);
       } catch (error) {
         console.error("failed to fetch employees", error);
       }
