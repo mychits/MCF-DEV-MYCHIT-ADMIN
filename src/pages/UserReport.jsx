@@ -15,6 +15,8 @@ import { IoMdMore } from "react-icons/io";
 import { MdAccountBalanceWallet } from "react-icons/md";
 import Fuse from "fuse.js";
 import { numberToIndianWords } from "../helpers/numberToIndianWords";
+import { FiUser, FiBookOpen, FiFileText, FiRepeat } from "react-icons/fi";
+import { FaRupeeSign } from "react-icons/fa";
 const UserReport = () => {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get("user_id");
@@ -89,10 +91,7 @@ const UserReport = () => {
   const [filteredAuction, setFilteredAuction] = useState([]);
   const [groupInfo, setGroupInfo] = useState({});
 
-  // const [selectedDate, setSelectedDate] = useState(() => {
-  //   const today = new Date();
-  //   return today.toISOString().split("T")[0];
-  // });
+
   const [selectedFromDate, setSelectedFromDate] = useState("");
   const [selectedToDate, setSelectedToDate] = useState("");
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
@@ -115,6 +114,7 @@ const UserReport = () => {
   const [filteredBorrowerData, setFilteredBorrowerData] = useState([]);
   const [filteredDisbursement, setFilteredDisbursement] = useState([]);
   const [disbursementLoading, setDisbursementLoading] = useState(false);
+  const [statementLoading, setStatementLoading] = useState(false);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   const [registrationAmount, setRegistrationAmount] = useState(null);
@@ -133,6 +133,11 @@ const UserReport = () => {
   const [transactionsTable, setTransactionsTable] = useState([]);
   const [totalTransactions, setTotalTransactons] = useState(10);
   const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
+  const [enrollmentData, setEnrollmentData] = useState([]);
+  const [activeEnrollmentData, setActiveEnrollmentData] = useState("");
+  const [enrollmentDataLoading, setEnrollmentDataLoading] = useState(false);
+
+  const [enrollmentId, setEnrollmentId] = useState("")
   const onGlobalSearchChangeHandler = (e) => {
     setSearchText(e.target.value);
   };
@@ -240,8 +245,8 @@ const UserReport = () => {
               ticket: item?.loan
                 ? item.loan?.loan_id
                 : item?.pigme
-                ? item.pigme?.pigme_id
-                : item?.ticket || "N/A",
+                  ? item.pigme?.pigme_id
+                  : item?.ticket || "N/A",
               receipt: item?.receipt_no || "N/A",
               old_receipt_no: item?.old_receipt_no || "-",
               amount: item?.amount || 0,
@@ -379,8 +384,8 @@ const UserReport = () => {
             setRegistrationDate(
               registrationFees[0]?.createdAt
                 ? new Date(registrationFees[0].createdAt).toLocaleDateString(
-                    "en-GB"
-                  )
+                  "en-GB"
+                )
                 : null
             );
           }
@@ -790,6 +795,118 @@ const UserReport = () => {
     selectedCustomers,
   ]);
 
+  async function getActiveCustomerEnrollmentData() {
+    try {
+      setEnrollmentDataLoading(true)
+
+      const response = await api.get(`/enroll/customers/${selectedGroup}`)
+      const responseData = response?.data?.data ?? [];
+
+      setEnrollmentData(responseData)
+    } catch (error) {
+      setEnrollmentData([])
+
+    } finally {
+      setEnrollmentDataLoading(false);
+    }
+  }
+  useEffect(() => {
+    if (activeTab === "customerPaymentStatement")
+      getActiveCustomerEnrollmentData()
+  }, [activeTab, selectedGroup]);
+
+
+  async function getCustomerPaymentStatement() {
+    try {
+      setStatementLoading(true);
+      const response = await api.get(`/enroll/customer-payment/statement/${enrollmentId}`);
+      const responseData = response.data?.data?.statement ?? [];
+
+     const filteredResponse = responseData.map((statement, index) => {
+  const balanceValue = Number(statement?.balance || 0);
+  const isNegative = balanceValue < 0;
+
+  return {
+    id: index + 1,
+    // RAW DATA
+    rawDate: `${statement?.date}`.split("T")?.[0] ?? "N/A",
+    rawBalance: balanceValue,
+    rawDescription:statement?.description,
+    rawDue:statement?.due,
+    rawPaid:statement?.paid,
+
+
+    // DECORATED DATA
+    date: (
+      <div className="text-slate-500 text-xs font-medium">
+        {`${statement?.date}`.split("T")?.[0] ?? "N/A"}
+      </div>
+    ),
+    
+    description: (
+      <div className="flex flex-col">
+        <span className="text-slate-900 font-bold text-sm tracking-tight">
+          {statement?.description || "General Payment"}
+        </span>
+        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+          Ref: #{index.toString().padStart(4, '0')}
+        </span>
+      </div>
+    ),
+
+    due: (
+       <div className="text-slate-600 font-semibold text-sm">
+         ₹{Number(statement?.due || 0).toLocaleString('en-IN')}
+       </div>
+    ),
+
+    paid: (
+      <div className="text-emerald-600 font-bold text-sm">
+        {statement?.paid > 0 ? `+ ₹${Number(statement?.paid).toLocaleString('en-IN')}` : "—"}
+      </div>
+    ),
+
+    balance: (
+      <div className="flex items-center justify-end gap-3">
+        <div className="text-right">
+          <div className={`text-sm font-black ${isNegative ? "text-rose-600" : "text-green-900"}`}>
+            ₹{Math.abs(balanceValue).toLocaleString('en-IN')}
+          </div>
+          <div className={`text-[9px] font-bold uppercase tracking-widest ${isNegative ? "text-rose-400" : "text-emerald-500"}`}>
+            {isNegative ? "Debit / Outstanding" : "Credit / Settled"}
+          </div>
+        </div>
+        {/* Simple geometric indicator instead of pulsing dots */}
+        <div className={`w-1 h-8 rounded-full ${isNegative ? "bg-rose-200" : "bg-emerald-200"}`} />
+      </div>
+    ),
+  };
+});
+      setActiveEnrollmentData(filteredResponse)
+
+    } catch (error) {
+      setActiveEnrollmentData([])
+    } finally {
+      setStatementLoading(false);
+
+    }
+  }
+  useEffect(() => {
+    if (enrollmentId)
+      getCustomerPaymentStatement()
+  }, [enrollmentId])
+  useEffect(() => {
+    setEnrollmentId(""),
+    setActiveEnrollmentData([]);
+  }, [selectedGroup])
+  const handleEnrollmentChange = (e) => {
+    const value = e.target.value;
+    if (value)
+      setEnrollmentId(value)
+
+  }
+
+
   const handleTransactionsSelectFilter = (value) => {
     setSelectedLabel(value);
     const today = new Date();
@@ -835,119 +952,6 @@ const UserReport = () => {
     { key: "maturity_interest", header: "Intrest" },
     { key: "total_deposited_amount", header: "Total Deposited Amount" },
   ];
-
-  // const handleGroupAuctionChange = async (groupId) => {
-  //   setFilteredAuction([]);
-  //   if (groupId) {
-  //     try {
-  //       const response = await api.post(
-  //         `/enroll/account/${groupId}`
-  //       );
-
-  //       if (response.data && response.data.length > 0) {
-  //         setFilteredAuction(response.data);
-  //         console.log(response.data, "resienns");
-
-  //         const formattedData = response.data
-  //           .map((group, index) => {
-  //             const groupName = group?.enrollment?.group?.group_name || "";
-  //             const tickets = group?.enrollment?.tickets || "";
-  //             const groupType = group?.enrollment?.group?.group_type;
-  //             const groupInstall =
-  //               parseInt(group?.enrollment?.group?.group_install) || 0;
-  //             const auctionCount = parseInt(group?.auction?.auctionCount) || 0;
-  //             const totalPaidAmount = group?.payments?.totalPaidAmount || 0;
-  //             const totalProfit = group?.profit?.totalProfit || 0;
-  //             const totalPayable = group?.payable?.totalPayable || 0;
-  //             const firstDividentHead =
-  //               group?.firstAuction?.firstDividentHead || 0;
-
-  //             if (!group?.enrollment?.group) {
-  //               return null;
-  //             }
-
-  //             return {
-  //               id: index + 1,
-  //               group: groupName,
-  //               ticket: tickets,
-
-  //               totalBePaid:
-  //                 groupType === "double"
-  //                   ? groupInstall * auctionCount + groupInstall
-  //                   : totalPayable + groupInstall + totalProfit,
-
-  //               profit: totalProfit,
-
-  //               toBePaidAmount:
-  //                 groupType === "double"
-  //                   ? groupInstall * auctionCount + groupInstall
-  //                   : totalPayable + groupInstall + firstDividentHead,
-
-  //               paidAmount: totalPaidAmount,
-
-  //               balance:
-  //                 groupType === "double"
-  //                   ? groupInstall * auctionCount +
-  //                   groupInstall -
-  //                   totalPaidAmount
-  //                   : totalPayable +
-  //                   groupInstall +
-  //                   firstDividentHead -
-  //                   totalPaidAmount,
-  //               referred_type: group?.enrollment?.referred_type || "N/A",
-  //               referrer_name: group?.enrollment?.referrer_name || "N/A",
-  //               chit_asking_month: group?.enrollment?.chit_asking_month || "N/A",
-  //               customer_status: group?.enrollment?.customer_status || "N/A",
-  //               removal_reason: group?.enrollment?.removal_reason || "N/A",
-  //               isPrized:
-  //                 group?.enrollment?.isPrized === true
-  //                   ? "Prized"
-  //                   : "Un Prized" || "N/A",
-  //             };
-  //           })
-  //           .filter((item) => item !== null)
-  //           .filter((item) => item.customer_status === "Active");
-
-  //         setTableAuctions(formattedData);
-  //         setCommission(0);
-  //         console.info(formattedData, "test");
-  //         const totalToBePaidAmount = formattedData
-  //           .filter((summary) => summary.customer_status === "Active")
-  //           .reduce((sum, group) => {
-  //             return sum + (group?.totalBePaid || 0);
-  //           }, 0);
-  //         setTotalToBePaid(totalToBePaidAmount);
-
-  //         const totalNetToBePaidAmount = formattedData
-  //           .filter((summary) => summary.customer_status === "Active")
-  //           .reduce((sum, group) => {
-  //             return sum + (group?.toBePaidAmount || 0);
-  //           }, 0);
-  //         setNetTotalProfit(totalNetToBePaidAmount);
-
-  //         const totalPaidAmount = formattedData
-  //           .filter((summary) => summary.customer_status === "Active")
-  //           .reduce((sum, group) => sum + (group?.paidAmount || 0), 0);
-  //         setTotalPaid(totalPaidAmount);
-
-  //         const totalProfit = formattedData
-  //           .filter((summary) => summary.customer_status === "Active")
-  //           .reduce((sum, group) => sum + (group?.profit || 0), 0);
-  //         setTotalProfit(totalProfit);
-  //       } else {
-  //         setFilteredAuction([]);
-  //         setCommission(0);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching enrollment data:", error);
-  //       setFilteredAuction([]);
-  //       setCommission(0);
-  //     }
-  //   } else {
-  //     setFilteredAuction([]);
-  //     setCommission(0);
-  //   }
-  // };
 
   const handleGroupAuctionChange = async (userId) => {
     setFilteredAuction([]);
@@ -1135,6 +1139,25 @@ const UserReport = () => {
     { key: "balance", header: "Balance" },
   ];
 
+  const CustomerPaymentStatementColumns = [
+    { key: "id", header: "SL. NO" },
+    { key: "date", header: "Due Date" },
+    { key: "description", header: "Description" },
+    { key: "due", header: "Due Amount" },
+    { key: "paid", header: "Paid Amount" },
+    { key: "balance", header: "Balance" },
+
+  ];
+   const CustomerPaymentStatementExportsColumns = [
+    { key: "id", header: "SL. NO" },
+    { key: "rawDate", header: "Due Date" },
+    { key: "rawDescription", header: "Description" },
+    { key: "rawDue", header: "Due Amount" },
+    { key: "rawPaid", header: "Paid Amount" },
+    { key: "rawBalance", header: "Balance" },
+
+  ];
+
   const formatDate = (dateString) => {
     const parts = dateString.split("-");
     if (parts.length === 3) {
@@ -1192,15 +1215,7 @@ const UserReport = () => {
     fetchEnroll();
   }, [selectedGroup, formattedFromDate, formattedToDate]);
 
-  const Datecolumns = [
-    { key: "id", header: "SL. NO" },
-    { key: "name", header: "Customer Name" },
-    { key: "phone_number", header: "Customer Phone Number" },
-    { key: "ticket", header: "Ticket" },
-    { key: "amount_to_be_paid", header: "Amount to be Paid" },
-    { key: "amount_paid", header: "Amount Paid" },
-    { key: "amount_balance", header: "Amount Balance" },
-  ];
+
 
   useEffect(() => {
     if (groupInfo && formData.bid_amount) {
@@ -1293,43 +1308,28 @@ const UserReport = () => {
               {selectedGroup && (
                 <>
                   <div className="mt-6 mb-8">
-                    <div className="flex justify-start border-b border-gray-300 mb-4">
-                      <button
-                        className={`px-6 py-2 font-medium ${
-                          activeTab === "groupDetails"
-                            ? "border-b-2 border-blue-500 text-blue-500"
-                            : "text-gray-500"
-                        }`}
-                        onClick={() => handleTabChange("groupDetails")}>
-                        Customer Details
-                      </button>
-                      <button
-                        className={`px-6 py-2 font-medium ${
-                          activeTab === "basicReport"
-                            ? "border-b-2 border-blue-500 text-blue-500"
-                            : "text-gray-500"
-                        }`}
-                        onClick={() => handleTabChange("basicReport")}>
-                        Customer Ledger
-                      </button>
-                      <button
-                        className={`px-6 py-2 font-medium ${
-                          activeTab === "transactions"
-                            ? "border-b-2 border-blue-500 text-blue-500"
-                            : "text-gray-500"
-                        }`}
-                        onClick={() => handleTabChange("transactions")}>
-                        Transactions
-                      </button>
-                      <button
-                        className={`px-6 py-2 font-medium ${
-                          activeTab === "disbursement"
-                            ? "border-b-2 border-blue-500 text-blue-500"
-                            : "text-gray-500"
-                        }`}
-                        onClick={() => handleTabChange("disbursement")}>
-                        PayOut | Disbursement
-                      </button>
+                    <div className="mb-8 p-1.5 bg-slate-100/80 backdrop-blur-md rounded-2xl inline-flex items-center gap-1 shadow-inner border border-slate-200/50 overflow-x-auto no-scrollbar max-w-full">
+                      {[
+                        { id: "groupDetails", label: "Customer Details", icon: <FiUser size={16} /> },
+                        { id: "basicReport", label: "Ledger", icon: <FiBookOpen size={16} /> },
+                        { id: "customerPaymentStatement", label: "Statement", icon: <FiFileText size={16} /> },
+                        { id: "transactions", label: "Transactions", icon: <FiRepeat size={16} /> },
+                        { id: "disbursement", label: "Payouts", icon: <FaRupeeSign size={16} /> },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap ${activeTab === tab.id
+                            ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-white/40"
+                            }`}
+                        >
+                          <span className={`${activeTab === tab.id ? "text-blue-500" : "text-slate-400"}`}>
+                            {tab.icon}
+                          </span>
+                          {tab.label}
+                        </button>
+                      ))}
                     </div>
                     <div className="flex justify-end mb-3">
                       <button
@@ -1448,11 +1448,10 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${
-          visibleRows.row1
-            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-        }
+        ${visibleRows.row1
+                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+                                    }
       `}>
                                   {visibleRows.row1
                                     ? "✓ Hide Basic Info"
@@ -1467,11 +1466,10 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${
-          visibleRows.row2
-            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-        }
+        ${visibleRows.row2
+                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+                                    }
       `}>
                                   {visibleRows.row2
                                     ? "✓ Hide Address Info"
@@ -1486,11 +1484,10 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${
-          visibleRows.row3
-            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-        }
+        ${visibleRows.row3
+                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+                                    }
       `}>
                                   {visibleRows.row3
                                     ? "✓ Hide Regional Info"
@@ -1505,11 +1502,10 @@ const UserReport = () => {
                                     }))
                                   }
                                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-        ${
-          visibleRows.row4
-            ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
-            : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
-        }
+        ${visibleRows.row4
+                                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg"
+                                      : "bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md hover:shadow-lg hover:scale-105"
+                                    }
       `}>
                                   {visibleRows.row4
                                     ? "✓ Hide Referral, Nominee & Bank Details"
@@ -1569,8 +1565,8 @@ const UserReport = () => {
                                       value={
                                         group.dateofbirth
                                           ? new Date(group.dateofbirth)
-                                              .toISOString()
-                                              .split("T")[0]
+                                            .toISOString()
+                                            .split("T")[0]
                                           : ""
                                       }
                                     />
@@ -1639,8 +1635,8 @@ const UserReport = () => {
                                       value={
                                         group.nominee_dateofbirth
                                           ? new Date(group.nominee_dateofbirth)
-                                              .toISOString()
-                                              .split("T")[0]
+                                            .toISOString()
+                                            .split("T")[0]
                                           : ""
                                       }
                                     />
@@ -1837,194 +1833,7 @@ const UserReport = () => {
                       </>
                     )}
 
-                    {/* {activeTab === "basicReport" && (
-                      <>
-                        <div>
-                          <div className="flex gap-4">
-                            <div className="flex flex-col flex-1">
-                              <label className="mb-1 text-sm font-medium text-gray-700">
-                                Groups and Tickets
-                              </label>
-                              <select
-                                value={
-                                  EnrollGroupId.groupId
-                                    ? `${EnrollGroupId.groupId}|${EnrollGroupId.ticket}`
-                                    : ""
-                                }
-                                onChange={handleEnrollGroup}
-                                className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md"
-                              >
-                                <option value="">Select Group | Ticket</option>
 
-                                {filteredAuction.map((group) => {
-                                  if (group?.enrollment?.group) {
-                                    return (
-                                      <option
-                                        key={group.enrollment.group._id}
-                                        value={`${group.enrollment.group._id}|${group.enrollment.tickets}`}
-                                      >
-                                        {group.enrollment.group.group_name} |{" "}
-                                        {group.enrollment.tickets}
-                                      </option>
-                                    );
-                                  }
-                                  return null;
-                                })}
-
-                                {Array.isArray(loanCustomers)
-                                  ? loanCustomers.map((loan) => (
-                                      <option
-                                        key={loan._id}
-                                        value={`Loan|${loan._id}`}
-                                      >
-                                        {`${loan.loan_id || "N/A"} | ₹${
-                                          loan.loan_amount || 0
-                                        }`}
-                                      </option>
-                                    ))
-                                  : Array.isArray(loanCustomers?.overall_loan)
-                                  ? loanCustomers.overall_loan.map(
-                                      (loan, index) => (
-                                        <option
-                                          key={index}
-                                          value={`Loan|${
-                                            loan?.loan_details?.loan?._id ||
-                                            index
-                                          }`}
-                                        >
-                                          {`${
-                                            loan?.loan_details?.loan?.loan_id ||
-                                            "N/A"
-                                          } | ₹${loan?.loan_value || 0}`}
-                                        </option>
-                                      )
-                                    )
-                                  : null}
-                                  {Array.isArray(pigmeCustomers)
-                                  ? pigmeCustomers.map((pigme) => (
-                                      <option
-                                        key={loan._id}
-                                        value={`Pigme|${pigme._id}`}
-                                      >
-                                        {`${pigme.pigme_id || "N/A"} 
-                                        }`}
-                                      </option>
-                                    ))
-                                  : Array.isArray(pigmeCustomers?.overall_pigme)
-                                  ? pigmeCustomers.overall_pigme.map(
-                                      (pigme, index) => (
-                                        <option
-                                          key={index}
-                                          value={`Pigme|${
-                                            pigme?.pigme_details?.pigme?._id ||
-                                            index
-                                          }`}
-                                        >
-                                          {`${
-                                            pigme?.pigme_details?.pigme?.pigme_id ||
-                                            "N/A"
-                                          } | ₹${pigme?.total_deposited_amount || 0}`}
-                                        </option>
-                                      )
-                                    )
-                                  : null}
-                              </select>
-
-                              {registrationFee.amount > 0 && (
-                                <div className="mt-6 p-4 border rounded bg-gray-100 w-fit text-gray-800 shadow">
-                                  <p className="text-sm font-semibold">
-                                    Registration Fee Info
-                                  </p>
-                                  <p>
-                                    <strong>Amount:</strong> ₹
-                                    {registrationFee.amount}
-                                  </p>
-                                  <p>
-                                    <strong>Date:</strong>{" "}
-                                    {registrationFee.createdAt
-                                      ? new Date(
-                                          registrationFee.createdAt
-                                        ).toLocaleDateString("en-GB")
-                                      : "N/A"}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-6 flex justify-center gap-8 flex-wrap">
-                              <input
-                                type="text"
-                                value={`Registration Fee: ₹${
-                                  registrationAmount || 0
-                                }`}
-                                readOnly
-                                className="px-4 py-2 border rounded font-semibold w-60 text-center bg-green-100 text-green-800 border-green-400"
-                              />
-
-                              <input
-                                type="text"
-                                value={`Payment Balance: ₹${finalPaymentBalance}`}
-                                readOnly
-                                className="px-4 py-2 border rounded font-semibold w-60 text-center bg-blue-100 text-blue-800 border-blue-400"
-                              />
-
-                              <input
-                                type="text"
-                                value={`Total: ₹${
-                                  Number(finalPaymentBalance) +
-                                  Number(registrationAmount || 0)
-                                }`}
-                                readOnly
-                                className="px-4 py-2 border rounded font-semibold w-60 text-center bg-purple-100 text-purple-800 border-purple-400"
-                              />
-                            </div>
-                          </div>
-
-                          {(TableEnrolls && TableEnrolls.length > 0) ||
-                          (borrowersData.length > 0 && !basicLoading) ? (
-                            <div className="mt-10">
-                              <DataTable
-                                exportedPdfName="Customer Ledger Report"
-                                printHeaderKeys={[
-                                  "Customer Name",
-                                  "Customer Id",
-                                  "Phone Number",
-                                  "Ticket Number",
-                                  "Group Name",
-                                  "Start Date",
-                                  "End Date",
-                                ]}
-                                printHeaderValues={[
-                                  group.full_name,
-                                  group.customer_id,
-                                  group.phone_number,
-                                  EnrollGroupId.ticket,
-                                  groupDetails.group_name,
-                                  new Date(
-                                    groupDetails.start_date
-                                  ).toLocaleDateString("en-GB"),
-                                  new Date(
-                                    groupDetails.end_date
-                                  ).toLocaleDateString("en-GB"),
-                                ]}
-                                data={
-                                  EnrollGroupId.groupId === "Loan"
-                                    ? borrowersData
-                                    : TableEnrolls
-                                }
-                                columns={
-                                  EnrollGroupId.groupId === "Loan"
-                                    ? BasicLoanColumns
-                                    : Basiccolumns
-                                }
-                              />
-                            </div>
-                          ) : (
-                            <CircularLoader isLoading={basicLoading} />
-                          )}
-                        </div>
-                      </>
-                    )} */}
                     {activeTab === "basicReport" && (
                       <>
                         <div>
@@ -2047,7 +1856,7 @@ const UserReport = () => {
                                   if (
                                     group?.enrollment?.group &&
                                     group?.enrollment?.customer_status ===
-                                      "Active"
+                                    "Active"
                                   ) {
                                     return (
                                       <option
@@ -2068,9 +1877,8 @@ const UserReport = () => {
                                         key={
                                           loan?.loan_details?.loan?._id || index
                                         }
-                                        value={`Loan|${
-                                          loan?.loan_details?.loan?._id || index
-                                        }`}>
+                                        value={`Loan|${loan?.loan_details?.loan?._id || index
+                                          }`}>
                                         {loan?.loan_details?.loan?.loan_id ||
                                           "N/A"}{" "}
                                         | ₹{loan?.loan_value || 0}
@@ -2086,10 +1894,9 @@ const UserReport = () => {
                                           pigme?.pigme_details?.pigme?._id ||
                                           index
                                         }
-                                        value={`Pigme|${
-                                          pigme?.pigme_details?.pigme?._id ||
+                                        value={`Pigme|${pigme?.pigme_details?.pigme?._id ||
                                           index
-                                        }`}>
+                                          }`}>
                                         {pigme?.pigme_details?.pigme
                                           ?.pigme_id || "N/A"}{" "}
                                         | ₹{pigme?.total_deposited_amount || 0}
@@ -2103,9 +1910,8 @@ const UserReport = () => {
                           <div className="mt-6 flex justify-center gap-8 flex-wrap">
                             <input
                               type="text"
-                              value={`Registration Fee: ₹${
-                                registrationAmount || 0
-                              }`}
+                              value={`Registration Fee: ₹${registrationAmount || 0
+                                }`}
                               readOnly
                               className="px-4 py-2 border rounded font-semibold w-60 text-center bg-green-100 text-green-800 border-green-400"
                             />
@@ -2117,10 +1923,9 @@ const UserReport = () => {
                             />
                             <input
                               type="text"
-                              value={`Total: ₹${
-                                Number(finalPaymentBalance) +
+                              value={`Total: ₹${Number(finalPaymentBalance) +
                                 Number(registrationAmount || 0)
-                              }`}
+                                }`}
                               readOnly
                               className="px-4 py-2 border rounded font-semibold w-60 text-center bg-purple-100 text-purple-800 border-purple-400"
                             />
@@ -2129,7 +1934,7 @@ const UserReport = () => {
                           {(TableEnrolls?.length > 0 ||
                             borrowersData?.length > 0 ||
                             pigmeCustomerData?.length > 0) &&
-                          !basicLoading ? (
+                            !basicLoading ? (
                             <div className="mt-10">
                               <DataTable
                                 exportedPdfName="Customer Ledger Report"
@@ -2151,15 +1956,15 @@ const UserReport = () => {
                                   EnrollGroupId?.groupId === "Loan"
                                     ? borrowersData
                                     : EnrollGroupId?.groupId === "Pigme"
-                                    ? pigmeCustomerData
-                                    : TableEnrolls
+                                      ? pigmeCustomerData
+                                      : TableEnrolls
                                 }
                                 columns={
                                   EnrollGroupId?.groupId === "Loan"
                                     ? BasicLoanColumns
                                     : EnrollGroupId?.groupId === "Pigme"
-                                    ? BasicPigmeColumns
-                                    : Basiccolumns
+                                      ? BasicPigmeColumns
+                                      : Basiccolumns
                                 }
                               />
                             </div>
@@ -2198,6 +2003,64 @@ const UserReport = () => {
                         ) : (
                           <div className="p-40  w-full flex justify-center items-center ">
                             No Disbursement Data Found
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+
+                    {activeTab === "customerPaymentStatement" && (
+                      <div className="flex flex-col flex-1">
+                        <label className="mb-1 text-sm  text-gray-700 font-bold">
+                          Customer Payment Statement
+                        </label>
+                        {(function () { console.log(enrollmentData, "thi is enrollment data") })()}
+                        <div className="flex flex-col flex-1">
+                          <label className="mb-1 text-sm font-medium text-gray-700">
+                            Groups and Tickets
+                          </label>
+                          <select
+                            value={
+                              enrollmentId
+                            }
+                            onChange={handleEnrollmentChange}
+                            className="border border-gray-300 rounded px-6 py-2 shadow-sm outline-none w-full max-w-md">
+                            <option value="">Select Group | Ticket</option>
+
+                            {enrollmentData.map((e) => {
+
+                              return (
+                                <option
+                                  key={e?._id}
+                                  value={`${e?._id}`}>
+                                  {e?.group_id?.group_name} |{" "}
+                                  {e?.tickets}
+                                </option>
+                              );
+
+                            })}
+
+
+
+
+                          </select>
+                        </div>
+                        {statementLoading ? (
+                          <CircularLoader />
+                        ) : activeEnrollmentData?.length > 0 ? (
+                          <div className="mt-10">
+                            <DataTable
+                              data={activeEnrollmentData}
+                              columns={CustomerPaymentStatementColumns}
+                              exportCols={CustomerPaymentStatementExportsColumns}
+                              exportedPdfName={`Customer Statement Report`}
+                              exportedFileName={`Customer Statement.csv`}
+
+                            />
+                          </div>
+                        ) : (
+                          <div className="p-40  w-full flex justify-center items-center ">
+                            No Customer Payment Statement Found
                           </div>
                         )}
                       </div>
