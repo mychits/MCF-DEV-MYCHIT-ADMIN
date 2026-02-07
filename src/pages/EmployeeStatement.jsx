@@ -298,7 +298,7 @@ const EmployeeStatement = () => {
                 <DataTable
                   exportCols={columnsRaw}
                   data={filterTableData(tableData, searchText)}
-                  columns={columnsRaw}
+                  columns={columns}
                   exportedPdfName={`Salary Statement: ${selectedEmployeeName}`}
                   exportedFileName={`Salary Statement ${selectedEmployeeName}`}
                 />

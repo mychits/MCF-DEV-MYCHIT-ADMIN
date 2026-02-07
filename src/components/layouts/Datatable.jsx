@@ -380,7 +380,7 @@ const DataTable = ({
           <table style="width: 100%; border-collapse: collapse;">
             <thead>
               <tr>
-                ${safeColumns
+                ${exportColumns
                   .filter((col) => col.key.toLowerCase() !== "action")
                   .map(
                     (col) =>
@@ -394,7 +394,7 @@ const DataTable = ({
                 .map(
                   (row) => `
                   <tr>
-                    ${safeColumns
+                    ${exportColumns
                       .filter((col) => col.key.toLowerCase() !== "action")
                       .map(
                         (col) =>
